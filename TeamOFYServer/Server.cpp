@@ -1,4 +1,16 @@
 #include "Server.h"
+
+Server::Server() : listenSocket(INVALID_SOCKET), handler_(*this) {
+}
+
+Server::~Server() {
+    if (listenSocket != INVALID_SOCKET) {
+        closesocket(listenSocket);
+        listenSocket = INVALID_SOCKET;
+    }
+}
+
+
 bool Server::Initialize(unsigned short port) {
     WSADATA wsaData;
     int result = WSAStartup(MAKEWORD(2, 2), &wsaData);
@@ -52,21 +64,39 @@ void Server::AcceptClients() {
             continue;
         }
 
-        // IP 주소 문자열 변환
         char ipStr[INET_ADDRSTRLEN] = { 0 };
         InetNtopA(AF_INET, &(clientAddr.sin_addr), ipStr, INET_ADDRSTRLEN);
-
-        // 포트 번호 변환 (네트워크 바이트 순서 -> 호스트 바이트 순서)
         int port = ntohs(clientAddr.sin_port);
 
-        std::cout << "클라이언트 접속됨 - IP: " << ipStr << ", Port: " << port << std::endl;
+        std::cout << "[접속] 클라이언트 - IP: " << ipStr << ", Port: " << port << std::endl;
+
+        auto clientInfo = std::make_shared<ClientInfo>(clientSocket, ipStr, port);
+
+        {
+            std::lock_guard<std::mutex> lock(clientsMutex);
+            clients.push_back(clientInfo);
+        }
+
+        std::thread([this, clientInfo]() {
+            handler_.HandleClient(clientInfo);
+            }).detach();
     }
 }
 
-void Server::RemoveClient(const ClientInfo& client) {
-    lock_guard<mutex> lock(clientsMutex);
-    clients.erase(
-        remove_if(clients.begin(), clients.end(),
-            [&](const ClientInfo& c) { return c.socket == client.socket; }),
-        clients.end());
+void Server::RemoveClient(std::shared_ptr<ClientInfo> client) {
+    {
+        std::lock_guard<std::mutex> lock(clientsMutex);
+
+        auto it = std::remove_if(clients.begin(), clients.end(),
+            [&](const std::shared_ptr<ClientInfo>& c) {
+                return c->socket == client->socket;
+            });
+
+        if (it != clients.end()) {
+            std::cout << "[접속 종료] 클라이언트 - IP: " << client->ip << ", Port: " << client->port << std::endl;
+            shutdown(client->socket, SD_BOTH);
+            closesocket(client->socket);
+            clients.erase(it, clients.end());
+        }
+    }
 }

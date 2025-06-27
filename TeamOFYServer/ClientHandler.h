@@ -1,14 +1,16 @@
 #pragma once
+#include<iostream>
 #include"ClientInfo.h"
 #include "Utils.h"
-#include "Server.h"
+
+class Server;
 class ClientHandler {
 public:
-    void HandleClient(ClientInfo client);
-    void Run();
+    ClientHandler(Server& server);
+    ~ClientHandler();
+    void HandleClient(shared_ptr<ClientInfo> client);
 private:
-    ClientInfo client;
     Server& server_;
-    //void ProcessMessage(const string& message); // º±≈√
+    void ProcessMessages(shared_ptr<ClientInfo>, const string&);
 };
 

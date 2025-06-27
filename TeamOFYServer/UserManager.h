@@ -8,10 +8,10 @@
 class UserManager
 {
 public:
-	std::vector<User> LoadUsers(const std::string& filename);
-	void SaveUsers(const std::vector<User>& users, const std::string& filename);
+	vector<User> LoadUsers(const string& filename);
+	void SaveUsers(const vector<User>& users, const string& filename);
 
 private:
-	std::vector<User> users;
+	vector<User> users;
 };
 

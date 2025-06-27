@@ -4,16 +4,22 @@
 #include <vector>
 #include <mutex>
 #include "ClientInfo.h"
+#include "ClientHandler.h"
 #include "Utils.h"
 class Server {
 public:
-    bool Initialize(unsigned short port);
-    void RemoveClient(const ClientInfo& client);
+    Server();
+    ~Server();
+
+    bool Initialize(unsigned short);
+    void RemoveClient(shared_ptr<ClientInfo>);
     void Run();
     void AcceptClients();
-
+    
 private:
     SOCKET listenSocket;
-    vector<ClientInfo> clients;
+    vector<shared_ptr<ClientInfo>> clients;
     mutex clientsMutex;
+
+    ClientHandler handler_;
 };
