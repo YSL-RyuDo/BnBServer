@@ -7,10 +7,10 @@ class ClientInfo
 {
 public:
     SOCKET socket;
-    std::string ip;
+    string ip;
     int port;
     string id;
-
+    int modelType = -1;
     ClientInfo();
 
     ClientInfo(SOCKET sock, const string& ip, int port)

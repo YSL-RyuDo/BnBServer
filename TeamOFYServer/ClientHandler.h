@@ -6,9 +6,9 @@
 class Server;
 class ClientHandler {
 public:
-    ClientHandler(Server& server);
+    ClientHandler(Server&);
     ~ClientHandler();
-    void HandleClient(shared_ptr<ClientInfo> client);
+    void HandleClient(shared_ptr<ClientInfo>);
 private:
     Server& server_;
     void ProcessMessages(shared_ptr<ClientInfo>, const string&);
