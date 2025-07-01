@@ -6,6 +6,8 @@
 #include "ClientInfo.h"
 #include "ClientHandler.h"
 #include "Utils.h"
+#include "UserManager.h"
+
 class Server {
 public:
     Server();
@@ -15,11 +17,12 @@ public:
     void RemoveClient(shared_ptr<ClientInfo>);
     void Run();
     void AcceptClients();
-    
+    mutex clientsMutex;
 private:
     SOCKET listenSocket;
     vector<shared_ptr<ClientInfo>> clients;
-    mutex clientsMutex;
+    
 
     ClientHandler handler_;
+    UserManager userManager_;
 };

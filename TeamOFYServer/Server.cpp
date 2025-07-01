@@ -1,6 +1,6 @@
 #include "Server.h"
 
-Server::Server() : listenSocket(INVALID_SOCKET), handler_(*this) {
+Server::Server() : listenSocket(INVALID_SOCKET), handler_(*this, userManager_) {
 }
 
 Server::~Server() {
@@ -50,6 +50,11 @@ bool Server::Initialize(unsigned short port) {
 }
 
 void Server::Run() {
+    auto loadedUsers = userManager_.LoadUsers("users.csv");
+    if (loadedUsers.empty()) {
+        cerr << "users.csv 로드 실패 또는 내용 없음" << endl;
+        return;
+    }
     cout << "서버 실행 중..." << endl;
     AcceptClients();
 }
