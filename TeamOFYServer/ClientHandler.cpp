@@ -1,8 +1,8 @@
 #include "ClientHandler.h"
 #include "Server.h"
 
-ClientHandler::ClientHandler(Server& server, UserManager& userManager)
-    : server_(server), userManager_(userManager) {}
+ClientHandler::ClientHandler(Server& server, UserManager& userManager, RoomManager& roomManager)
+    : server_(server), userManager_(userManager), roomManager_(roomManager){}
 
 ClientHandler::~ClientHandler() {}
 
@@ -54,7 +54,7 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
 
             string nick;
             if (response.rfind("LOGIN_SUCCESS|", 0) == 0) {
-                size_t colonPos = response.find(':');
+                size_t colonPos = response.find('|');
                 if (colonPos != string::npos) {
                     string userData = response.substr(colonPos + 1);
                     stringstream ss(userData);
@@ -85,7 +85,7 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
         else if (message.rfind("REGISTER|", 0) == 0) {
             cout << "[ProcessMessages] 회원가입 요청 감지" << endl;
 
-            string data = message.substr(9);
+            string data = message.substr(strlen("REGISTER|"));
             stringstream ss(data);
             string id, pw, nick;
             if (getline(ss, id, ',') && getline(ss, pw, ',') && getline(ss, nick)) {
@@ -105,94 +105,62 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
             server_.RemoveClient(client);
             return;
         }
+        else if (message.rfind("GET_USER_INFO|", 0) == 0)
+        {
+            string nickname = message.substr(strlen("GET_USER_INFO|"));
 
+            userManager_.SendUserInfoByNickname(client, nickname);
+        }
+        else if (message == "GET_LOBBY_USER_LIST|")
+        {
+            cout << "접속 유저리스트 요청 감지" << endl;
+            userManager_.BroadcastLobbyUserList();
+        }
+        else if (message == "GET_ROOM_LIST|")
+        {
+            cout << "방 생성 리스트 요청 감지" << endl;
+            roomManager_.BroadcastRoomlist(client);
+        }
+        else if (message.rfind("CREATE_ROOM|", 0) == 0)
+        {
+            cout << "방 생성 요청 감지" << endl;
+            string data = message.substr(strlen("CREATE_ROOM|"));
+            stringstream ss(data);
+            string roomName, mapName, password;
 
-        //else if (message.rfind("JOIN|", 0) == 0)
-        //{
-        //    // JOIN 메시지 페이로드 얻기
-        //    std::string payload = message.substr(5);
-        //    // 직접 Split (',' 기준)
-        //    std::vector<std::string> tokens;
-        //    size_t splitStart = 0;
-        //    while (true)
-        //    {
-        //        size_t commaPos = payload.find(',', splitStart);
-        //        if (commaPos == std::string::npos)
-        //        {
-        //            tokens.push_back(payload.substr(splitStart));
-        //            break;
-        //        }
-        //        tokens.push_back(payload.substr(splitStart, commaPos - splitStart));
-        //        splitStart = commaPos + 1;
-        //    }
-        //    std::string response;
-        //    // 직접 Trim (앞뒤 공백 제거)
-        //    auto trim = [](const std::string& s) -> std::string {
-        //        size_t st = 0, ed = s.size() - 1;
-        //        while (st < s.size() && std::isspace(static_cast<unsigned char>(s[st]))) ++st;
-        //        while (ed > st && std::isspace(static_cast<unsigned char>(s[ed]))) --ed;
-        //        return s.substr(st, ed - st + 1);
-        //        };
-        //    if (tokens.size() != 2)
-        //    {
-        //        response = "ERROR|JOIN 메시지 형식 오류\n";
-        //    }
-        //    else
-        //    {
-        //        std::string nickname = trim(tokens[0]);
-        //        int modelType = 0;
-        //        try
-        //        {
-        //            modelType = std::stoi(tokens[1]);
-        //        }
-        //        catch (...)
-        //        {
-        //            response = "ERROR|잘못된 모델 타입\n";
-        //        }
-        //        if (nickname.empty())
-        //            response = "ERROR|닉네임을 입력하세요\n";
-        //        if (response.empty())
-        //        {
-        //            client->id = nickname;
-        //            client->modelType = modelType;
-        //            std::cout << "JOIN - 닉네임: " << nickname << ", 모델타입: " << modelType << std::endl;
-        //            response = "JOIN_SUCCESS|\n";
-        //        }
-        //    }
-        //    if (!SendToClient(client, response))
-        //        break;
-        //}
-        //else if (message.rfind("REQUEST_MODEL|", 0) == 0)
-        //{
-        //    std::string nickname = message.substr(strlen("REQUEST_MODEL|"));
-        //    // 공백 제거 (선택)
-        //    auto trim = [](const std::string& s) -> std::string {
-        //        size_t st = 0, ed = s.size() - 1;
-        //        while (st < s.size() && std::isspace(static_cast<unsigned char>(s[st]))) ++st;
-        //        while (ed > st && std::isspace(static_cast<unsigned char>(s[ed]))) --ed;
-        //        return s.substr(st, ed - st + 1);
-        //        };
-        //    nickname = trim(nickname);
-        //    std::string response;
-        //    if (nickname.empty())
-        //    {
-        //        response = "ERROR|닉네임이 없습니다\n";
-        //    }
-        //    else
-        //    {
-        //        // 닉네임이 현재 접속 중인 클라이언트와 일치하는지 확인
-        //        if (client->id == nickname)
-        //        {
-        //            response = "MODEL_TYPE|" + std::to_string(client->modelType) + "\n";
-        //        }
-        //        else
-        //        {
-        //            response = "ERROR|닉네임 불일치 또는 존재하지 않음\n";
-        //        }
-        //    }
-        //    if (!SendToClient(client, response))
-        //        break;
-        //}
+            if (getline(ss, roomName, '|') && getline(ss, mapName, '|')) {
+                if (!getline(ss, password)) password = "";
+
+                roomManager_.CreateRoom(client, roomName, mapName, password);
+                response.clear();
+            }
+            else {
+                response = "CREATE_ROOM_FORMAT_ERROR\n";
+            }
+        }
+        else if (message.rfind("LOBBY_MESSAGE|", 0) == 0)
+        {
+            cout << "[ProcessMessages] 로비 메시지 수신" << endl;
+
+            string data = message.substr(strlen("LOBBY_MESSAGE|")); // "닉네임:메시지"
+            size_t delimPos = data.find(':');
+
+            if (delimPos != string::npos) {
+                string nickname = data.substr(0, delimPos);
+                string chatMsg = data.substr(delimPos + 1);
+
+                userManager_.BroadcastLobbyChatMessage(nickname, chatMsg);
+                response.clear();
+            }
+            else {
+                cerr << "[ProcessMessages] 채팅 메시지 포맷 오류: " << data << endl;
+            }
+        }
+        else if (message.rfind("LOGOUT|", 0) == 0) {
+            userManager_.LogoutUser(client);
+            response.clear();
+        }
+
 
         if (pos == std::string::npos)
             break;

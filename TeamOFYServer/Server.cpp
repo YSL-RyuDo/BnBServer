@@ -1,6 +1,12 @@
 #include "Server.h"
 
-Server::Server() : listenSocket(INVALID_SOCKET), handler_(*this, userManager_) {
+Server::Server()
+    : roomManager_(*this),
+    userManager_(*this),
+    handler_(*this, userManager_, roomManager_),
+    listenSocket(INVALID_SOCKET)
+{
+    userManager_.SetClientHandler(&handler_);
 }
 
 Server::~Server() {
@@ -9,7 +15,6 @@ Server::~Server() {
         listenSocket = INVALID_SOCKET;
     }
 }
-
 
 bool Server::Initialize(unsigned short port) {
     WSADATA wsaData;
@@ -105,3 +110,7 @@ void Server::RemoveClient(shared_ptr<ClientInfo> client) {
         }
     }
 }
+
+vector<shared_ptr<ClientInfo>>& Server::GetClients() { return clients; }
+
+mutex& Server::GetClientsMutex() { return clientsMutex; }

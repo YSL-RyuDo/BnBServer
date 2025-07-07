@@ -17,12 +17,17 @@ public:
     void RemoveClient(shared_ptr<ClientInfo>);
     void Run();
     void AcceptClients();
+
+    vector<shared_ptr<ClientInfo>>& GetClients();
+    mutex& GetClientsMutex();
+
     mutex clientsMutex;
 private:
     SOCKET listenSocket;
     vector<shared_ptr<ClientInfo>> clients;
     
 
-    ClientHandler handler_;
+    RoomManager roomManager_;
     UserManager userManager_;
+    ClientHandler handler_;
 };
