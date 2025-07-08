@@ -20,13 +20,11 @@ public:
 
     vector<shared_ptr<ClientInfo>>& GetClients();
     mutex& GetClientsMutex();
-
     mutex clientsMutex;
+    
 private:
     SOCKET listenSocket;
     vector<shared_ptr<ClientInfo>> clients;
-    
-
     RoomManager roomManager_;
     UserManager userManager_;
     ClientHandler handler_;

@@ -5,24 +5,27 @@
 #include <memory>
 #include "Room.h"
 #include "ClientInfo.h"
+
 class Server;
+class ClientHandler;
 using namespace std;
 
 class RoomManager {
 public:
-    RoomManager(Server& server);
+    RoomManager(Server& server, ClientHandler& clientHandler);
 
     // 방 목록 전체 전송
     void BroadcastRoomlist(shared_ptr<ClientInfo> client);
     bool CreateRoom(shared_ptr<ClientInfo> client, const string& roomName, const string& mapName, const string& password);
     void BroadcastMessageExcept(SOCKET exceptSocket, const string& message);
-    // 방 추가 등 확장 가능
-    /*void AddRoom(const Room& room);
-    void RemoveRoom(const string& roomName);
-    vector<Room> GetRooms();*/
+    bool EnterRoom(shared_ptr<ClientInfo> client, const string& roomName, const string& password, string& outResponse);
+    void HandleRoomChatMessage(shared_ptr<ClientInfo> sender, const string& data);
 
+    void ExitRoom(const std::string& message);
+    void SendRoomList(ClientInfo& client);
 private:
     Server& server_;
+    ClientHandler& clientHandler_;
     vector<Room> rooms;
     mutex roomsMutex;
 };

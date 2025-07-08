@@ -174,7 +174,7 @@ void UserManager::SendUserInfoByNickname(shared_ptr<ClientInfo> client, const st
 
 void UserManager::BroadcastLobbyChatMessage(const string& nickname, const string& message) {
     string fullMsg = "LOBBY_CHAT|" + nickname + ":" + message + "\n";
-    lock_guard<mutex> lock(server_.clientsMutex);  // server_는 UserManager가 들고 있다고 가정
+    lock_guard<mutex> lock(server_.clientsMutex);
     for (const auto& client : server_.GetClients()) {
         send(client->socket, fullMsg.c_str(), (int)fullMsg.size(), 0);
     }

@@ -1,7 +1,7 @@
 #include "Server.h"
 
 Server::Server()
-    : roomManager_(*this),
+    : roomManager_(*this, handler_),
     userManager_(*this),
     handler_(*this, userManager_, roomManager_),
     listenSocket(INVALID_SOCKET)

@@ -1,6 +1,7 @@
 #pragma once
 #include<iostream>
 #include<unordered_map>
+#include <string>
 #include"ClientInfo.h"
 #include "Utils.h"
 #include "UserManager.h"
@@ -16,11 +17,12 @@ public:
     unordered_map<string, shared_ptr<ClientInfo>>& GetClientsMap() {
         return clientsMap;
     }
+    //vector<shared_ptr<ClientInfo>> clients;
 private:
     Server& server_;
     UserManager& userManager_;
     RoomManager& roomManager_;
-    vector<shared_ptr<ClientInfo>> clients;
+    
     unordered_map<string, shared_ptr<ClientInfo>> clientsMap;
     void ProcessMessages(shared_ptr<ClientInfo>, const string&);
 

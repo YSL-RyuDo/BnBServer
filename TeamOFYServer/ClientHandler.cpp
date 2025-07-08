@@ -69,7 +69,7 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
                 {
                     lock_guard<mutex> lock(server_.clientsMutex);
 
-                    for (auto& c : clients) {
+                    for (auto& c : server_.GetClients()) {
                         if (c->socket == client->socket) {
                             c->id = client->id;  // 덮어쓰기
                             break;
@@ -121,23 +121,6 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
             cout << "방 생성 리스트 요청 감지" << endl;
             roomManager_.BroadcastRoomlist(client);
         }
-        else if (message.rfind("CREATE_ROOM|", 0) == 0)
-        {
-            cout << "방 생성 요청 감지" << endl;
-            string data = message.substr(strlen("CREATE_ROOM|"));
-            stringstream ss(data);
-            string roomName, mapName, password;
-
-            if (getline(ss, roomName, '|') && getline(ss, mapName, '|')) {
-                if (!getline(ss, password)) password = "";
-
-                roomManager_.CreateRoom(client, roomName, mapName, password);
-                response.clear();
-            }
-            else {
-                response = "CREATE_ROOM_FORMAT_ERROR\n";
-            }
-        }
         else if (message.rfind("LOBBY_MESSAGE|", 0) == 0)
         {
             cout << "[ProcessMessages] 로비 메시지 수신" << endl;
@@ -160,7 +143,44 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
             userManager_.LogoutUser(client);
             response.clear();
         }
+        else if (message.rfind("CREATE_ROOM|", 0) == 0){
+            string data = message.substr(strlen("CREATE_ROOM|"));
+            stringstream ss(data);
+            string roomName, mapName, password;
 
+            if (getline(ss, roomName, '|') && getline(ss, mapName, '|')) {
+                if (!getline(ss, password)) password = "";
+
+                // 룸 매니저에 위임
+                roomManager_.CreateRoom(client, roomName, mapName, password);
+
+                response.clear();
+            }
+            else {
+                response = "CREATE_ROOM_FORMAT_ERROR\n";
+            }
+        }
+        else if (message.rfind("ENTER_ROOM|", 0) == 0) {
+            string data = message.substr(strlen("ENTER_ROOM|"));
+            stringstream ss(data);
+            string roomName, password;
+            getline(ss, roomName, '|');
+            getline(ss, password);
+
+            string response;
+            if (!roomManager_.EnterRoom(client, roomName, password, response)) {
+            }
+            send(client->socket, response.c_str(), (int)response.size(), 0);
+        }
+        else if (message.rfind("ROOM_MESSAGE|", 0) == 0)
+        {
+            // 기존 처리 코드를 RoomManager에 넘기기
+            string data = message.substr(strlen("ROOM_MESSAGE|"));
+            roomManager_.HandleRoomChatMessage(client, data);
+        }
+        else if (message.rfind("EXIT_ROOM|", 0) == 0) {
+            roomManager_.ExitRoom(message);
+        }
 
         if (pos == std::string::npos)
             break;
