@@ -58,12 +58,14 @@ bool RoomManager::CreateRoom(shared_ptr<ClientInfo> client, const string& roomNa
             userListStr += createdRoom.users[i];
         }
     }
+    string hasPasswordStr = password.empty() ? "NO_PASSWORD" : "HAS_PASSWORD";
 
-    string successMsg = "CREATE_ROOM_SUCCESS|" + roomName + "|" + mapName + "|CREATOR|" + userListStr + "\n";
+    string successMsg = "CREATE_ROOM_SUCCESS|" + roomName + "|" + mapName + "|CREATOR|" + userListStr + "|" + hasPasswordStr + "\n";
     send(client->socket, successMsg.c_str(), (int)successMsg.size(), 0);
 
-    string broadcastMsg = "ROOM_CREATED|" + roomName + "|" + mapName + "|" + userListStr + "\n";
+    string broadcastMsg = "ROOM_CREATED|" + roomName + "|" + mapName + "|" + userListStr + "|" + hasPasswordStr + "\n";
     BroadcastMessageExcept(client->socket, broadcastMsg);
+
 
     return true;
 }
