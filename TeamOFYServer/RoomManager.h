@@ -3,6 +3,7 @@
 #include <string>
 #include <mutex>
 #include <memory>
+#include <sstream>
 #include "Room.h"
 #include "ClientInfo.h"
 
@@ -23,6 +24,7 @@ public:
 
     void ExitRoom(const std::string& message);
     void SendRoomList(ClientInfo& client);
+    void HandleCharacterChoice(ClientInfo& client, const string& data);
 private:
     Server& server_;
     ClientHandler& clientHandler_;

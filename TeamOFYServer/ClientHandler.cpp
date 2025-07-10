@@ -181,6 +181,11 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
         else if (message.rfind("EXIT_ROOM|", 0) == 0) {
             roomManager_.ExitRoom(message);
         }
+        else if (message.rfind("CHOOSE_CHARACTER|", 0) == 0)
+        {
+            string data = message.substr(strlen("CHOOSE_CHARACTER|"));
+            roomManager_.HandleCharacterChoice(*client, data);
+        }
 
         if (pos == std::string::npos)
             break;

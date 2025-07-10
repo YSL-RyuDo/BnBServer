@@ -55,12 +55,24 @@ bool RoomManager::CreateRoom(shared_ptr<ClientInfo> client, const string& roomNa
 
         for (size_t i = 0; i < createdRoom.users.size(); ++i) {
             if (i > 0) userListStr += ",";
-            userListStr += createdRoom.users[i];
+            string username = createdRoom.users[i];
+            // 방 생성 시 기본 캐릭터 인덱스는 0으로 설정 (필요하면 다르게)
+            int characterIndex = 0;
+
+            // 만약에 createdRoom.characterSelections에 초기값이 있으면 그걸로 대체 가능
+            auto it = createdRoom.characterSelections.find(username);
+            if (it != createdRoom.characterSelections.end()) {
+                characterIndex = it->second;
+            }
+
+            userListStr += username + ":" + std::to_string(characterIndex);
         }
+
     }
     string hasPasswordStr = password.empty() ? "NO_PASSWORD" : "HAS_PASSWORD";
 
     string successMsg = "CREATE_ROOM_SUCCESS|" + roomName + "|" + mapName + "|CREATOR|" + userListStr + "|" + hasPasswordStr + "\n";
+    cout << successMsg << endl;
     send(client->socket, successMsg.c_str(), (int)successMsg.size(), 0);
 
     string broadcastMsg = "ROOM_CREATED|" + roomName + "|" + mapName + "|" + userListStr + "|" + hasPasswordStr + "\n";
@@ -95,53 +107,94 @@ bool RoomManager::EnterRoom(shared_ptr<ClientInfo> client, const string& roomNam
     for (auto& room : rooms) {
         if (room.roomName == roomName) {
             found = true;
+            cout << "[EnterRoom] 방 찾음: " << roomName << endl;
+
             if (room.password == password) {
+                cout << "[EnterRoom] 비밀번호 일치" << endl;
+
                 if (room.users.size() >= maxPlayers) {
                     outResponse = "ROOM_FULL\n";
+                    cout << "[Send to Client] " << outResponse;
                     return false;
                 }
+
                 passwordMatch = true;
                 mapName = room.mapName;
 
-                // 중복 입장 방지
+                // 유저가 아직 방에 없으면 추가
                 if (std::find(room.users.begin(), room.users.end(), client->id) == room.users.end()) {
                     room.users.push_back(client->id);
+                    cout << "[EnterRoom] 사용자 " << client->id << " 입장 처리 완료" << endl;
+
+                    // 캐릭터 선택 정보가 없으면 기본값 0으로 초기화
+                    if (room.characterSelections.find(client->id) == room.characterSelections.end()) {
+                        room.characterSelections[client->id] = 0;
+                    }
+                }
+                else {
+                    cout << "[EnterRoom] 사용자 " << client->id << " 이미 입장 상태" << endl;
                 }
 
-                // 유저 리스트 문자열 생성
+                // 유저 리스트 문자열 생성 (닉네임:캐릭터인덱스)
                 userListStr.clear();
                 for (size_t i = 0; i < room.users.size(); ++i) {
                     if (i > 0) userListStr += ",";
-                    userListStr += room.users[i];
+
+                    const string& username = room.users[i];
+
+                    // 항상 캐릭터 인덱스 포함
+                    int characterIndex = 0;
+                    auto charIt = room.characterSelections.find(username);
+                    if (charIt != room.characterSelections.end()) {
+                        characterIndex = charIt->second;
+                    }
+                    else {
+                        room.characterSelections[username] = 0;
+                    }
+
+                    userListStr += username + ":" + to_string(characterIndex);
                 }
 
-                // 입장 성공 메시지
+                cout << "[EnterRoom] 유저 리스트 + 캐릭터 인덱스: " << userListStr << endl;
+
                 outResponse = "ENTER_ROOM_SUCCESS|" + roomName + "|" + userListStr + "\n";
+                cout << "[Send to Client] " << outResponse;
 
-                // 다른 유저에게 갱신 메시지 브로드캐스트
+                // 방에 있는 다른 유저들에게 갱신 메시지 전송
                 string refreshMsg = "REFRESH_ROOM_SUCCESS|" + roomName + "|" + userListStr + "\n";
-                auto& clientsMap = clientHandler_.GetClientsMap();
+                cout << "[Broadcast to Others] " << refreshMsg;
 
+                auto& clientsMap = clientHandler_.GetClientsMap();
                 for (const auto& user : room.users) {
-                    if (user == client->id) continue;
+                    //if (user == client->id) continue;
+
                     auto it = clientsMap.find(user);
                     if (it != clientsMap.end()) {
                         send(it->second->socket, refreshMsg.c_str(), (int)refreshMsg.size(), 0);
+                        cout << "[EnterRoom] 다른 유저 " << user << "에게 갱신 메시지 전송" << endl;
                     }
                 }
 
                 return true;
             }
-            break;
+            else {
+                cout << "[EnterRoom] 비밀번호 불일치" << endl;
+            }
+
+            break; // 방은 찾았기 때문에 루프 종료
         }
     }
 
+    // 실패 케이스 처리
     if (!found) {
         outResponse = "ROOM_NOT_FOUND\n";
+        cout << "[Send to Client] " << outResponse;
     }
     else if (!passwordMatch) {
         outResponse = "WRONG_ROOM_PASSWORD\n";
+        cout << "[Send to Client] " << outResponse;
     }
+
     return false;
 }
 
@@ -264,8 +317,6 @@ void RoomManager::ExitRoom(const std::string& message) {
             SendRoomList(*c);
         }
     }
-
-    //BroadcastLobbyUserList(); // 로비 유저 리스트 갱신 브로드캐스트
 }
 
 void RoomManager::SendRoomList(ClientInfo& client) {
@@ -285,4 +336,71 @@ void RoomManager::SendRoomList(ClientInfo& client) {
     send(client.socket, message.c_str(), (int)message.size(), 0);
     cout << "[SendRoomList] 보낸 메시지 -> IP: " << client.ip
         << ", Port: " << client.port << " -> " << message;
+}
+
+void RoomManager::HandleCharacterChoice(ClientInfo& client, const std::string& data)
+{
+    std::stringstream ss(data);
+    std::string roomName, nickname, characterIndexStr;
+
+    if (!std::getline(ss, roomName, '|') ||
+        !std::getline(ss, nickname, '|') ||
+        !std::getline(ss, characterIndexStr)) {
+        std::cout << "[경고] CHOOSE_CHARACTER 파싱 실패: " << data << std::endl;
+        return;
+    }
+
+    int characterIndex = 0;
+    try {
+        characterIndex = std::stoi(characterIndexStr);
+    }
+    catch (const std::exception& e) {
+        std::cout << "[에러] characterIndex 파싱 실패: " << characterIndexStr << " (" << e.what() << ")" << std::endl;
+        return;
+    }
+
+    std::lock_guard<std::mutex> lock(roomsMutex);
+
+    auto it = std::find_if(rooms.begin(), rooms.end(), [&](const Room& r) {
+        return r.roomName == roomName;
+        });
+
+    if (it != rooms.end())
+    {
+        Room& room = *it;
+
+        // 닉네임이 실제로 존재하는지 확인 (보안적으로 안정)
+        auto userIt = std::find(room.users.begin(), room.users.end(), nickname);
+        if (userIt == room.users.end()) {
+            std::cout << "[경고] " << nickname << " 은(는) 방 '" << roomName << "' 에 존재하지 않음\n";
+            return;
+        }
+
+        // 캐릭터 선택 정보 저장
+        room.characterSelections[nickname] = characterIndex;
+
+        std::string msg = "UPDATE_CHARACTER|" + nickname + "|" + std::to_string(characterIndex) + "\n";
+
+        // 브로드캐스트
+        std::lock_guard<std::mutex> lockClients(server_.clientsMutex);
+        for (const auto& user : room.users) {
+            auto clientIt = clientHandler_.GetClientsMap().find(user);
+            if (clientIt != clientHandler_.GetClientsMap().end()) {
+                SOCKET s = clientIt->second->socket;
+                int sendLen = send(s, msg.c_str(), (int)msg.size(), 0);
+                if (sendLen == SOCKET_ERROR) {
+                    std::cout << "[캐릭터 브로드캐스트 실패] " << WSAGetLastError() << " - user: " << user << std::endl;
+                }
+                else {
+                    std::cout << "[캐릭터 브로드캐스트] " << user << " 에게 전송됨: " << msg;
+                }
+            }
+            else {
+                std::cout << "[클라이언트 검색 실패] user: " << user << " 를 clientsMap에서 찾지 못함\n";
+            }
+        }
+    }
+    else {
+        std::cout << "[경고] 방 '" << roomName << "' 을 찾을 수 없음\n";
+    }
 }
