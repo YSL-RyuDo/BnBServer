@@ -135,27 +135,24 @@ bool RoomManager::EnterRoom(shared_ptr<ClientInfo> client, const string& roomNam
                     cout << "[EnterRoom] 사용자 " << client->id << " 이미 입장 상태" << endl;
                 }
 
-                // 유저 리스트 문자열 생성 (닉네임:캐릭터인덱스)
                 userListStr.clear();
+                /*for (size_t i = 0; i < room.users.size(); ++i) {
+                    if (i > 0) userListStr += ",";
+                    userListStr += room.users[i];
+                }*/
                 for (size_t i = 0; i < room.users.size(); ++i) {
                     if (i > 0) userListStr += ",";
 
-                    const string& username = room.users[i];
-
-                    // 항상 캐릭터 인덱스 포함
-                    int characterIndex = 0;
-                    auto charIt = room.characterSelections.find(username);
-                    if (charIt != room.characterSelections.end()) {
-                        characterIndex = charIt->second;
-                    }
-                    else {
-                        room.characterSelections[username] = 0;
+                    const std::string& nickname = room.users[i];
+                    int charIndex = 0;
+                    if (room.characterSelections.find(nickname) != room.characterSelections.end()) {
+                        charIndex = room.characterSelections[nickname];
                     }
 
-                    userListStr += username + ":" + to_string(characterIndex);
+                    userListStr += nickname + ":" + std::to_string(charIndex);
                 }
 
-                cout << "[EnterRoom] 유저 리스트 + 캐릭터 인덱스: " << userListStr << endl;
+                cout << "[EnterRoom] 유저 리스트: " << userListStr << endl;
 
                 outResponse = "ENTER_ROOM_SUCCESS|" + roomName + "|" + userListStr + "\n";
                 cout << "[Send to Client] " << outResponse;
@@ -271,9 +268,20 @@ void RoomManager::ExitRoom(const std::string& message) {
                 }
                 else {
                     // 남은 유저 리스트 구성
-                    for (const auto& user : room.users) {
+                    /*for (const auto& user : room.users) {
                         if (!userListStr.empty()) userListStr += ",";
                         userListStr += user;
+                    }*/
+                    for (const auto& user : room.users) {
+                        if (!userListStr.empty()) userListStr += ",";
+
+                        int charIndex = 0;
+                        auto charIt = room.characterSelections.find(user);
+                        if (charIt != room.characterSelections.end()) {
+                            charIndex = charIt->second;
+                        }
+
+                        userListStr += user + ":" + std::to_string(charIndex);
                     }
 
                     // 남은 유저에게 갱신 메시지 전송
