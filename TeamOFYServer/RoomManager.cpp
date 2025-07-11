@@ -19,7 +19,7 @@ void RoomManager::BroadcastRoomlist(shared_ptr<ClientInfo> client)
     }
 
     message += "\n";
-
+    cout << "[룸리스트]" << message << endl;
     int sendLen = send(client->socket, message.c_str(), (int)message.size(), 0);
     if (sendLen == SOCKET_ERROR) {
         std::cout << "[BroadcastRoomlist] 전송 실패: " << WSAGetLastError() << std::endl;
@@ -136,10 +136,6 @@ bool RoomManager::EnterRoom(shared_ptr<ClientInfo> client, const string& roomNam
                 }
 
                 userListStr.clear();
-                /*for (size_t i = 0; i < room.users.size(); ++i) {
-                    if (i > 0) userListStr += ",";
-                    userListStr += room.users[i];
-                }*/
                 for (size_t i = 0; i < room.users.size(); ++i) {
                     if (i > 0) userListStr += ",";
 
@@ -328,23 +324,29 @@ void RoomManager::ExitRoom(const std::string& message) {
 }
 
 void RoomManager::SendRoomList(ClientInfo& client) {
-    string message = "ROOM_LIST|";
+    std::string message = "ROOM_LIST|"; 
 
     {
-        lock_guard<mutex> lock(roomsMutex);
-        for (size_t i = 0; i < rooms.size(); ++i) {
-            const Room& room = rooms[i];
-            message += room.roomName + "|" + room.mapName + "|" + (room.password.empty() ? "0" : "1");
-            if (i != rooms.size() - 1)
-                message += ",";
+        std::lock_guard<std::mutex> lock(roomsMutex);
+        bool first = true;
+
+        for (const Room& room : rooms) {
+            if (!first) {
+                message += "|";  // 각 방 정보는 |로 구분
+            }
+            message += room.roomName + "," + room.mapName + "," + (room.password.empty() ? "0" : "1");
+            first = false;
         }
     }
 
-    message += "\n";
+    message += "\n";  // 줄바꿈으로 메시지 종료
+    std::cout << "[SendRoomList] 보낸 메시지 -> IP: " << client.ip
+        << ", Port: " << client.port << " -> " << message << endl;
     send(client.socket, message.c_str(), (int)message.size(), 0);
-    cout << "[SendRoomList] 보낸 메시지 -> IP: " << client.ip
-        << ", Port: " << client.port << " -> " << message;
+
+    
 }
+
 
 void RoomManager::HandleCharacterChoice(ClientInfo& client, const std::string& data)
 {
@@ -377,7 +379,7 @@ void RoomManager::HandleCharacterChoice(ClientInfo& client, const std::string& d
     {
         Room& room = *it;
 
-        // 닉네임이 실제로 존재하는지 확인 (보안적으로 안정)
+        // 닉네임이 실제로 존재하는지 확인
         auto userIt = std::find(room.users.begin(), room.users.end(), nickname);
         if (userIt == room.users.end()) {
             std::cout << "[경고] " << nickname << " 은(는) 방 '" << roomName << "' 에 존재하지 않음\n";
