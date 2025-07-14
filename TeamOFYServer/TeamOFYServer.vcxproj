@@ -130,6 +130,7 @@
     <ClCompile Include="ClientInfo.cpp" />
     <ClCompile Include="ClientHandler.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="MapManager.cpp" />
     <ClCompile Include="Room.cpp" />
     <ClCompile Include="RoomManager.cpp" />
     <ClCompile Include="Server.cpp" />
@@ -139,6 +140,7 @@
   <ItemGroup>
     <ClInclude Include="ClientHandler.h" />
     <ClInclude Include="ClientInfo.h" />
+    <ClInclude Include="MapManager.h" />
     <ClInclude Include="Room.h" />
     <ClInclude Include="RoomManager.h" />
     <ClInclude Include="Server.h" />

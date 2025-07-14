@@ -414,3 +414,18 @@ void RoomManager::HandleCharacterChoice(ClientInfo& client, const std::string& d
         std::cout << "[경고] 방 '" << roomName << "' 을 찾을 수 없음\n";
     }
 }
+
+bool RoomManager::TryStartGame(const string& roomName, vector<string>& usersOut) {
+    lock_guard<mutex> lock(roomsMutex);
+    for (auto& room : rooms) {
+        if (room.roomName == roomName) {
+            if (room.users.size() >= 2) {
+                usersOut = room.users;
+                return true;
+            }
+            return false;
+        }
+    }
+    return false;
+}
+

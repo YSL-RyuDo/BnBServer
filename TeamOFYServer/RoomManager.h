@@ -22,9 +22,11 @@ public:
     bool EnterRoom(shared_ptr<ClientInfo> client, const string& roomName, const string& password, string& outResponse);
     void HandleRoomChatMessage(shared_ptr<ClientInfo> sender, const string& data);
 
-    void ExitRoom(const std::string& message);
+    void ExitRoom(const string& message);
     void SendRoomList(ClientInfo& client);
     void HandleCharacterChoice(ClientInfo& client, const string& data);
+
+    bool TryStartGame(const string& roomName, std::vector<string>& usersOut);
 private:
     Server& server_;
     ClientHandler& clientHandler_;

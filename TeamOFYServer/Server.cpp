@@ -3,7 +3,7 @@
 Server::Server()
     : roomManager_(*this, handler_),
     userManager_(*this),
-    handler_(*this, userManager_, roomManager_),
+    handler_(*this, userManager_, roomManager_, mapManager_),
     listenSocket(INVALID_SOCKET)
 {
     userManager_.SetClientHandler(&handler_);

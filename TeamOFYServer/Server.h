@@ -25,7 +25,9 @@ public:
 private:
     SOCKET listenSocket;
     vector<shared_ptr<ClientInfo>> clients;
-    RoomManager roomManager_;
+    MapManager mapManager_;
     UserManager userManager_;
     ClientHandler handler_;
+    RoomManager roomManager_;
+
 };

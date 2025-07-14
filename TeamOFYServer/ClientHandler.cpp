@@ -1,8 +1,8 @@
 #include "ClientHandler.h"
 #include "Server.h"
 
-ClientHandler::ClientHandler(Server& server, UserManager& userManager, RoomManager& roomManager)
-    : server_(server), userManager_(userManager), roomManager_(roomManager){}
+ClientHandler::ClientHandler(Server& server, UserManager& userManager, RoomManager& roomManager, MapManager& mapManager)
+    : server_(server), userManager_(userManager), roomManager_(roomManager), mapManager_(mapManager){}
 
 ClientHandler::~ClientHandler() {}
 
@@ -186,6 +186,67 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
             string data = message.substr(strlen("CHOOSE_CHARACTER|"));
             roomManager_.HandleCharacterChoice(*client, data);
         }
+        else if (message.rfind("START_GAME|", 0) == 0)
+        {
+            string roomName = message.substr(strlen("START_GAME|"));
+            vector<string> userList;
+
+            if (!roomManager_.TryStartGame(roomName, userList))
+            {
+                string failMsg = "START_GAME_FAIL|";
+                if (userList.empty())
+                    failMsg += "ROOM_NOT_FOUND\n";
+                else
+                    failMsg += "NOT_ENOUGH_PLAYERS\n";
+
+                send(client->socket, failMsg.c_str(), (int)failMsg.size(), 0);
+                return;
+            }
+
+            string response = "START_GAME_SUCCESS\n";
+            send(client->socket, response.c_str(), (int)response.size(), 0);
+
+            string startMsg = "GAME_START|" + roomName + "\n";
+            for (const auto& user : userList)
+            {
+                auto it = clientsMap.find(user);
+                if (it != clientsMap.end())
+                {
+                    send(it->second->socket, startMsg.c_str(), (int)startMsg.size(), 0);
+                }
+            }
+        }
+
+        else if (message.rfind("GET_MAP|", 0) == 0)
+        {
+            std::string mapName = message.substr(strlen("GET_MAP|"));
+
+            std::vector<std::vector<int>> mapData = mapManager_.LoadMapByName(mapName);
+
+            std::string mapDataStr;
+            for (const auto& row : mapData)
+            {
+                for (int cell : row)
+                {
+                    mapDataStr += std::to_string(cell) + ",";
+                }
+                if (!row.empty()) mapDataStr.pop_back();
+                mapDataStr += ";";
+            }
+            if (!mapData.empty()) mapDataStr.pop_back();
+
+            std::string response = "MAP_DATA|" + mapName + "|" + mapDataStr + "\n";
+
+            {
+                std::lock_guard<std::mutex> lock(server_.GetClientsMutex());
+                for (const auto& c : server_.GetClients())
+                {
+                    send(c->socket, response.c_str(), static_cast<int>(response.size()), 0);
+                }
+            }
+        }
+
+
 
         if (pos == std::string::npos)
             break;
