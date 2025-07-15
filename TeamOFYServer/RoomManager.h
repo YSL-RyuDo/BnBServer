@@ -27,6 +27,8 @@ public:
     void HandleCharacterChoice(ClientInfo& client, const string& data);
 
     bool TryStartGame(const string& roomName, std::vector<string>& usersOut);
+    Room* FindRoomByName(const std::string& roomName);
+
 private:
     Server& server_;
     ClientHandler& clientHandler_;

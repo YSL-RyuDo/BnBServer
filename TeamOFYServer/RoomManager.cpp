@@ -92,7 +92,7 @@ void RoomManager::BroadcastMessageExcept(SOCKET exceptSocket, const string& mess
     for (const auto& otherClient : server_.GetClients()) {
         if (otherClient->socket == exceptSocket) continue;
         send(otherClient->socket, msgWithNewline.c_str(), (int)msgWithNewline.size(), 0);
-        cout << "[브로드캐스트 (제외)] → " << otherClient->ip << ":" << otherClient->port << " : " << msgWithNewline;
+        //cout << "[브로드캐스트 (제외)] → " << otherClient->ip << ":" << otherClient->port << " : " << msgWithNewline;
     }
 }
 
@@ -391,22 +391,23 @@ void RoomManager::HandleCharacterChoice(ClientInfo& client, const std::string& d
 
         std::string msg = "UPDATE_CHARACTER|" + nickname + "|" + std::to_string(characterIndex) + "\n";
 
-        // 브로드캐스트
-        std::lock_guard<std::mutex> lockClients(server_.clientsMutex);
-        for (const auto& user : room.users) {
-            auto clientIt = clientHandler_.GetClientsMap().find(user);
-            if (clientIt != clientHandler_.GetClientsMap().end()) {
-                SOCKET s = clientIt->second->socket;
-                int sendLen = send(s, msg.c_str(), (int)msg.size(), 0);
-                if (sendLen == SOCKET_ERROR) {
-                    std::cout << "[캐릭터 브로드캐스트 실패] " << WSAGetLastError() << " - user: " << user << std::endl;
+        {
+            std::lock_guard<std::mutex> lockClients(server_.clientsMutex);
+            for (const auto& user : room.users) {
+                auto clientIt = clientHandler_.GetClientsMap().find(user);
+                if (clientIt != clientHandler_.GetClientsMap().end()) {
+                    SOCKET s = clientIt->second->socket;
+                    int sendLen = send(s, msg.c_str(), (int)msg.size(), 0);
+                    if (sendLen == SOCKET_ERROR) {
+                        std::cout << "[캐릭터 브로드캐스트 실패] " << WSAGetLastError() << " - user: " << user << std::endl;
+                    }
+                    else {
+                        std::cout << "[캐릭터 브로드캐스트] " << user << " 에게 전송됨: " << msg;
+                    }
                 }
                 else {
-                    std::cout << "[캐릭터 브로드캐스트] " << user << " 에게 전송됨: " << msg;
+                    std::cout << "[클라이언트 검색 실패] user: " << user << " 를 clientsMap에서 찾지 못함\n";
                 }
-            }
-            else {
-                std::cout << "[클라이언트 검색 실패] user: " << user << " 를 clientsMap에서 찾지 못함\n";
             }
         }
     }
@@ -429,3 +430,13 @@ bool RoomManager::TryStartGame(const string& roomName, vector<string>& usersOut)
     return false;
 }
 
+Room* RoomManager::FindRoomByName(const std::string& roomName)
+{
+    std::lock_guard<std::mutex> lock(roomsMutex);
+    for (auto& room : rooms)
+    {
+        if (room.roomName == roomName)
+            return &room;
+    }
+    return nullptr;
+}

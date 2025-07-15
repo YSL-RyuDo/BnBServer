@@ -29,5 +29,5 @@ private:
     UserManager userManager_;
     ClientHandler handler_;
     RoomManager roomManager_;
-
+    Player player_;
 };

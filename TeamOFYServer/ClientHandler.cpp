@@ -1,8 +1,8 @@
 #include "ClientHandler.h"
 #include "Server.h"
 
-ClientHandler::ClientHandler(Server& server, UserManager& userManager, RoomManager& roomManager, MapManager& mapManager)
-    : server_(server), userManager_(userManager), roomManager_(roomManager), mapManager_(mapManager){}
+ClientHandler::ClientHandler(Server& server, UserManager& userManager, RoomManager& roomManager, MapManager& mapManager, Player& player)
+    : server_(server), userManager_(userManager), roomManager_(roomManager), mapManager_(mapManager), player_(player){}
 
 ClientHandler::~ClientHandler() {}
 
@@ -31,7 +31,7 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
         if (pos == string::npos)
         {
             message = recvStr.substr(start);
-        } 
+        }
         else {
             message = recvStr.substr(start, pos - start);
         }
@@ -39,7 +39,10 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
         if (message.empty())
             break;
 
-        cout << "[수신] 클라이언트 메시지 - IP: " << client->ip << ", 메시지: '" << message << "'" << endl;
+        if (message.rfind("MOVE|", 0) != 0) 
+        {
+            cout << "[수신] 클라이언트 메시지 - IP: " << client->ip << ", 메시지: '" << message << "'" << endl;
+        }
         string response;
 
         if (message.rfind("LOGIN|", 0) == 0) {
@@ -143,7 +146,7 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
             userManager_.LogoutUser(client);
             response.clear();
         }
-        else if (message.rfind("CREATE_ROOM|", 0) == 0){
+        else if (message.rfind("CREATE_ROOM|", 0) == 0) {
             string data = message.substr(strlen("CREATE_ROOM|"));
             stringstream ss(data);
             string roomName, mapName, password;
@@ -219,10 +222,34 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
 
         else if (message.rfind("GET_MAP|", 0) == 0)
         {
-            std::string mapName = message.substr(strlen("GET_MAP|"));
+            // message 예: GET_MAP|roomName|mapName
+            std::string data = message.substr(strlen("GET_MAP|"));
+            std::stringstream ss(data);
+            std::string roomName, mapName;
 
-            std::vector<std::vector<int>> mapData = mapManager_.LoadMapByName(mapName);
+            if (!getline(ss, roomName, '|') || !getline(ss, mapName))
+            {
+                std::cerr << "[GET_MAP] 메시지 형식 오류: " << message << std::endl;
+                return;
+            }
 
+            // 맵 데이터와 스폰 좌표 불러오기
+            auto result = mapManager_.LoadMapByNameWithSpawns(mapName);
+            auto& mapData = result.first;
+            auto& allSpawnPoints = result.second;
+
+            Room* room = roomManager_.FindRoomByName(roomName);
+
+            auto& userList = room->users;
+            size_t userCount = userList.size();
+
+            if (userCount > allSpawnPoints.size())
+            {
+                std::cerr << "[GET_MAP] 스폰 좌표 부족" << std::endl;
+                return;
+            }
+
+            // mapData 문자열 직렬화
             std::string mapDataStr;
             for (const auto& row : mapData)
             {
@@ -235,23 +262,82 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
             }
             if (!mapData.empty()) mapDataStr.pop_back();
 
-            std::string response = "MAP_DATA|" + mapName + "|" + mapDataStr + "\n";
+            // 스폰 좌표 인덱스 배열 생성 및 셔플 (랜덤 할당)
+            std::vector<size_t> indices(allSpawnPoints.size());
+            std::iota(indices.begin(), indices.end(), 0);
 
+            std::random_device rd;
+            std::mt19937 g(rd());
+            std::shuffle(indices.begin(), indices.end(), g);
+
+            // 유저 수만큼 랜덤 스폰 좌표 문자열 생성 (층 생략)
+            std::string spawnStr;
+            for (size_t i = 0; i < userCount; ++i)
             {
-                std::lock_guard<std::mutex> lock(server_.GetClientsMutex());
-                for (const auto& c : server_.GetClients())
+                const auto& spawn = allSpawnPoints[indices[i]];
+                const std::string& user = userList[i];
+
+                int x = std::get<0>(spawn);
+                int y = std::get<1>(spawn);
+                int charIndex = 0;
+
+                auto it = room->characterSelections.find(user);
+                if (it != room->characterSelections.end())
+                    charIndex = it->second;
+
+                spawnStr += user + ":" + std::to_string(x) + ":" + std::to_string(y) + ":" + std::to_string(charIndex) + ",";
+            }
+            if (!spawnStr.empty()) spawnStr.pop_back();
+
+
+            // 방에 속한 유저들에게만 메시지 전송
+            std::string response = "MAP_DATA|" + mapName + "|" + mapDataStr + "|" + spawnStr + "\n";
+            std::cout << "[서버 MAP_DATA 전송] " << response;
+            std::lock_guard<std::mutex> lock(server_.GetClientsMutex());
+            auto& clientsMap = GetClientsMap();
+
+            for (const auto& user : userList)
+            {
+                auto it = clientsMap.find(user);
+                if (it != clientsMap.end())
                 {
-                    send(c->socket, response.c_str(), static_cast<int>(response.size()), 0);
+                    send(it->second->socket, response.c_str(), (int)response.size(), 0);
                 }
+            }
+        }
+        else if (message.rfind("MOVE|", 0) == 0)
+        {
+            std::string data = message.substr(strlen("MOVE|")); // username|x,z
+
+            size_t delimiterPos = data.find('|');
+            if (delimiterPos == std::string::npos) return;
+
+            std::string username = data.substr(0, delimiterPos);
+            std::string coords = data.substr(delimiterPos + 1);
+
+            size_t commaPos = coords.find(',');
+            if (commaPos == std::string::npos) return;
+
+            float x = std::stof(coords.substr(0, commaPos));
+            float z = std::stof(coords.substr(commaPos + 1));
+
+            bool updated = player_.UpdatePlayerPosition(username, x, z);
+            if (updated)
+            {
+                auto pos = player_.GetPlayerPosition(username);
+                std::string resultMsg = "MOVE_RESULT|" + username + "," +
+                    std::to_string(pos.first) + "," + std::to_string(pos.second);
+
+                // 보내는 클라이언트 소켓을 제외하고 같은 방 유저들에게 전송
+                roomManager_.BroadcastMessageExcept(client->socket, resultMsg);
             }
         }
 
 
+            if (pos == std::string::npos)
+                break;
 
-        if (pos == std::string::npos)
-            break;
-
-        start = pos + 1;
+            start = pos + 1;
     }
 }
 
