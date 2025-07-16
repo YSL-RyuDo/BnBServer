@@ -56,16 +56,15 @@ bool RoomManager::CreateRoom(shared_ptr<ClientInfo> client, const string& roomNa
         for (size_t i = 0; i < createdRoom.users.size(); ++i) {
             if (i > 0) userListStr += ",";
             string username = createdRoom.users[i];
-            // 방 생성 시 기본 캐릭터 인덱스는 0으로 설정 (필요하면 다르게)
+            string nickname = clientHandler_.GetNicknameById(username);
             int characterIndex = 0;
 
-            // 만약에 createdRoom.characterSelections에 초기값이 있으면 그걸로 대체 가능
             auto it = createdRoom.characterSelections.find(username);
             if (it != createdRoom.characterSelections.end()) {
                 characterIndex = it->second;
             }
 
-            userListStr += username + ":" + std::to_string(characterIndex);
+            userListStr += nickname + ":" + std::to_string(characterIndex);
         }
 
     }
@@ -139,10 +138,13 @@ bool RoomManager::EnterRoom(shared_ptr<ClientInfo> client, const string& roomNam
                 for (size_t i = 0; i < room.users.size(); ++i) {
                     if (i > 0) userListStr += ",";
 
-                    const std::string& nickname = room.users[i];
+                    const std::string& userId = room.users[i];
+                    std::string nickname = clientHandler_.GetNicknameById(userId);
+
                     int charIndex = 0;
-                    if (room.characterSelections.find(nickname) != room.characterSelections.end()) {
-                        charIndex = room.characterSelections[nickname];
+                    auto itChar = room.characterSelections.find(userId);
+                    if (itChar != room.characterSelections.end()) {
+                        charIndex = itChar->second;
                     }
 
                     userListStr += nickname + ":" + std::to_string(charIndex);
@@ -240,7 +242,7 @@ void RoomManager::ExitRoom(const std::string& message) {
     getline(ss, nickname);
 
     std::string userListStr;
-
+    string userId = clientHandler_.GetIdByNickname(nickname);
     {
         std::lock_guard<std::mutex> lock(roomsMutex);
         auto it = std::find_if(rooms.begin(), rooms.end(), [&](const Room& r) {
@@ -251,7 +253,7 @@ void RoomManager::ExitRoom(const std::string& message) {
             Room& room = *it;
 
             // 유저 제거
-            auto userIt = std::remove(room.users.begin(), room.users.end(), nickname);
+            auto userIt = std::remove(room.users.begin(), room.users.end(), userId);
             if (userIt != room.users.end()) {
                 room.users.erase(userIt, room.users.end());
                 std::cout << "[서버] " << nickname << " 님이 방 '" << roomName << "' 에서 퇴장\n";
@@ -263,21 +265,18 @@ void RoomManager::ExitRoom(const std::string& message) {
                     roomDeleted = true;
                 }
                 else {
-                    // 남은 유저 리스트 구성
-                    /*for (const auto& user : room.users) {
-                        if (!userListStr.empty()) userListStr += ",";
-                        userListStr += user;
-                    }*/
-                    for (const auto& user : room.users) {
+                    for (const auto& userId : room.users) {
                         if (!userListStr.empty()) userListStr += ",";
 
+                        string nickname = clientHandler_.GetNicknameById(userId);
+
                         int charIndex = 0;
-                        auto charIt = room.characterSelections.find(user);
+                        auto charIt = room.characterSelections.find(userId);
                         if (charIt != room.characterSelections.end()) {
                             charIndex = charIt->second;
                         }
 
-                        userListStr += user + ":" + std::to_string(charIndex);
+                        userListStr += nickname + ":" + std::to_string(charIndex);
                     }
 
                     // 남은 유저에게 갱신 메시지 전송
@@ -347,7 +346,6 @@ void RoomManager::SendRoomList(ClientInfo& client) {
     
 }
 
-
 void RoomManager::HandleCharacterChoice(ClientInfo& client, const std::string& data)
 {
     std::stringstream ss(data);
@@ -360,6 +358,8 @@ void RoomManager::HandleCharacterChoice(ClientInfo& client, const std::string& d
         return;
     }
 
+    
+
     int characterIndex = 0;
     try {
         characterIndex = std::stoi(characterIndexStr);
@@ -368,6 +368,8 @@ void RoomManager::HandleCharacterChoice(ClientInfo& client, const std::string& d
         std::cout << "[에러] characterIndex 파싱 실패: " << characterIndexStr << " (" << e.what() << ")" << std::endl;
         return;
     }
+
+    string userId = clientHandler_.GetIdByNickname(nickname);
 
     std::lock_guard<std::mutex> lock(roomsMutex);
 
@@ -380,14 +382,14 @@ void RoomManager::HandleCharacterChoice(ClientInfo& client, const std::string& d
         Room& room = *it;
 
         // 닉네임이 실제로 존재하는지 확인
-        auto userIt = std::find(room.users.begin(), room.users.end(), nickname);
+        auto userIt = std::find(room.users.begin(), room.users.end(), userId);
         if (userIt == room.users.end()) {
-            std::cout << "[경고] " << nickname << " 은(는) 방 '" << roomName << "' 에 존재하지 않음\n";
+            std::cout << "[경고] " << userId << " 은(는) 방 '" << roomName << "' 에 존재하지 않음\n";
             return;
         }
 
         // 캐릭터 선택 정보 저장
-        room.characterSelections[nickname] = characterIndex;
+        room.characterSelections[userId] = characterIndex;
 
         std::string msg = "UPDATE_CHARACTER|" + nickname + "|" + std::to_string(characterIndex) + "\n";
 
@@ -421,7 +423,11 @@ bool RoomManager::TryStartGame(const string& roomName, vector<string>& usersOut)
     for (auto& room : rooms) {
         if (room.roomName == roomName) {
             if (room.users.size() >= 2) {
-                usersOut = room.users;
+                usersOut.clear();
+                for (const auto& userId : room.users) {
+                    std::string nickname = clientHandler_.GetNicknameById(userId);
+                    usersOut.push_back(nickname);
+                }
                 return true;
             }
             return false;
@@ -439,4 +445,24 @@ Room* RoomManager::FindRoomByName(const std::string& roomName)
             return &room;
     }
     return nullptr;
+}
+
+string RoomManager::GetGameUserListResponse(const string& roomName)
+{
+    std::lock_guard<std::mutex> lock(roomsMutex);
+    for (const auto& room : rooms)
+    {
+        if (room.roomName == roomName)
+        {
+            string response = "GAME_USER_LIST|";
+            for (const string& nickname : room.users)
+            {
+                response += nickname + ",1;";
+            }
+            if (!room.users.empty()) response.pop_back();
+            response += "\n";
+            return response;
+        }
+    }
+    return "GAME_USER_LIST|\n";
 }

@@ -28,7 +28,7 @@ public:
 
     bool TryStartGame(const string& roomName, std::vector<string>& usersOut);
     Room* FindRoomByName(const std::string& roomName);
-
+    string GetGameUserListResponse(const string& roomName);
 private:
     Server& server_;
     ClientHandler& clientHandler_;

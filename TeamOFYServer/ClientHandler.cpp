@@ -67,6 +67,7 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
                     getline(ss, nickname, ',');
 
                     client->id = id;
+                    client->nickname = nickname;
                 }
 
                 {
@@ -75,6 +76,7 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
                     for (auto& c : server_.GetClients()) {
                         if (c->socket == client->socket) {
                             c->id = client->id;  // 덮어쓰기
+                            c->nickname = client->nickname;
                             break;
                         }
                     }
@@ -184,6 +186,7 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
         else if (message.rfind("EXIT_ROOM|", 0) == 0) {
             roomManager_.ExitRoom(message);
         }
+
         else if (message.rfind("CHOOSE_CHARACTER|", 0) == 0)
         {
             string data = message.substr(strlen("CHOOSE_CHARACTER|"));
@@ -212,14 +215,14 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
             string startMsg = "GAME_START|" + roomName + "\n";
             for (const auto& user : userList)
             {
-                auto it = clientsMap.find(user);
+                string userId = GetIdByNickname(user);
+                auto it = clientsMap.find(userId);
                 if (it != clientsMap.end())
                 {
                     send(it->second->socket, startMsg.c_str(), (int)startMsg.size(), 0);
                 }
             }
         }
-
         else if (message.rfind("GET_MAP|", 0) == 0)
         {
             // message 예: GET_MAP|roomName|mapName
@@ -233,6 +236,11 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
                 return;
             }
 
+            if (!characterStatsManager_.LoadFromName("CharStat")) {
+                std::cerr << "[GET_MAP] CharStat.csv 로딩 실패" << std::endl;
+                return;
+            }
+
             // 맵 데이터와 스폰 좌표 불러오기
             auto result = mapManager_.LoadMapByNameWithSpawns(mapName);
             auto& mapData = result.first;
@@ -240,8 +248,12 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
 
             Room* room = roomManager_.FindRoomByName(roomName);
 
-            auto& userList = room->users;
-            size_t userCount = userList.size();
+            for (const auto& userId : room->users) {
+                string nickname = GetNicknameById(userId); // 변환
+                // nickname으로 전송 메시지 구성
+            }
+
+            size_t userCount = room->users.size();
 
             if (userCount > allSpawnPoints.size())
             {
@@ -272,38 +284,68 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
 
             // 유저 수만큼 랜덤 스폰 좌표 문자열 생성 (층 생략)
             std::string spawnStr;
-            for (size_t i = 0; i < userCount; ++i)
-            {
-                const auto& spawn = allSpawnPoints[indices[i]];
-                const std::string& user = userList[i];
+            for (size_t i = 0; i < userCount; ++i) {
+                const std::string& userId = room->users[i];  // id
+                string nickname = GetNicknameById(userId);   // 닉네임 변환
 
-                int x = std::get<0>(spawn);
-                int y = std::get<1>(spawn);
+                int x = std::get<0>(allSpawnPoints[indices[i]]);
+                int y = std::get<1>(allSpawnPoints[indices[i]]);
                 int charIndex = 0;
 
-                auto it = room->characterSelections.find(user);
+                auto it = room->characterSelections.find(userId);
                 if (it != room->characterSelections.end())
                     charIndex = it->second;
 
-                spawnStr += user + ":" + std::to_string(x) + ":" + std::to_string(y) + ":" + std::to_string(charIndex) + ",";
+                spawnStr += nickname + ":" + std::to_string(x) + ":" + std::to_string(y) + ":" + std::to_string(charIndex) + ",";
             }
             if (!spawnStr.empty()) spawnStr.pop_back();
 
+            std::string charInfoStr = "CHAR_INFO|";
+            for (size_t i = 0; i < userCount; ++i) {
+                const std::string& userId = room->users[i];                 // ID
+                std::string nickname = GetNicknameById(userId);             // 닉네임 변환
 
-            // 방에 속한 유저들에게만 메시지 전송
+                int charIndex = 0;
+                auto itCharSel = room->characterSelections.find(userId);
+                if (itCharSel != room->characterSelections.end())
+                    charIndex = itCharSel->second;
+
+                const CharStats* stats = characterStatsManager_.GetStats(charIndex);
+                int health = stats ? stats->health : 0;
+                int attack = stats ? stats->attack : 0;
+
+                charInfoStr += nickname + "," + std::to_string(charIndex) + "," +
+                    std::to_string(health) + "," + std::to_string(attack);
+
+                if (i != userCount - 1)
+                    charInfoStr += "|";
+            }
+            charInfoStr += "\n";
+
+
+            std::cout << "[서버 캐릭터 전송] " << charInfoStr;
             std::string response = "MAP_DATA|" + mapName + "|" + mapDataStr + "|" + spawnStr + "\n";
             std::cout << "[서버 MAP_DATA 전송] " << response;
             std::lock_guard<std::mutex> lock(server_.GetClientsMutex());
             auto& clientsMap = GetClientsMap();
 
-            for (const auto& user : userList)
+            std::vector<std::string> userList;
+            for (const auto& userId : room->users) {
+                std::string nickname = GetNicknameById(userId);
+                userList.push_back(nickname);
+            }
+
+            for (const auto& nickname : userList)
             {
-                auto it = clientsMap.find(user);
+                std::string userId = GetIdByNickname(nickname);  // 닉네임 → ID 변환
+                auto it = clientsMap.find(userId);
                 if (it != clientsMap.end())
                 {
                     send(it->second->socket, response.c_str(), (int)response.size(), 0);
+                    send(it->second->socket, charInfoStr.c_str(), (int)charInfoStr.size(), 0);
                 }
             }
+
         }
         else if (message.rfind("MOVE|", 0) == 0)
         {
@@ -333,9 +375,8 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
             }
         }
 
-
-            if (pos == std::string::npos)
-                break;
+        if (pos == std::string::npos)
+            break;
 
             start = pos + 1;
     }

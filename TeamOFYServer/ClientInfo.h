@@ -10,6 +10,7 @@ public:
     string ip;
     int port;
     string id;
+    string nickname;
     int modelType = -1;
     ClientInfo();
 

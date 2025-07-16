@@ -4,8 +4,8 @@
 UserManager::UserManager(Server& server)
     : server_(server){}
 
-vector<User> UserManager::LoadUsers(const string& filename) {
-    vector<User> loadedUsers;
+vector<UserAccount> UserManager::LoadAccountUsers(const string& filename) {
+    vector<UserAccount> loadedUsers;
     ifstream file(filename);
     if (!file.is_open()) {
         std::cerr << "파일 열기 실패: " << filename << std::endl;
@@ -24,11 +24,10 @@ vector<User> UserManager::LoadUsers(const string& filename) {
 
         stringstream ss(line);
         string id, pw, nick, levelStr, expStr;
-        if (getline(ss, id, ',') && getline(ss, pw, ',') && getline(ss, nick, ',') &&
-            getline(ss, levelStr, ',') && getline(ss, expStr)) {
+        if (getline(ss, id, ',') && getline(ss, pw, ',') && getline(ss, nick, ',')) {
             try {
-                User user = { id, pw, nick, stoi(levelStr), stof(expStr) };
-                loadedUsers.push_back(user);
+                UserAccount userAccount = { id, pw, nick};
+                loadedUsers.push_back(userAccount);
                 count++;
             }
             catch (const std::exception& e) {
@@ -50,7 +49,187 @@ vector<User> UserManager::LoadUsers(const string& filename) {
     return users;
 }
 
-void UserManager::SaveUsers(const vector<User>& users, const string& filename) {
+std::vector<UserProfile> UserManager::LoadUserProfiles(const std::string& filename)
+{
+    std::ifstream file(filename);
+    std::vector<UserProfile> loadedProfiles;
+
+    if (!file.is_open()) {
+        std::cerr << "파일 열기 실패: " << filename << std::endl;
+        return loadedProfiles;
+    }
+
+    std::string line;
+    if (!std::getline(file, line)) {
+        std::cerr << "헤더 읽기 실패: " << filename << std::endl;
+        return loadedProfiles;
+    }
+
+    while (std::getline(file, line)) {
+        if (line.empty()) continue;
+
+        std::stringstream ss(line);
+        UserProfile profile;
+        std::string expStr;
+
+        if (std::getline(ss, profile.id, ',') &&
+            std::getline(ss, line, ',') && (profile.level = std::stoi(line), true) &&
+            std::getline(ss, expStr, ',') && (profile.exp = std::stof(expStr), true) &&
+            std::getline(ss, line, ',') && (profile.icon = std::stoi(line), true) &&
+            std::getline(ss, line, ',') && (profile.money0 = std::stoi(line), true) &&
+            std::getline(ss, line, ',') && (profile.money1 = std::stoi(line), true) &&
+            std::getline(ss, line, ',') && (profile.emo0 = std::stoi(line), true) &&
+            std::getline(ss, line, ',') && (profile.emo1 = std::stoi(line), true) &&
+            std::getline(ss, line, ',') && (profile.emo2 = std::stoi(line), true) &&
+            std::getline(ss, line) && (profile.emo3 = std::stoi(line), true))
+        {
+            loadedProfiles.push_back(profile);
+        }
+        else {
+            std::cerr << "UserProfile.csv 파싱 오류 라인: " << line << std::endl;
+        }
+    }
+
+    userProfiles = std::move(loadedProfiles);
+    return userProfiles;
+}
+
+// LoadUserCharacters
+std::vector<UserCharacters> UserManager::LoadUserCharacters(const std::string& filename)
+{
+    std::ifstream file(filename);
+    std::vector<UserCharacters> loadedCharacters;
+
+    if (!file.is_open()) {
+        std::cerr << "파일 열기 실패: " << filename << std::endl;
+        return loadedCharacters;
+    }
+
+    std::string line;
+    if (!std::getline(file, line)) {
+        std::cerr << "헤더 읽기 실패: " << filename << std::endl;
+        return loadedCharacters;
+    }
+
+    while (std::getline(file, line)) {
+        if (line.empty()) continue;
+
+        std::stringstream ss(line);
+        UserCharacters characters;
+
+        if (std::getline(ss, characters.id, ',') &&
+            std::getline(ss, line, ',') && (characters.char0 = std::stoi(line), true) &&
+            std::getline(ss, line, ',') && (characters.char1 = std::stoi(line), true) &&
+            std::getline(ss, line, ',') && (characters.char2 = std::stoi(line), true) &&
+            std::getline(ss, line, ',') && (characters.char3 = std::stoi(line), true) &&
+            std::getline(ss, line, ',') && (characters.char4 = std::stoi(line), true) &&
+            std::getline(ss, line, ',') && (characters.char5 = std::stoi(line), true) &&
+            std::getline(ss, line) && (characters.char6 = std::stoi(line), true))
+        {
+            loadedCharacters.push_back(characters);
+        }
+        else {
+            std::cerr << "UserCharacters.csv 파싱 오류 라인: " << line << std::endl;
+        }
+    }
+
+    userCharacters = std::move(loadedCharacters);
+    return userCharacters;
+}
+
+// LoadUserCharacterEmotes
+std::vector<UserCharacterEmotes> UserManager::LoadUserCharacterEmotes(const std::string& filename)
+{
+    std::ifstream file(filename);
+    std::vector<UserCharacterEmotes> loadedEmotes;
+
+    if (!file.is_open()) {
+        std::cerr << "파일 열기 실패: " << filename << std::endl;
+        return loadedEmotes;
+    }
+
+    std::string line;
+    if (!std::getline(file, line)) {
+        std::cerr << "헤더 읽기 실패: " << filename << std::endl;
+        return loadedEmotes;
+    }
+
+    while (std::getline(file, line)) {
+        if (line.empty()) continue;
+
+        std::stringstream ss(line);
+        UserCharacterEmotes emotes;
+
+        if (std::getline(ss, emotes.id, ',') &&
+            std::getline(ss, line, ',') && (emotes.emo0 = std::stoi(line), true) &&
+            std::getline(ss, line, ',') && (emotes.emo1 = std::stoi(line), true) &&
+            std::getline(ss, line, ',') && (emotes.emo2 = std::stoi(line), true) &&
+            std::getline(ss, line) && (emotes.emo3 = std::stoi(line), true))
+        {
+            loadedEmotes.push_back(emotes);
+        }
+        else {
+            std::cerr << "UserCharacterEmotes.csv 파싱 오류 라인: " << line << std::endl;
+        }
+    }
+
+    userEmotes = std::move(loadedEmotes);
+    return userEmotes;
+}
+
+// LoadUserWinLossStats
+std::vector<UserWinLossStats> UserManager::LoadUserWinLossStats(const std::string& filename)
+{
+    std::ifstream file(filename);
+    std::vector<UserWinLossStats> loadedStats;
+
+    if (!file.is_open()) {
+        std::cerr << "파일 열기 실패: " << filename << std::endl;
+        return loadedStats;
+    }
+
+    std::string line;
+    if (!std::getline(file, line)) {
+        std::cerr << "헤더 읽기 실패: " << filename << std::endl;
+        return loadedStats;
+    }
+
+    while (std::getline(file, line)) {
+        if (line.empty()) continue;
+
+        std::stringstream ss(line);
+        UserWinLossStats stats;
+
+        if (std::getline(ss, stats.id, ',') &&
+            std::getline(ss, line, ',') && (stats.winCount = std::stoi(line), true) &&
+            std::getline(ss, line, ',') && (stats.LoseCount = std::stoi(line), true) &&
+            std::getline(ss, line, ',') && (stats.char0_win = std::stoi(line), true) &&
+            std::getline(ss, line, ',') && (stats.char0_lose = std::stoi(line), true) &&
+            std::getline(ss, line, ',') && (stats.char1_win = std::stoi(line), true) &&
+            std::getline(ss, line, ',') && (stats.char1_lose = std::stoi(line), true) &&
+            std::getline(ss, line, ',') && (stats.char2_win = std::stoi(line), true) &&
+            std::getline(ss, line, ',') && (stats.char2_lose = std::stoi(line), true) &&
+            std::getline(ss, line, ',') && (stats.char3_win = std::stoi(line), true) &&
+            std::getline(ss, line, ',') && (stats.char3_lose = std::stoi(line), true) &&
+            std::getline(ss, line, ',') && (stats.char4_win = std::stoi(line), true) &&
+            std::getline(ss, line, ',') && (stats.char4_lose = std::stoi(line), true) &&
+            std::getline(ss, line, ',') && (stats.char5_win = std::stoi(line), true) &&
+            std::getline(ss, line, ',') && (stats.char5_lose = std::stoi(line), true) &&
+            std::getline(ss, line, ',') && (stats.char6_win = std::stoi(line), true) &&
+            std::getline(ss, line) && (stats.char6_lose = std::stoi(line), true))
+        {
+            loadedStats.push_back(stats);
+        }
+        else {
+            std::cerr << "UserWinLossStats.csv 파싱 오류 라인: " << line << std::endl;
+        }
+    }
+
+    userStats = std::move(loadedStats);
+    return userStats;
+}
+
+void UserManager::SaveUsers(const vector<UserAccount>& users, const string& filename) {
     ofstream file(filename);
     if (!file.is_open()) {
         cout << "[오류] 사용자 정보 저장 실패" << endl;
@@ -58,7 +237,7 @@ void UserManager::SaveUsers(const vector<User>& users, const string& filename) {
     }
     file << "id,password,nickname,level,exp\n";
     for (const auto& user : users) {
-        file << user.id << "," << user.password << "," << user.nickname << "," << user.level << "," << user.exp << "\n";
+        file << user.id << "," << user.password << "," << user.nickname << "\n";
     }
 }
 
@@ -70,7 +249,7 @@ string UserManager::CheckLogin(const string& id, const string& pw) {
             if (user.password == pw) {
                 stringstream ss;
                 ss << "LOGIN_SUCCESS|" << user.id << "," << user.password << ","
-                    << user.nickname << "," << user.level << "," << user.exp;
+                    << user.nickname;
                 return ss.str() + "\n";
             }
             else {
@@ -94,15 +273,67 @@ string UserManager::RegisterUser(const string& id, const string& pw, const strin
     if (pw.empty())
         return "EMPTY_PASSWORD|\n";
 
-    User newUser = { id, pw, nickname, 1, 0 };
+    UserAccount newUser = { id, pw, nickname};
 
-    // 파일에 저장
-    ofstream outFile("users.csv", ios::app);
+    // 유저 로그인 파일에 저장
+    ofstream outFile("UsersAccount.csv", ios::app);
     if (!outFile.is_open())
         return "FILE_WRITE_ERROR|\n";
 
-    outFile << newUser.id << "," << newUser.password << "," << newUser.nickname << "," << newUser.level << "," << newUser.exp << "\n";
+    outFile << newUser.id << "," << newUser.password << "," << newUser.nickname << "\n";
     outFile.close();
+
+    // 유저 프로필 파일에 저장
+    UserProfile newProfile;
+    newProfile.id = id;
+
+    ofstream profileFile("UserProfile.csv", ios::app);
+    if (!profileFile.is_open())
+        return "PROFILE_FILE_WRITE_ERROR|\n";
+
+    profileFile << newProfile.id << "," << newProfile.level << "," << newProfile.exp << "," << newProfile.icon << ","
+        << newProfile.money0 << "," << newProfile.money1 << ","
+        << newProfile.emo0 << "," << newProfile.emo1 << "," << newProfile.emo2 << "," << newProfile.emo3 << "\n";
+    profileFile.close();
+
+    //UserCharacters 초기화 및 저장
+    UserCharacters newCharacters;
+    newCharacters.id = id;
+    ofstream charFile("UserCharacters.csv", ios::app);
+    if (!charFile.is_open())
+        return "CHARACTER_FILE_WRITE_ERROR|\n";
+    charFile << newCharacters.id << ","
+        << newCharacters.char0 << "," << newCharacters.char1 << "," << newCharacters.char2 << ","
+        << newCharacters.char3 << "," << newCharacters.char4 << "," << newCharacters.char5 << ","
+        << newCharacters.char6 << "\n";
+    charFile.close();
+
+    // UserCharacterEmotes 초기화 및 저장
+    UserCharacterEmotes newEmotes;
+    newEmotes.id = id;
+    ofstream emoteFile("UserCharacterEmotes.csv", ios::app);
+    if (!emoteFile.is_open())
+        return "EMOTE_FILE_WRITE_ERROR|\n";
+    emoteFile << newEmotes.id << ","
+        << newEmotes.emo0 << "," << newEmotes.emo1 << "," << newEmotes.emo2 << "," << newEmotes.emo3 << "\n";
+    emoteFile.close();
+
+    // UserWinLossStats 초기화 및 저장
+    UserWinLossStats newStats;
+    newStats.id = id;
+    ofstream statsFile("UserWinLossStats.csv", ios::app);
+    if (!statsFile.is_open())
+        return "STATS_FILE_WRITE_ERROR|\n";
+    statsFile << newStats.id << ","
+        << newStats.winCount << "," << newStats.LoseCount << ","
+        << newStats.char0_win << "," << newStats.char0_lose << ","
+        << newStats.char1_win << "," << newStats.char1_lose << ","
+        << newStats.char2_win << "," << newStats.char2_lose << ","
+        << newStats.char3_win << "," << newStats.char3_lose << ","
+        << newStats.char4_win << "," << newStats.char4_lose << ","
+        << newStats.char5_win << "," << newStats.char5_lose << ","
+        << newStats.char6_win << "," << newStats.char6_lose << "\n";
+    statsFile.close();
 
     users.push_back(newUser);
     return "REGISTER_SUCCESS|\n";
@@ -117,28 +348,39 @@ void UserManager::BroadcastLobbyUserList() {
         for (const auto& c : clients) {
             if (c->id.empty()) continue;
 
-            auto it = std::find_if(users.begin(), users.end(), [&](const User& u) {
+            auto itUser = std::find_if(users.begin(), users.end(), [&](const UserAccount& u) {
                 return u.id == c->id;
                 });
 
-            if (it != users.end()) {
-                message += "|" + it->nickname + "," + std::to_string(it->level);
+            if (itUser != users.end()) {
+                const std::string& nickname = itUser->nickname;
+
+                // UserProfile에서 레벨 찾기
+                auto itProfile = std::find_if(userProfiles.begin(), userProfiles.end(), [&](const UserProfile& p) {
+                    return p.id == c->id;
+                    });
+
+                int level = 1;  // 기본 레벨
+                if (itProfile != userProfiles.end()) {
+                    level = itProfile->level;
+                }
+
+                message += "|" + nickname + "," + std::to_string(level);
             }
             else {
-                // 일치하는 유저 정보가 없으면 기본값 level 1
+                // UserAccount가 없으면 id로 기본 레벨 1 전송
                 message += "|" + c->id + ",1";
             }
         }
 
         message += "\n";
 
-        // 모든 클라이언트에게 전송
         for (const auto& c : clients) {
             if (c->id.empty()) continue;
             int sendLen = send(c->socket, message.c_str(), (int)message.size(), 0);
             if (sendLen == SOCKET_ERROR) {
-                cout << "[BroadcastLobbyUserList] send 오류 - user: "
-                    << c->id << ", 오류 코드: " << WSAGetLastError() << endl;
+                std::cout << "[BroadcastLobbyUserList] send 오류 - user: "
+                    << c->id << ", 오류 코드: " << WSAGetLastError() << std::endl;
             }
         }
     }
@@ -150,26 +392,36 @@ void UserManager::SendUserInfoByNickname(shared_ptr<ClientInfo> client, const st
 {
     lock_guard<mutex> lock(usersMutex);
 
-    auto it = find_if(users.begin(), users.end(), [&](const User& u) {
+    auto itUser = find_if(users.begin(), users.end(), [&](const UserAccount& u) {
         return u.nickname == nickname;
         });
 
-    if (it != users.end())
-    {
-        const User& user = *it;
-
-        // USER_INFO|nickname,level,exp\n
-        string response = "USER_INFO|" + user.nickname + "," +
-            to_string(user.level) + "," +
-            to_string(user.exp) + "\n";
-
-        send(client->socket, response.c_str(), (int)response.size(), 0);
-    }
-    else
+    if (itUser == users.end())
     {
         string response = "USER_NOT_FOUND|\n";
         send(client->socket, response.c_str(), (int)response.size(), 0);
+        return;
     }
+    const UserAccount& user = *itUser;
+
+    auto itProfile = find_if(userProfiles.begin(), userProfiles.end(), [&](const UserProfile& p) {
+        return p.id == user.id;
+        });
+
+    if (itProfile == userProfiles.end())
+    {
+        string response = "PROFILE_NOT_FOUND|\n";
+        send(client->socket, response.c_str(), (int)response.size(), 0);
+        return;
+    }
+
+    const UserProfile& profile = *itProfile;
+
+    string response = "USER_INFO|" + user.nickname + "," +
+        to_string(profile.level) + "," +
+        to_string(profile.exp) + "\n";
+
+    send(client->socket, response.c_str(), (int)response.size(), 0);
 }
 
 void UserManager::BroadcastLobbyChatMessage(const string& nickname, const string& message) {

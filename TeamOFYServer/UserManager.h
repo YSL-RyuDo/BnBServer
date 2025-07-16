@@ -4,7 +4,7 @@
 #include <fstream>
 #include <sstream>
 #include <mutex>
-#include "User.h"
+#include "UserAccount.h"
 #include "Utils.h"
 #include "ClientInfo.h"
 
@@ -16,8 +16,14 @@ class UserManager
 public:
 	UserManager(Server& server);
 	void SetClientHandler(ClientHandler* handler) { clientHandler_ = handler; }
-	vector<User> LoadUsers(const string&);
-	void SaveUsers(const vector<User>&, const string&);
+
+	vector<UserAccount> LoadAccountUsers(const string&);
+	vector<UserProfile> LoadUserProfiles(const string&);
+	vector<UserCharacters> LoadUserCharacters(const string&);
+	vector<UserCharacterEmotes> LoadUserCharacterEmotes(const string&);
+	vector<UserWinLossStats> LoadUserWinLossStats(const string&);
+
+	void SaveUsers(const vector<UserAccount>&, const string&);
 	string CheckLogin(const string& id, const string& pw);
 	string RegisterUser(const string& id, const string& pw, const string& nickname);
 	void BroadcastLobbyUserList();
@@ -30,6 +36,10 @@ private:
 	ClientHandler* clientHandler_ = nullptr;
 	//ClientHandler& clientHandler_;
 	mutex usersMutex;
-	vector<User> users;
+	vector<UserAccount> users;
+	vector<UserProfile> userProfiles;
+	vector<UserCharacters> userCharacters;
+	vector<UserCharacterEmotes> userEmotes;
+	vector<UserWinLossStats> userStats;
 };
 

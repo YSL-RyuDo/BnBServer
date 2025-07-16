@@ -55,7 +55,11 @@ bool Server::Initialize(unsigned short port) {
 }
 
 void Server::Run() {
-    auto loadedUsers = userManager_.LoadUsers("users.csv");
+    auto loadedUsers = userManager_.LoadAccountUsers("UsersAccount.csv");
+    auto loadedProfiles = userManager_.LoadUserProfiles("UserProfile.csv");
+    auto loadedCharacters = userManager_.LoadUserCharacters("UserCharacters.csv");
+    auto loadedEmotes = userManager_.LoadUserCharacterEmotes("UserCharacterEmotes.csv");
+    auto loadedStats = userManager_.LoadUserWinLossStats("UserWinLossStats.csv");
     if (loadedUsers.empty()) {
         cerr << "users.csv 로드 실패 또는 내용 없음" << endl;
         return;

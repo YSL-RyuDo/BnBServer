@@ -18,7 +18,7 @@
     <ClCompile Include="main.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="User.cpp">
+    <ClCompile Include="UserAccount.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="UserManager.cpp">
@@ -45,9 +45,12 @@
     <ClCompile Include="Player.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="CharacterStatsManager.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="User.h">
+    <ClInclude Include="UserAccount.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="UserManager.h">
@@ -75,6 +78,9 @@
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="Player.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="CharacterStatsManager.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>
