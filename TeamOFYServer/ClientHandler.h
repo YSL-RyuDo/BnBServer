@@ -25,22 +25,25 @@ public:
     }
 
     string GetNicknameById(const std::string& id) const {
+        string trimmedID = Trim(id);
         for (const auto& pair : clientsMap) {
-            if (pair.second && pair.second->id == id) {
+            if (pair.second && pair.second->id == trimmedID) {
                 return pair.second->nickname;
             }
         }
         return id;
     }
 
-    string GetIdByNickname(const std::string& nickname) const {
+    string GetIdByNickname(const string& nickname) const {
+        string trimmedNick = Trim(nickname);
         for (const auto& pair : clientsMap) {
-            if (pair.second && pair.second->nickname == nickname) {
+            if (pair.second && Trim(pair.second->nickname) == trimmedNick) {
                 return pair.second->id;
             }
         }
-        return "";  // 닉네임을 찾지 못했을 때 빈 문자열 반환
+        return "";
     }
+
 
     //vector<shared_ptr<ClientInfo>> clients;
 private:

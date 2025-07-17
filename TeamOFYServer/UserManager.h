@@ -30,7 +30,7 @@ public:
 	void SendUserInfoByNickname(shared_ptr<ClientInfo> client, const string& nickname);
 	void BroadcastLobbyChatMessage(const string& nickname, const string& message);
 	void LogoutUser(shared_ptr<ClientInfo> client);
-
+	vector<int> GetEmotionsByUserId(const std::string& userId);
 private:
 	Server& server_;
 	ClientHandler* clientHandler_ = nullptr;

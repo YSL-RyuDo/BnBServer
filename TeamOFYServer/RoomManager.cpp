@@ -56,7 +56,8 @@ bool RoomManager::CreateRoom(shared_ptr<ClientInfo> client, const string& roomNa
         for (size_t i = 0; i < createdRoom.users.size(); ++i) {
             if (i > 0) userListStr += ",";
             string username = createdRoom.users[i];
-            string nickname = clientHandler_.GetNicknameById(username);
+            string rawNickname = clientHandler_.GetNicknameById(username);
+            string nickname = Trim(rawNickname);
             int characterIndex = 0;
 
             auto it = createdRoom.characterSelections.find(username);
@@ -139,7 +140,8 @@ bool RoomManager::EnterRoom(shared_ptr<ClientInfo> client, const string& roomNam
                     if (i > 0) userListStr += ",";
 
                     const std::string& userId = room.users[i];
-                    std::string nickname = clientHandler_.GetNicknameById(userId);
+                    std::string rawNickname = clientHandler_.GetNicknameById(userId);
+                    string nickname = Trim(rawNickname);
 
                     int charIndex = 0;
                     auto itChar = room.characterSelections.find(userId);
@@ -242,7 +244,8 @@ void RoomManager::ExitRoom(const std::string& message) {
     getline(ss, nickname);
 
     std::string userListStr;
-    string userId = clientHandler_.GetIdByNickname(nickname);
+    string rawuserId = clientHandler_.GetIdByNickname(nickname);
+    string userId = Trim(rawuserId);
     {
         std::lock_guard<std::mutex> lock(roomsMutex);
         auto it = std::find_if(rooms.begin(), rooms.end(), [&](const Room& r) {
@@ -268,7 +271,9 @@ void RoomManager::ExitRoom(const std::string& message) {
                     for (const auto& userId : room.users) {
                         if (!userListStr.empty()) userListStr += ",";
 
-                        string nickname = clientHandler_.GetNicknameById(userId);
+                        string rawNickname = clientHandler_.GetNicknameById(userId);
+
+                        string nickname = Trim(rawNickname);
 
                         int charIndex = 0;
                         auto charIt = room.characterSelections.find(userId);
@@ -369,8 +374,8 @@ void RoomManager::HandleCharacterChoice(ClientInfo& client, const std::string& d
         return;
     }
 
-    string userId = clientHandler_.GetIdByNickname(nickname);
-
+    string rawuserId = clientHandler_.GetIdByNickname(nickname);
+    string userId = Trim(rawuserId);
     std::lock_guard<std::mutex> lock(roomsMutex);
 
     auto it = std::find_if(rooms.begin(), rooms.end(), [&](const Room& r) {
@@ -425,7 +430,8 @@ bool RoomManager::TryStartGame(const string& roomName, vector<string>& usersOut)
             if (room.users.size() >= 2) {
                 usersOut.clear();
                 for (const auto& userId : room.users) {
-                    std::string nickname = clientHandler_.GetNicknameById(userId);
+                    std::string rawNickname = clientHandler_.GetNicknameById(userId);
+                    string nickname = Trim(rawNickname);
                     usersOut.push_back(nickname);
                 }
                 return true;
@@ -465,4 +471,37 @@ string RoomManager::GetGameUserListResponse(const string& roomName)
         }
     }
     return "GAME_USER_LIST|\n";
+}
+
+// RoomManager 클래스 내부에 추가
+void RoomManager::BroadcastToUserRoom(const std::string& senderId, const std::string& message) {
+    std::lock_guard<std::mutex> lockRooms(roomsMutex);
+
+    // senderId가 속한 방 찾기
+    auto it = std::find_if(rooms.begin(), rooms.end(), [&](const Room& room) {
+        return std::find(room.users.begin(), room.users.end(), senderId) != room.users.end();
+        });
+
+    if (it == rooms.end()) {
+        std::cerr << "[BroadcastToUserRoom] senderId가 속한 방을 찾을 수 없음: " << senderId << std::endl;
+        return;
+    }
+
+    Room& room = *it;
+
+    std::lock_guard<std::mutex> lockClients(server_.clientsMutex);
+    auto& clientsMap = clientHandler_.GetClientsMap();
+
+    for (const auto& userId : room.users) {
+        auto clientIt = clientsMap.find(userId);
+        if (clientIt != clientsMap.end()) {
+            int sendLen = send(clientIt->second->socket, message.c_str(), (int)message.size(), 0);
+            if (sendLen == SOCKET_ERROR) {
+                std::cerr << "[BroadcastToUserRoom] send 실패: " << WSAGetLastError() << " - userId: " << userId << std::endl;
+            }
+        }
+        else {
+            std::cerr << "[BroadcastToUserRoom] 클라이언트 검색 실패 - userId: " << userId << std::endl;
+        }
+    }
 }

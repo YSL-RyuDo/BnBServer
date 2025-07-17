@@ -450,3 +450,50 @@ void UserManager::LogoutUser(std::shared_ptr<ClientInfo> client) {
     BroadcastLobbyUserList();
 }
 
+std::vector<int> UserManager::GetEmotionsByUserId(const std::string& userId) {
+    std::ifstream file("UserProfile.csv");
+    if (!file.is_open()) {
+        std::cerr << "[GET_EMO] UserProfile.csv 열기 실패" << std::endl;
+        return {};
+    }
+
+    std::string ID = Trim(userId);
+    std::string line;
+    if (!std::getline(file, line)) return {}; // 헤더 스킵
+
+    while (std::getline(file, line)) {
+        std::stringstream ss(line);
+        std::string id, levelStr, expStr, iconStr, money0Str, money1Str;
+        std::string emo0, emo1, emo2, emo3;
+
+        if (std::getline(ss, id, ',') &&
+            std::getline(ss, levelStr, ',') &&
+            std::getline(ss, expStr, ',') &&
+            std::getline(ss, iconStr, ',') &&
+            std::getline(ss, money0Str, ',') &&
+            std::getline(ss, money1Str, ',') &&
+            std::getline(ss, emo0, ',') &&
+            std::getline(ss, emo1, ',') &&
+            std::getline(ss, emo2, ',') &&
+            std::getline(ss, emo3, ',')) {
+
+            if (Trim(id) == ID) {
+                try {
+                    return {
+                        std::stoi(emo0),
+                        std::stoi(emo1),
+                        std::stoi(emo2),
+                        std::stoi(emo3)
+                    };
+                }
+                catch (const std::exception& e) {
+                    std::cerr << "[GET_EMO] stoi 변환 실패: " << e.what() << std::endl;
+                    return {};
+                }
+            }
+        }
+    }
+
+    std::cerr << "[GET_EMO] 일치하는 ID 없음: " << userId << std::endl;
+    return {};
+}

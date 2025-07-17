@@ -216,6 +216,7 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
             for (const auto& user : userList)
             {
                 string userId = GetIdByNickname(user);
+                //string userId = Trim(rawuserId);
                 auto it = clientsMap.find(userId);
                 if (it != clientsMap.end())
                 {
@@ -249,7 +250,7 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
             Room* room = roomManager_.FindRoomByName(roomName);
 
             for (const auto& userId : room->users) {
-                string nickname = GetNicknameById(userId); // 변환
+                string nickname = Trim(GetNicknameById(userId)); // 변환
                 // nickname으로 전송 메시지 구성
             }
 
@@ -286,7 +287,7 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
             std::string spawnStr;
             for (size_t i = 0; i < userCount; ++i) {
                 const std::string& userId = room->users[i];  // id
-                string nickname = GetNicknameById(userId);   // 닉네임 변환
+                string nickname = Trim(GetNicknameById(userId));   // 닉네임 변환
 
                 int x = std::get<0>(allSpawnPoints[indices[i]]);
                 int y = std::get<1>(allSpawnPoints[indices[i]]);
@@ -303,7 +304,7 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
             std::string charInfoStr = "CHAR_INFO|";
             for (size_t i = 0; i < userCount; ++i) {
                 const std::string& userId = room->users[i];                 // ID
-                std::string nickname = GetNicknameById(userId);             // 닉네임 변환
+                std::string nickname = Trim(GetNicknameById(userId));             // 닉네임 변환
 
                 int charIndex = 0;
                 auto itCharSel = room->characterSelections.find(userId);
@@ -331,13 +332,14 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
 
             std::vector<std::string> userList;
             for (const auto& userId : room->users) {
-                std::string nickname = GetNicknameById(userId);
+                std::string nickname = Trim(GetNicknameById(userId));
                 userList.push_back(nickname);
             }
 
             for (const auto& nickname : userList)
             {
-                std::string userId = GetIdByNickname(nickname);  // 닉네임 → ID 변환
+                std::string userId = Trim(GetIdByNickname(nickname));  // 닉네임 → ID 변환
+                //string userId = Trim(rawuserId);
                 auto it = clientsMap.find(userId);
                 if (it != clientsMap.end())
                 {
@@ -347,6 +349,47 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
             }
 
         }
+        else if (message.rfind("GET_EMO|", 0) == 0) {
+            std::string nickname = message.substr(strlen("GET_EMO|"));
+            nickname = Trim(nickname); // 혹시 공백 제거
+
+            std::string userId = Trim(GetIdByNickname(nickname));
+            if (userId.empty()) {
+                std::cerr << "[GET_EMO] 닉네임에 해당하는 ID 없음: " << nickname << std::endl;
+                return;
+            }
+
+            auto emoList = userManager_.GetEmotionsByUserId(userId);
+
+            std::string response = "EMO_LIST|";
+            for (size_t i = 0; i < emoList.size(); ++i) {
+                response += std::to_string(emoList[i]);
+                if (i != emoList.size() - 1) response += ",";
+            }
+            response += "\n";
+            send(client->socket, response.c_str(), (int)response.size(), 0);
+        }
+        else if (message.rfind("EMO_CLICK|", 0) == 0) {
+            std::string data = message.substr(strlen("EMO_CLICK|"));
+            std::stringstream ss(data);
+            std::string nickname, emoIndexStr;
+
+            if (!getline(ss, nickname, '|') || !getline(ss, emoIndexStr)) {
+                std::cerr << "[EMO_CLICK] 메시지 형식 오류: " << message << std::endl;
+                return;
+            }
+
+            std::string senderId = Trim(GetIdByNickname(nickname));
+            if (senderId.empty()) {
+                std::cerr << "[EMO_CLICK] 닉네임에서 ID 변환 실패: " << nickname << std::endl;
+                return;
+            }
+
+            std::string broadcastMsg = "EMO_CLICK|" + nickname + "|" + emoIndexStr + "\n";
+
+            roomManager_.BroadcastToUserRoom(senderId, broadcastMsg);
+        }
+
         else if (message.rfind("MOVE|", 0) == 0)
         {
             std::string data = message.substr(strlen("MOVE|")); // username|x,z
@@ -374,6 +417,8 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
                 roomManager_.BroadcastMessageExcept(client->socket, resultMsg);
             }
         }
+        
+
 
         if (pos == std::string::npos)
             break;
@@ -395,4 +440,4 @@ bool ClientHandler::SendToClient(std::shared_ptr<ClientInfo> client, const std::
     std::cout << "[SendToClient] 클라이언트 응답 전송 - IP: " << client->ip << ":" << client->port
         << " -> " << response;
     return true;
-}
+} 
