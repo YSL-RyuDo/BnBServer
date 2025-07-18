@@ -177,6 +177,7 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
             }
             send(client->socket, response.c_str(), (int)response.size(), 0);
         }
+        
         else if (message.rfind("ROOM_MESSAGE|", 0) == 0)
         {
             // 기존 처리 코드를 RoomManager에 넘기기
@@ -186,7 +187,32 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
         else if (message.rfind("EXIT_ROOM|", 0) == 0) {
             roomManager_.ExitRoom(message);
         }
+        else if (message.rfind("GET_CHARACTER|", 0) == 0)
+        {
+            std::string nickname = message.substr(strlen("GET_CHARACTER|"));
+            nickname = Trim(nickname); // 공백 제거
 
+            std::string userId = Trim(GetIdByNickname(nickname));
+            if (userId.empty()) {
+                std::cerr << "[GET_CHARACTER] 닉네임에 해당하는 ID 없음: " << nickname << std::endl;
+                return;
+            }
+
+            std::vector<int> charList = userManager_.GetCharactersByUserId(userId);
+            if (charList.empty()) {
+                std::cerr << "[GET_CHARACTER] 해당 유저의 캐릭터 정보 없음: " << userId << std::endl;
+                return;
+            }
+
+            std::string response = "CHARACTER_LIST|";
+            for (size_t i = 0; i < charList.size(); ++i) {
+                response += std::to_string(charList[i]);
+                if (i != charList.size() - 1) response += ",";
+            }
+            response += "\n";
+
+            send(client->socket, response.c_str(), (int)response.size(), 0);
+        }
         else if (message.rfind("CHOOSE_CHARACTER|", 0) == 0)
         {
             string data = message.substr(strlen("CHOOSE_CHARACTER|"));
@@ -224,6 +250,7 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
                 }
             }
         }
+
         else if (message.rfind("GET_MAP|", 0) == 0)
         {
             // message 예: GET_MAP|roomName|mapName
@@ -349,6 +376,21 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
             }
 
         }
+        else if (message.rfind("GET_BALLOON|", 0) == 0)
+        {
+            string nickname = message.substr(strlen("GET_BALLOON|"));
+            nickname = Trim(nickname);
+
+            string userId = Trim(GetIdByNickname(nickname));
+            if (userId.empty()) {
+                std::cerr << "[GET_EMO] 닉네임에 해당하는 ID 없음: " << nickname << std::endl;
+                return;
+            }
+
+            auto balloonType = userManager_.GetBalloonByUserId(userId);
+            std::string response = "BALLOON_LIST|" + std::to_string(balloonType) + "\n";
+            send(client->socket, response.c_str(), (int)response.size(), 0);
+        }
         else if (message.rfind("GET_EMO|", 0) == 0) {
             std::string nickname = message.substr(strlen("GET_EMO|"));
             nickname = Trim(nickname); // 혹시 공백 제거
@@ -389,7 +431,6 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
 
             roomManager_.BroadcastToUserRoom(senderId, broadcastMsg);
         }
-
         else if (message.rfind("MOVE|", 0) == 0)
         {
             std::string data = message.substr(strlen("MOVE|")); // username|x,z

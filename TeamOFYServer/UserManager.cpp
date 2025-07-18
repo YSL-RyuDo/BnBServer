@@ -81,7 +81,9 @@ std::vector<UserProfile> UserManager::LoadUserProfiles(const std::string& filena
             std::getline(ss, line, ',') && (profile.emo0 = std::stoi(line), true) &&
             std::getline(ss, line, ',') && (profile.emo1 = std::stoi(line), true) &&
             std::getline(ss, line, ',') && (profile.emo2 = std::stoi(line), true) &&
-            std::getline(ss, line) && (profile.emo3 = std::stoi(line), true))
+            std::getline(ss, line, ',') && (profile.emo3 = std::stoi(line), true) &&
+            std::getline(ss, line) && (profile.balloon = std::stoi(line), true)
+            )
         {
             loadedProfiles.push_back(profile);
         }
@@ -176,6 +178,45 @@ std::vector<UserCharacterEmotes> UserManager::LoadUserCharacterEmotes(const std:
     userEmotes = std::move(loadedEmotes);
     return userEmotes;
 }
+
+std::vector<UserBallon> UserManager::LoadUserBallons(const std::string& filename)
+{
+    std::ifstream file(filename);
+    std::vector<UserBallon> loadedBallons;
+
+    if (!file.is_open()) {
+        std::cerr << "파일 열기 실패: " << filename << std::endl;
+        return loadedBallons;
+    }
+
+    std::string line;
+    if (!std::getline(file, line)) {
+        std::cerr << "헤더 읽기 실패: " << filename << std::endl;
+        return loadedBallons;
+    }
+
+    while (std::getline(file, line)) {
+        if (line.empty()) continue;
+
+        std::stringstream ss(line);
+        UserBallon ballon;
+
+        if (std::getline(ss, ballon.id, ',') &&
+            std::getline(ss, line, ',') && (ballon.balloon0 = std::stoi(line), true) &&
+            std::getline(ss, line, ',') && (ballon.balloon1 = std::stoi(line), true) &&
+            std::getline(ss, line, ',') && (ballon.balloon2 = std::stoi(line), true) &&
+            std::getline(ss, line) && (ballon.balloon3 = std::stoi(line), true))
+        {
+            loadedBallons.push_back(ballon);
+        }
+        else {
+            std::cerr << "UserBallon.csv 파싱 오류 라인: " << line << std::endl;
+        }
+    }
+
+    return loadedBallons;
+}
+
 
 // LoadUserWinLossStats
 std::vector<UserWinLossStats> UserManager::LoadUserWinLossStats(const std::string& filename)
@@ -464,7 +505,7 @@ std::vector<int> UserManager::GetEmotionsByUserId(const std::string& userId) {
     while (std::getline(file, line)) {
         std::stringstream ss(line);
         std::string id, levelStr, expStr, iconStr, money0Str, money1Str;
-        std::string emo0, emo1, emo2, emo3;
+        std::string emo0, emo1, emo2, emo3, balloon;
 
         if (std::getline(ss, id, ',') &&
             std::getline(ss, levelStr, ',') &&
@@ -475,7 +516,8 @@ std::vector<int> UserManager::GetEmotionsByUserId(const std::string& userId) {
             std::getline(ss, emo0, ',') &&
             std::getline(ss, emo1, ',') &&
             std::getline(ss, emo2, ',') &&
-            std::getline(ss, emo3, ',')) {
+            std::getline(ss, emo3, ',') &&
+            std::getline(ss, balloon, ',')) {
 
             if (Trim(id) == ID) {
                 try {
@@ -496,4 +538,74 @@ std::vector<int> UserManager::GetEmotionsByUserId(const std::string& userId) {
 
     std::cerr << "[GET_EMO] 일치하는 ID 없음: " << userId << std::endl;
     return {};
+}
+
+int UserManager::GetBalloonByUserId(const std::string& userId) {
+    std::ifstream file("UserProfile.csv");
+    if (!file.is_open()) {
+        std::cerr << "[GET_BALLOON] UserProfile.csv 열기 실패" << std::endl;
+        return -1;
+    }
+
+    std::string ID = Trim(userId);
+    std::string line;
+    if (!std::getline(file, line)) return -1; // 헤더 스킵
+
+    while (std::getline(file, line)) {
+        std::stringstream ss(line);
+        std::string id, levelStr, expStr, iconStr, money0Str, money1Str;
+        std::string emo0, emo1, emo2, emo3, balloonStr;
+
+        if (std::getline(ss, id, ',') &&
+            std::getline(ss, levelStr, ',') &&
+            std::getline(ss, expStr, ',') &&
+            std::getline(ss, iconStr, ',') &&
+            std::getline(ss, money0Str, ',') &&
+            std::getline(ss, money1Str, ',') &&
+            std::getline(ss, emo0, ',') &&
+            std::getline(ss, emo1, ',') &&
+            std::getline(ss, emo2, ',') &&
+            std::getline(ss, emo3, ',') &&
+            std::getline(ss, balloonStr)) {
+
+            if (Trim(id) == ID) {
+                try {
+                    return std::stoi(balloonStr); // 딱 하나만 반환
+                }
+                catch (const std::exception& e) {
+                    std::cerr << "[GET_BALLOON] stoi 실패: " << e.what() << std::endl;
+                    return -1;
+                }
+            }
+        }
+    }
+
+    std::cerr << "[GET_BALLOON] 일치하는 ID 없음: " << userId << std::endl;
+    return -1;
+}
+
+std::vector<int> UserManager::GetCharactersByUserId(const std::string& userId)
+{
+    std::ifstream file("UserCharacters.csv");
+    std::string line;
+
+    // 첫 줄은 헤더니까 skip
+    std::getline(file, line);
+
+    while (std::getline(file, line)) {
+        std::stringstream ss(line);
+        std::string id;
+        std::getline(ss, id, ',');
+
+        if (Trim(id) == userId) {
+            std::vector<int> characters;
+            std::string token;
+            while (std::getline(ss, token, ',')) {
+                characters.push_back(std::stoi(token));
+            }
+            return characters;
+        }
+    }
+
+    return {}; // 찾지 못한 경우
 }

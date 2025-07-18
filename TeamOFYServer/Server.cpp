@@ -60,6 +60,7 @@ void Server::Run() {
     auto loadedCharacters = userManager_.LoadUserCharacters("UserCharacters.csv");
     auto loadedEmotes = userManager_.LoadUserCharacterEmotes("UserCharacterEmotes.csv");
     auto loadedStats = userManager_.LoadUserWinLossStats("UserWinLossStats.csv");
+    auto loadedBalloon = userManager_.LoadUserBallons("UserBalloon.csv");
     if (loadedUsers.empty()) {
         cerr << "users.csv 로드 실패 또는 내용 없음" << endl;
         return;

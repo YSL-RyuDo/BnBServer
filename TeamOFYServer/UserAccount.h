@@ -23,7 +23,7 @@ public:
     int emo1 = 1;
     int emo2 = 2;
     int emo3 = 3;
-
+    int balloon = 0;
     UserProfile() = default;
 };
 
@@ -76,4 +76,14 @@ public:
     int char6_lose = 0;
 
     UserWinLossStats() = default;
+};
+
+class UserBallon
+{
+public:
+    string id = "";
+    int balloon0;
+    int balloon1;
+    int balloon2;
+    int balloon3;
 };

@@ -21,6 +21,7 @@ public:
 	vector<UserProfile> LoadUserProfiles(const string&);
 	vector<UserCharacters> LoadUserCharacters(const string&);
 	vector<UserCharacterEmotes> LoadUserCharacterEmotes(const string&);
+	vector<UserBallon> LoadUserBallons(const std::string& filename);
 	vector<UserWinLossStats> LoadUserWinLossStats(const string&);
 
 	void SaveUsers(const vector<UserAccount>&, const string&);
@@ -31,6 +32,9 @@ public:
 	void BroadcastLobbyChatMessage(const string& nickname, const string& message);
 	void LogoutUser(shared_ptr<ClientInfo> client);
 	vector<int> GetEmotionsByUserId(const std::string& userId);
+	int GetBalloonByUserId(const std::string& userId);
+	vector<int> GetCharactersByUserId(const std::string& userId);
+
 private:
 	Server& server_;
 	ClientHandler* clientHandler_ = nullptr;
