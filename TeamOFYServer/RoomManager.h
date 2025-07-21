@@ -12,6 +12,12 @@ class ClientHandler;
 using namespace std;
 
 class RoomManager {
+private:
+    Server& server_;
+    ClientHandler& clientHandler_;
+    vector<Room> rooms;
+    mutex roomsMutex;
+
 public:
     RoomManager(Server& server, ClientHandler& clientHandler);
 
@@ -30,9 +36,7 @@ public:
     Room* FindRoomByName(const std::string& roomName);
     string GetGameUserListResponse(const string& roomName);
     void BroadcastToUserRoom(const std::string& senderId, const std::string& message);
-private:
-    Server& server_;
-    ClientHandler& clientHandler_;
-    vector<Room> rooms;
-    mutex roomsMutex;
+
+    const std::vector<Room>& GetRooms() const { return rooms; }
+
 };

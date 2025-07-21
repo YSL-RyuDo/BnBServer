@@ -4,6 +4,8 @@
 #include <string>
 #include <numeric>
 #include <random>
+#include <unordered_set>
+
 #include"ClientInfo.h"
 #include "Utils.h"
 #include "UserManager.h"
@@ -44,6 +46,7 @@ public:
         return "";
     }
 
+    bool GetUserPositionById(const std::string& userId, std::pair<float, float>& outPos);
 
     //vector<shared_ptr<ClientInfo>> clients;
 private:
@@ -54,7 +57,7 @@ private:
     Player& player_;
     CharacterStatsManager characterStatsManager_;
     unordered_map<string, shared_ptr<ClientInfo>> clientsMap;
-
+    unordered_map<std::string, std::pair<float, float>> userPositions;
     void ProcessMessages(shared_ptr<ClientInfo>, const string&);
 
     bool SendToClient(std::shared_ptr<ClientInfo> client, const std::string& response);

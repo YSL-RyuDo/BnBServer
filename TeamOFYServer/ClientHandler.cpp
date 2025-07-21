@@ -446,19 +446,138 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
 
             float x = std::stof(coords.substr(0, commaPos));
             float z = std::stof(coords.substr(commaPos + 1));
-
+            
             bool updated = player_.UpdatePlayerPosition(username, x, z);
             if (updated)
             {
                 auto pos = player_.GetPlayerPosition(username);
                 std::string resultMsg = "MOVE_RESULT|" + username + "," +
                     std::to_string(pos.first) + "," + std::to_string(pos.second);
-
+                
                 // 보내는 클라이언트 소켓을 제외하고 같은 방 유저들에게 전송
                 roomManager_.BroadcastMessageExcept(client->socket, resultMsg);
             }
         }
-        
+        else if (message.rfind("PLACE_BALLOON|", 0) == 0)
+        {
+            // 메시지: PLACE_BALLOON|닉네임|x,z|타입
+            std::string data = message.substr(strlen("PLACE_BALLOON|"));
+
+            size_t firstBar = data.find('|');
+            if (firstBar == std::string::npos) return;
+
+            std::string nickname = data.substr(0, firstBar);
+            std::string rest = data.substr(firstBar + 1);
+
+            size_t secondBar = rest.find('|');
+            if (secondBar == std::string::npos) return;
+
+            std::string posStr = rest.substr(0, secondBar); // "x,z"
+            std::string typeStr = rest.substr(secondBar + 1); // 풍선 타입
+
+            size_t commaPos = posStr.find(',');
+            if (commaPos == std::string::npos) return;
+
+            float x = std::stof(posStr.substr(0, commaPos));
+            float z = std::stof(posStr.substr(commaPos + 1));
+            int type = std::stoi(typeStr);
+
+            // 좌표 보정 (선택사항)
+            x = std::round(x * 100.0f) / 100.0f;
+            z = std::round(z * 100.0f) / 100.0f;
+
+            std::ostringstream oss;
+            oss << "PLACE_BALLOON_RESULT|" << nickname << "|"
+                << x << "," << z << "|" << type << "\n";  // <-- 여기 \n
+
+
+            std::string result = oss.str();
+            string senderId = Trim(GetIdByNickname(nickname));
+            roomManager_.BroadcastToUserRoom(senderId, result);
+
+
+        }
+        else if (message.rfind("REMOVE_BALLOON|", 0) == 0)
+        {
+            // 메시지: REMOVE_BALLOON|닉네임|x,z|타입
+            std::string data = message.substr(strlen("REMOVE_BALLOON|"));
+
+            size_t firstBarPos = data.find('|');
+            if (firstBarPos == std::string::npos) return;
+
+            size_t secondBarPos = data.find('|', firstBarPos + 1);
+            if (secondBarPos == std::string::npos) return;
+
+            std::string nickname = data.substr(0, firstBarPos);
+            std::string posStr = data.substr(firstBarPos + 1, secondBarPos - firstBarPos - 1); // x,z
+            std::string typeStr = data.substr(secondBarPos + 1); // 타입
+
+            size_t commaPos = posStr.find(',');
+            if (commaPos == std::string::npos) return;
+
+            float x = std::stof(posStr.substr(0, commaPos));
+            float z = std::stof(posStr.substr(commaPos + 1));
+
+            int balloonType = std::stoi(typeStr);
+
+            x = std::round(x * 100.0f) / 100.0f;
+            z = std::round(z * 100.0f) / 100.0f;
+
+            std::ostringstream removeMsg;
+            removeMsg << "REMOVE_BALLOON|" << nickname << "|" << x << "," << z << "\n";
+
+            std::string result = removeMsg.str();
+
+            std::string senderId = Trim(GetIdByNickname(nickname));
+            roomManager_.BroadcastToUserRoom(senderId, result);
+
+            std::cout << "[Server] REMOVE_BALLOON broadcast: " << result;
+
+            std::ostringstream waterSpread;
+            waterSpread << "WATER_SPREAD|" << nickname << "|" << x << "," << z << "|" << balloonType << "|";
+
+            const int range = 3;
+            for (int dx = -range; dx <= range; dx++)
+            {
+                if (dx == 0) continue;
+                waterSpread << (x + dx) << "," << z << ";";
+            }
+            for (int dz = -range; dz <= range; dz++)
+            {
+                waterSpread << x << "," << (z + dz) << ";";
+            }
+
+            std::string waterMsg = waterSpread.str();
+            if (waterMsg.back() == ';') waterMsg.pop_back();
+            waterMsg += "\n";
+
+            roomManager_.BroadcastToUserRoom(senderId, waterMsg);
+            std::cout << "[Server] WATER_SPREAD broadcast: " << waterMsg;
+        }
+        else if (message.rfind("WATER_HIT|", 0) == 0)
+        {
+            // 메시지: WATER_HIT|맞은닉네임|데미지
+            std::string data = message.substr(strlen("WATER_HIT|"));
+
+            size_t barPos = data.find('|');
+            if (barPos == std::string::npos) return;
+
+            std::string hitNickname = data.substr(0, barPos);
+            std::string damageStr = data.substr(barPos + 1);
+
+            int damage = std::stoi(damageStr);
+
+            std::string hitUserId = Trim(GetIdByNickname(hitNickname));
+
+            std::ostringstream oss;
+            oss << "PLAYER_HIT|" << hitNickname << "|" << damage << "\n";
+
+            std::string result = oss.str();
+
+            roomManager_.BroadcastToUserRoom(hitUserId, result);
+            std::cout << "[Server] PLAYER_HIT broadcast: " << result;
+        }
+
 
 
         if (pos == std::string::npos)
@@ -482,3 +601,13 @@ bool ClientHandler::SendToClient(std::shared_ptr<ClientInfo> client, const std::
         << " -> " << response;
     return true;
 } 
+
+bool ClientHandler::GetUserPositionById(const std::string& userId, std::pair<float, float>& outPos)
+{
+    auto it = userPositions.find(userId);
+    if (it == userPositions.end())
+        return false;
+
+    outPos = it->second;
+    return true;
+}
