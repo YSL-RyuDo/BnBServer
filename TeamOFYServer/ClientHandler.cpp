@@ -41,7 +41,7 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
 
         if (message.rfind("MOVE|", 0) != 0) 
         {
-            cout << "[수신] 클라이언트 메시지 - IP: " << client->ip << ", 메시지: '" << message << "'" << endl;
+            cout << "[수신] 클라이언트 메시지 - IP: " << client->port << ", 메시지: '" << message << "'" << endl;
         }
         string response;
 
@@ -536,7 +536,7 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
             std::ostringstream waterSpread;
             waterSpread << "WATER_SPREAD|" << nickname << "|" << x << "," << z << "|" << balloonType << "|";
 
-            const int range = 3;
+            const int range = 2;
             for (int dx = -range; dx <= range; dx++)
             {
                 if (dx == 0) continue;
