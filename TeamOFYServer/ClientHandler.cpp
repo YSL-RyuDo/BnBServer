@@ -275,7 +275,6 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
             auto& allSpawnPoints = result.second;
 
             Room* room = roomManager_.FindRoomByName(roomName);
-
             for (const auto& userId : room->users) {
                 string nickname = Trim(GetNicknameById(userId)); // 변환
                 // nickname으로 전송 메시지 구성
@@ -577,6 +576,112 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
             roomManager_.BroadcastToUserRoom(hitUserId, result);
             std::cout << "[Server] PLAYER_HIT broadcast: " << result;
         }
+        else if (message.rfind("DEAD|", 0) == 0)
+        {
+            std::string deadNickname = message.substr(strlen("DEAD|"));
+            std::string deadUserId = Trim(GetIdByNickname(deadNickname));
+            std::string roomId = roomManager_.GetUserRoomId(deadUserId);
+
+            if (roomId.empty())
+                return;
+
+            // 이미 처리된 유저면 중복 처리 방지
+            auto& deadSet = roomManager_.deadUsersByRoom[roomId];
+            if (deadSet.find(deadUserId) != deadSet.end())
+                return;
+
+            deadSet.insert(deadUserId);
+
+            std::ostringstream oss;
+            oss << "PLAYER_DEAD|" << deadNickname << "\n";
+            roomManager_.BroadcastToUserRoom(deadUserId, oss.str());
+            std::cout << "[Server] PLAYER_DEAD broadcast: " << oss.str();
+
+            // 방에 있는 전체 유저 닉네임 가져오기
+            std::vector<std::string> roomNicks = roomManager_.GetUserIdsInRoom(roomId);
+
+            // 살아있는 유저 목록 추출
+            std::vector<std::string> aliveNicks;
+            for (const std::string& nick : roomNicks)
+            {
+                if (deadSet.find(nick) == deadSet.end())
+                    aliveNicks.push_back(nick);
+            }
+
+            // 살아남은 유저가 1명뿐이라면 승리
+            if (aliveNicks.size() == 1)
+            {
+                std::string winnerUserId = aliveNicks[0];
+                string winnerNickname = Trim(GetNicknameById(winnerUserId));
+                std::ostringstream winMsg;
+                winMsg << "WIN|" << winnerNickname << "\n";
+
+                roomManager_.BroadcastToUserRoom(winnerUserId, winMsg.str());
+
+                std::cout << "[Server] WIN packet sent to: " << winnerNickname << "\n";
+
+                std::ostringstream rewardMsg;
+                rewardMsg << "REWARD_RESULT";
+
+                Room* room = roomManager_.FindRoomByName(roomId);
+
+                for (const std::string& userId : roomManager_.GetUserIdsInRoom(roomId))
+                {
+                    std::string nickname = Trim(GetNicknameById(userId));
+                    bool isWinner = (userId == winnerUserId);
+
+                    int gainedExp = isWinner ? 50 : 30;
+                    int gainedCoin0 = isWinner ? 500 : 200;
+                    int gainedCoin1 = isWinner ? 5 : 0;
+
+                    UserProfile& profile = userManager_.GetUserProfileById(userId);
+                    profile.exp += gainedExp;
+
+                    // 레벨업 계산 (예시: 100 * 레벨당 필요 경험치)
+                    while (profile.exp >= profile.level * 100)
+                    {
+                        profile.exp -= profile.level * 100;
+                        profile.level++;
+                    }
+
+                    profile.money0 += gainedCoin0;
+                    profile.money1 += gainedCoin1;
+
+
+                    int charIndex = 0;
+                    auto itChar = room->characterSelections.find(userId);
+                    if (itChar != room->characterSelections.end())
+                        charIndex = itChar->second;
+
+                    userManager_.UpdateWinLoss(userId, isWinner, charIndex);
+
+                    userManager_.SaveUserWinLossStats("UserWinLossStats.csv");
+                    userManager_.SaveUserProfilesToFile("UserProfile.csv");
+                    rewardMsg << "|" << nickname
+                        << ",level:" << profile.level
+                        << ",exp:" << profile.exp
+                        << ",money0:" << profile.money0
+                        << ",money1:" << profile.money1;
+                }
+
+                rewardMsg << "\n";
+                roomManager_.BroadcastToUserRoom(winnerUserId, rewardMsg.str());
+                std::cout << "[Server] REWARD_RESULT broadcast: " << rewardMsg.str();
+
+            }
+        }
+        else if (message.rfind("READY_TO_EXIT|", 0) == 0)
+        {
+            std::string nickname = message.substr(strlen("READY_TO_EXIT|"));
+            std::string userId = Trim(GetIdByNickname(nickname));
+            std::string roomId = roomManager_.GetUserRoomId(userId);
+
+            if (roomId.empty())
+                return;
+
+            roomManager_.HandleReadyToExit(userId, roomId, client->socket);
+        }
+
 
 
 

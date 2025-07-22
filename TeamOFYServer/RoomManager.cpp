@@ -154,11 +154,11 @@ bool RoomManager::EnterRoom(shared_ptr<ClientInfo> client, const string& roomNam
 
                 cout << "[EnterRoom] 유저 리스트: " << userListStr << endl;
 
-                outResponse = "ENTER_ROOM_SUCCESS|" + roomName + "|" + userListStr + "\n";
+                outResponse = "ENTER_ROOM_SUCCESS|" + roomName + "|" + mapName + "|" + userListStr + "\n";
                 cout << "[Send to Client] " << outResponse;
 
                 // 방에 있는 다른 유저들에게 갱신 메시지 전송
-                string refreshMsg = "REFRESH_ROOM_SUCCESS|" + roomName + "|" + userListStr + "\n";
+                string refreshMsg = "REFRESH_ROOM_SUCCESS|" + roomName + "|" + mapName + "|" + userListStr + "\n";
                 cout << "[Broadcast to Others] " << refreshMsg;
 
                 auto& clientsMap = clientHandler_.GetClientsMap();
@@ -285,7 +285,7 @@ void RoomManager::ExitRoom(const std::string& message) {
                     }
 
                     // 남은 유저에게 갱신 메시지 전송
-                    std::string refreshMsg = "REFRESH_ROOM_SUCCESS|" + roomName + "|" + userListStr + "\n";
+                    std::string refreshMsg = "REFRESH_ROOM_SUCCESS|" + roomName + "|" + room.mapName + "|" + userListStr + "\n";
 
                     // 클라이언트 뮤텍스 잠금
                     std::lock_guard<std::mutex> lockClients(server_.clientsMutex);
@@ -504,4 +504,104 @@ void RoomManager::BroadcastToUserRoom(const std::string& senderId, const std::st
             std::cerr << "[BroadcastToUserRoom] 클라이언트 검색 실패 - userId: " << userId << std::endl;
         }
     }
+}
+
+std::string RoomManager::GetUserRoomId(const std::string& userId) {
+    std::lock_guard<std::mutex> lockRooms(roomsMutex);
+
+    auto it = std::find_if(rooms.begin(), rooms.end(), [&](const Room& room) {
+        return std::find(room.users.begin(), room.users.end(), userId) != room.users.end();
+        });
+
+    if (it == rooms.end()) {
+        std::cerr << "[GetUserRoomId] userId가 속한 방을 찾을 수 없음: " << userId << std::endl;
+        return "";
+    }
+
+    return it->roomName;  // 방 구조체에 방 ID가 있다면 이렇게 리턴
+}
+
+// RoomManager.cpp
+std::vector<std::string> RoomManager::GetUserIdsInRoom(const std::string& roomId)
+{
+    std::lock_guard<std::mutex> lock(roomsMutex);
+    for (const auto& room : rooms)
+    {
+        if (room.roomName == roomId)
+        {
+            return room.users;
+        }
+    }
+    return {};
+}
+
+bool RoomManager::HandleReadyToExit(const std::string& userId, const std::string& roomId, SOCKET excludeSocket)
+{
+    std::string nickname = Trim(clientHandler_.GetNicknameById(userId));
+    bool allReady = false;
+    std::vector<std::string> roomUsers;
+
+    {
+        std::lock_guard<std::mutex> lock(roomsMutex);
+        readyUsersByRoom[roomId].insert(userId);
+
+        auto it = std::find_if(rooms.begin(), rooms.end(),
+            [&](const Room& r) { return r.roomName == roomId; });
+
+        if (it == rooms.end())
+            return false;
+
+        const Room& room = *it;
+        roomUsers = room.users;
+
+        allReady = true;
+        for (const auto& user : roomUsers)
+        {
+            if (readyUsersByRoom[roomId].find(user) == readyUsersByRoom[roomId].end())
+            {
+                allReady = false;
+                break;
+            }
+        }
+    }
+
+    // 준비 신호 브로드캐스트
+    BroadcastMessageExcept(excludeSocket, "READY_TO_EXIT|" + nickname);
+
+    if (allReady)
+    {
+        // GAME_END 전송
+        std::string gameEndMsg = "GAME_END\n";
+
+        std::lock_guard<std::mutex> clientLock(server_.clientsMutex);
+        auto& clientsMap = clientHandler_.GetClientsMap();
+
+        for (const auto& userId : roomUsers)
+        {
+            auto clientIt = clientsMap.find(userId);
+            if (clientIt != clientsMap.end())
+            {
+                send(clientIt->second->socket, gameEndMsg.c_str(), (int)gameEndMsg.size(), 0);
+            }
+        }
+
+        // 준비 상태 초기화
+        {
+            std::lock_guard<std::mutex> lock(roomsMutex);
+
+            std::cout << "[DEBUG] HandleReadyToExit: 초기화 전 준비 유저 수: "
+                << readyUsersByRoom[roomId].size() << ", 죽은 유저 수: "
+                << deadUsersByRoom[roomId].size() << std::endl;
+
+            readyUsersByRoom[roomId].clear();
+            deadUsersByRoom[roomId].clear();
+
+            std::cout << "[DEBUG] HandleReadyToExit: 초기화 완료. 준비 유저 수: "
+                << readyUsersByRoom[roomId].size() << ", 죽은 유저 수: "
+                << deadUsersByRoom[roomId].size() << std::endl;
+        }
+
+    }
+
+    return allReady;
 }

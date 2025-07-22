@@ -217,7 +217,6 @@ std::vector<UserBallon> UserManager::LoadUserBallons(const std::string& filename
     return loadedBallons;
 }
 
-
 // LoadUserWinLossStats
 std::vector<UserWinLossStats> UserManager::LoadUserWinLossStats(const std::string& filename)
 {
@@ -243,7 +242,7 @@ std::vector<UserWinLossStats> UserManager::LoadUserWinLossStats(const std::strin
 
         if (std::getline(ss, stats.id, ',') &&
             std::getline(ss, line, ',') && (stats.winCount = std::stoi(line), true) &&
-            std::getline(ss, line, ',') && (stats.LoseCount = std::stoi(line), true) &&
+            std::getline(ss, line, ',') && (stats.loseCount = std::stoi(line), true) &&
             std::getline(ss, line, ',') && (stats.char0_win = std::stoi(line), true) &&
             std::getline(ss, line, ',') && (stats.char0_lose = std::stoi(line), true) &&
             std::getline(ss, line, ',') && (stats.char1_win = std::stoi(line), true) &&
@@ -281,6 +280,74 @@ void UserManager::SaveUsers(const vector<UserAccount>& users, const string& file
         file << user.id << "," << user.password << "," << user.nickname << "\n";
     }
 }
+
+bool UserManager::SaveUserProfilesToFile(const std::string& filename)
+{
+    std::ofstream outFile(filename, std::ios::trunc);  // 기존 파일 덮어쓰기
+    if (!outFile.is_open())
+    {
+        std::cerr << "파일 열기 실패: " << filename << std::endl;
+        return false;
+    }
+
+    // 헤더 작성 (필요하면)
+    outFile << "id,level,exp,icon,money0,money1,emo0,emo1,emo2,emo3,balloon\n";
+
+    for (const auto& profile : userProfiles)
+    {
+        outFile << profile.id << ","
+            << profile.level << ","
+            << profile.exp << ","
+            << profile.icon << ","
+            << profile.money0 << ","
+            << profile.money1 << ","
+            << profile.emo0 << ","
+            << profile.emo1 << ","
+            << profile.emo2 << ","
+            << profile.emo3 << ","
+            << profile.balloon << "\n";
+    }
+
+    outFile.close();
+    return true;
+}
+
+bool UserManager::SaveUserWinLossStats(const std::string& filename)
+{
+    std::ofstream outFile(filename, std::ios::trunc);
+    if (!outFile.is_open())
+    {
+        std::cerr << "파일 열기 실패: " << filename << std::endl;
+        return false;
+    }
+
+    outFile << "id,winCount,LoseCount,char0_win,char0_lose,char1_win,char1_lose,char2_win,char2_lose,char3_win,char3_lose,char4_win,char4_lose,char5_win,char5_lose,char6_win,char6_lose\n";
+
+    for (const auto& stats : userStats)
+    {
+        outFile << stats.id << ","
+            << stats.winCount << ","
+            << stats.loseCount << ","
+            << stats.char0_win << ","
+            << stats.char0_lose << ","
+            << stats.char1_win << ","
+            << stats.char1_lose << ","
+            << stats.char2_win << ","
+            << stats.char2_lose << ","
+            << stats.char3_win << ","
+            << stats.char3_lose << ","
+            << stats.char4_win << ","
+            << stats.char4_lose << ","
+            << stats.char5_win << ","
+            << stats.char5_lose << ","
+            << stats.char6_win << ","
+            << stats.char6_lose << "\n";
+    }
+
+    outFile.close();
+    return true;
+}
+
 
 string UserManager::CheckLogin(const string& id, const string& pw) {
     lock_guard<mutex> lock(usersMutex); // 내부에서 잠금
@@ -334,7 +401,7 @@ string UserManager::RegisterUser(const string& id, const string& pw, const strin
 
     profileFile << newProfile.id << "," << newProfile.level << "," << newProfile.exp << "," << newProfile.icon << ","
         << newProfile.money0 << "," << newProfile.money1 << ","
-        << newProfile.emo0 << "," << newProfile.emo1 << "," << newProfile.emo2 << "," << newProfile.emo3 << "\n";
+        << newProfile.emo0 << "," << newProfile.emo1 << "," << newProfile.emo2 << "," << newProfile.emo3 << "," << newProfile.balloon << "\n";
     profileFile.close();
 
     //UserCharacters 초기화 및 저장
@@ -366,7 +433,7 @@ string UserManager::RegisterUser(const string& id, const string& pw, const strin
     if (!statsFile.is_open())
         return "STATS_FILE_WRITE_ERROR|\n";
     statsFile << newStats.id << ","
-        << newStats.winCount << "," << newStats.LoseCount << ","
+        << newStats.winCount << "," << newStats.loseCount << ","
         << newStats.char0_win << "," << newStats.char0_lose << ","
         << newStats.char1_win << "," << newStats.char1_lose << ","
         << newStats.char2_win << "," << newStats.char2_lose << ","
@@ -376,7 +443,24 @@ string UserManager::RegisterUser(const string& id, const string& pw, const strin
         << newStats.char6_win << "," << newStats.char6_lose << "\n";
     statsFile.close();
 
+    UserBallon newBallon;
+    newBallon.id = id;
+    ofstream ballonFile("UserBalloon.csv", ios::app);
+    if (!ballonFile.is_open())
+        return "BALLOON_FILE_WRITE_ERROR|\n";
+    ballonFile << newBallon.id << ","
+        << newBallon.balloon0 << ","
+        << newBallon.balloon1 << ","
+        << newBallon.balloon2 << ","
+        << newBallon.balloon3 << "\n";
+    ballonFile.close();
+
     users.push_back(newUser);
+    userProfiles.push_back(newProfile);
+    userCharacters.push_back(newCharacters);
+    userEmotes.push_back(newEmotes);
+    userStats.push_back(newStats);
+    userBallons.push_back(newBallon);
     return "REGISTER_SUCCESS|\n";
 }
 
@@ -608,4 +692,56 @@ std::vector<int> UserManager::GetCharactersByUserId(const std::string& userId)
     }
 
     return {}; // 찾지 못한 경우
+}
+
+UserProfile& UserManager::GetUserProfileById(const std::string& id)
+{
+    std::lock_guard<std::mutex> lock(usersMutex);
+
+    for (auto& profile : userProfiles)
+    {
+        if (profile.id == id)
+        {
+            return profile;
+        }
+    }
+
+    throw std::runtime_error("UserProfile not found for id: " + id);
+}
+
+void UserManager::UpdateWinLoss(const std::string& userId, bool isWin, int charIndex)
+{
+    auto it = std::find_if(userStats.begin(), userStats.end(),
+        [&](const UserWinLossStats& s) { return s.id == userId; });
+    if (it == userStats.end())
+        return;
+
+    if (isWin)
+    {
+        it->winCount++;
+        switch (charIndex)
+        {
+        case 0: it->char0_win++; break;
+        case 1: it->char1_win++; break;
+        case 2: it->char2_win++; break;
+        case 3: it->char3_win++; break;
+        case 4: it->char4_win++; break;
+        case 5: it->char5_win++; break;
+        case 6: it->char6_win++; break;
+        }
+    }
+    else
+    {
+        it->loseCount++;
+        switch (charIndex)
+        {
+        case 0: it->char0_lose++; break;
+        case 1: it->char1_lose++; break;
+        case 2: it->char2_lose++; break;
+        case 3: it->char3_lose++; break;
+        case 4: it->char4_lose++; break;
+        case 5: it->char5_lose++; break;
+        case 6: it->char6_lose++; break;
+        }
+    }
 }

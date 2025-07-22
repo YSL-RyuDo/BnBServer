@@ -4,6 +4,8 @@
 #include <mutex>
 #include <memory>
 #include <sstream>
+#include <unordered_map>
+#include<unordered_set>
 #include "Room.h"
 #include "ClientInfo.h"
 
@@ -39,4 +41,9 @@ public:
 
     const std::vector<Room>& GetRooms() const { return rooms; }
 
+    std::unordered_map<std::string, std::unordered_set<std::string>> deadUsersByRoom;
+    string GetUserRoomId(const std::string& userId);
+    vector<std::string> GetUserIdsInRoom(const std::string& roomId);
+    bool HandleReadyToExit(const std::string& userId, const std::string& roomId, SOCKET excludeSocket);
+    std::unordered_map<std::string, std::unordered_set<std::string>> readyUsersByRoom;
 };

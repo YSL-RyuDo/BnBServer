@@ -25,6 +25,9 @@ public:
 	vector<UserWinLossStats> LoadUserWinLossStats(const string&);
 
 	void SaveUsers(const vector<UserAccount>&, const string&);
+	bool SaveUserProfilesToFile(const std::string& filename);
+	bool SaveUserWinLossStats(const std::string& filename);
+
 	string CheckLogin(const string& id, const string& pw);
 	string RegisterUser(const string& id, const string& pw, const string& nickname);
 	void BroadcastLobbyUserList();
@@ -34,6 +37,8 @@ public:
 	vector<int> GetEmotionsByUserId(const std::string& userId);
 	int GetBalloonByUserId(const std::string& userId);
 	vector<int> GetCharactersByUserId(const std::string& userId);
+	UserProfile& GetUserProfileById(const std::string& id);
+	void UpdateWinLoss(const std::string& userId, bool isWin, int charIndex);
 
 private:
 	Server& server_;
@@ -45,5 +50,6 @@ private:
 	vector<UserCharacters> userCharacters;
 	vector<UserCharacterEmotes> userEmotes;
 	vector<UserWinLossStats> userStats;
+	vector<UserBallon> userBallons;
 };
 

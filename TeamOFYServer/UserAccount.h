@@ -59,7 +59,7 @@ class UserWinLossStats
 public:
     string id = "";
     int winCount = 0;
-    int LoseCount = 0;
+    int loseCount = 0;
     int char0_win = 0;
     int char0_lose = 0;
     int char1_win = 0;
@@ -82,8 +82,8 @@ class UserBallon
 {
 public:
     string id = "";
-    int balloon0;
-    int balloon1;
-    int balloon2;
-    int balloon3;
+    int balloon0 = 1;
+    int balloon1 = 1;
+    int balloon2 = 1;
+    int balloon3 = 1;
 };
