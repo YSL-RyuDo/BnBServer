@@ -12,4 +12,6 @@ struct Room {
     vector<string> users;
     vector<pair<int, int>> assignedSpawnPositions;
     unordered_map<string, int> characterSelections; 
+
+    bool isInGame = false;
 };

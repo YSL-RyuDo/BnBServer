@@ -745,3 +745,44 @@ void UserManager::UpdateWinLoss(const std::string& userId, bool isWin, int charI
         }
     }
 }
+
+int UserManager::GetAttackByIndex(int index)
+{
+    std::ifstream file("CharStat.csv");
+    if (!file.is_open()) {
+        std::cerr << "[GetAttackByIndex] CharStat.csv 열기 실패" << std::endl;
+        return 0;
+    }
+
+    std::string line;
+    if (!std::getline(file, line)) {
+        std::cerr << "[GetAttackByIndex] 헤더 읽기 실패" << std::endl;
+        return 0;
+    }
+
+    while (std::getline(file, line)) {
+        if (line.empty()) continue;
+
+        std::stringstream ss(line);
+        std::string indexStr, healthStr, attackStr;
+
+        if (std::getline(ss, indexStr, ',') &&
+            std::getline(ss, healthStr, ',') &&
+            std::getline(ss, attackStr, ',')) {
+
+            try {
+                int currentIndex = std::stoi(indexStr);
+                if (currentIndex == index) {
+                    return std::stoi(attackStr);
+                }
+            }
+            catch (const std::exception& e) {
+                std::cerr << "[GetAttackByIndex] 변환 오류: " << e.what() << " | 라인: " << line << std::endl;
+                return 0;
+            }
+        }
+    }
+
+    std::cerr << "[GetAttackByIndex] 인덱스 " << index << "에 해당하는 공격력 없음" << std::endl;
+    return 0;
+}

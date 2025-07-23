@@ -457,6 +457,56 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
                 roomManager_.BroadcastMessageExcept(client->socket, resultMsg);
             }
         }
+
+        else if (message.rfind("WEAPON_ATTACK|", 0) == 0)
+        {
+            std::string data = message.substr(strlen("WEAPON_ATTACK|"));
+
+            size_t first = data.find('|');
+            if (first == std::string::npos) return;
+            std::string nickname = data.substr(0, first);
+
+            size_t second = data.find('|', first + 1);
+            if (second == std::string::npos) return;
+            std::string charIndexStr = data.substr(first + 1, second - first - 1);
+
+            size_t third = data.find('|', second + 1);
+            if (third == std::string::npos) return;
+            std::string positionStr = data.substr(second + 1, third - second - 1);
+
+            std::string rotYStr = data.substr(third + 1);
+
+            std::string forwardMsg = "WEAPON_ATTACK|" + nickname + "|" + charIndexStr + "|" + positionStr + "|" + rotYStr + "\n";
+
+            roomManager_.BroadcastToRoomExcept(client->socket, forwardMsg);
+            std::cout << "[Server] WEAPON_ATTACK 처리 완료 from " << nickname << std::endl;
+        }
+        else if (message.rfind("HIT|", 0) == 0)
+        {
+            std::string data = message.substr(strlen("HIT|")); // weaponIndex|targetNickname
+
+            size_t delim = data.find('|');
+            if (delim == std::string::npos) return;
+
+            std::string weaponIndexStr = data.substr(0, delim);
+            std::string targetNickname = data.substr(delim + 1);
+
+            int weaponIndex = std::stoi(weaponIndexStr);
+            int damage = userManager_.GetAttackByIndex(weaponIndex); // 무기 인덱스로 데미지 가져오기
+
+            std::string attackerId = client->id;
+            std::string attackerNickname = Trim(GetNicknameById(attackerId));
+
+            std::string resultMsg = "DAMAGE|" + targetNickname + "|" + std::to_string(damage) + "\n";
+
+            // 같은 방 전체에게 데미지 전달
+            roomManager_.BroadcastToUserRoom(attackerId, resultMsg);
+
+            std::cout << "[서버] " << attackerNickname << " → " << targetNickname
+                << " 에게 " << damage << " 데미지 전달\n";
+                }
+
+
         else if (message.rfind("PLACE_BALLOON|", 0) == 0)
         {
             // 메시지: PLACE_BALLOON|닉네임|x,z|타입
@@ -659,9 +709,9 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
                     userManager_.SaveUserProfilesToFile("UserProfile.csv");
                     rewardMsg << "|" << nickname
                         << ",level:" << profile.level
-                        << ",exp:" << profile.exp
-                        << ",money0:" << profile.money0
-                        << ",money1:" << profile.money1;
+                        << ",exp:" << gainedExp
+                        << ",money0:" << gainedCoin0
+                        << ",money1:" << gainedCoin1;
                 }
 
                 rewardMsg << "\n";

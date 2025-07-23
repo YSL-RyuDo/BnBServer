@@ -38,7 +38,7 @@ public:
     Room* FindRoomByName(const std::string& roomName);
     string GetGameUserListResponse(const string& roomName);
     void BroadcastToUserRoom(const std::string& senderId, const std::string& message);
-
+    void BroadcastToRoomExcept(SOCKET excludedSocket, const std::string& message);
     const std::vector<Room>& GetRooms() const { return rooms; }
 
     std::unordered_map<std::string, std::unordered_set<std::string>> deadUsersByRoom;

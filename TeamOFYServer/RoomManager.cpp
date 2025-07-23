@@ -112,6 +112,12 @@ bool RoomManager::EnterRoom(shared_ptr<ClientInfo> client, const string& roomNam
             if (room.password == password) {
                 cout << "[EnterRoom] 비밀번호 일치" << endl;
 
+                if (room.isInGame) {
+                    outResponse = "GAME_ALREADY_STARTED\n";
+                    cout << "[Send to Client] " << outResponse;
+                    return false;
+                }
+
                 if (room.users.size() >= maxPlayers) {
                     outResponse = "ROOM_FULL\n";
                     cout << "[Send to Client] " << outResponse;
@@ -434,6 +440,7 @@ bool RoomManager::TryStartGame(const string& roomName, vector<string>& usersOut)
                     string nickname = Trim(rawNickname);
                     usersOut.push_back(nickname);
                 }
+                room.isInGame = true;
                 return true;
             }
             return false;
@@ -506,6 +513,47 @@ void RoomManager::BroadcastToUserRoom(const std::string& senderId, const std::st
     }
 }
 
+void RoomManager::BroadcastToRoomExcept(SOCKET exceptSocket, const std::string& message)
+{
+    std::lock_guard<std::mutex> lockRooms(roomsMutex);
+
+    // excludedSocket이 속한 방 찾기
+    auto it = std::find_if(rooms.begin(), rooms.end(), [&](const Room& room) {
+        for (const auto& userId : room.users)
+        {
+            auto clientIt = clientHandler_.GetClientsMap().find(userId);
+            if (clientIt != clientHandler_.GetClientsMap().end())
+            {
+                if (clientIt->second->socket == exceptSocket)
+                    return true;
+            }
+        }
+        return false;
+        });
+
+    if (it == rooms.end()) return;
+
+    Room& room = *it;
+
+    std::lock_guard<std::mutex> lockClients(server_.clientsMutex);
+    auto& clientsMap = clientHandler_.GetClientsMap();
+
+    std::string msgWithNewline = message;
+    if (!msgWithNewline.empty() && msgWithNewline.back() != '\n') {
+        msgWithNewline += "\n";
+    }
+
+    for (const auto& userId : room.users)
+    {
+        auto clientIt = clientsMap.find(userId);
+        if (clientIt != clientsMap.end())
+        {
+            if (clientIt->second->socket == exceptSocket) continue;
+            send(clientIt->second->socket, msgWithNewline.c_str(), (int)msgWithNewline.size(), 0);
+        }
+    }
+}
+
 std::string RoomManager::GetUserRoomId(const std::string& userId) {
     std::lock_guard<std::mutex> lockRooms(roomsMutex);
 
@@ -551,7 +599,7 @@ bool RoomManager::HandleReadyToExit(const std::string& userId, const std::string
         if (it == rooms.end())
             return false;
 
-        const Room& room = *it;
+        Room& room = *it;
         roomUsers = room.users;
 
         allReady = true;
@@ -563,10 +611,32 @@ bool RoomManager::HandleReadyToExit(const std::string& userId, const std::string
                 break;
             }
         }
+        if (allReady)
+        {
+            // 게임 종료 상태로 설정
+            room.isInGame = false;
+            std::cout << "[RoomManager] 방 '" << room.roomName << "' isInGame = false 로 변경됨 (게임 종료)\n";
+        }
     }
 
     // 준비 신호 브로드캐스트
-    BroadcastMessageExcept(excludeSocket, "READY_TO_EXIT|" + nickname);
+    {
+        std::lock_guard<std::mutex> clientLock(server_.clientsMutex);
+        auto& clientsMap = clientHandler_.GetClientsMap();
+
+        for (const auto& uid : roomUsers)
+        {
+            if (uid == userId) continue; // 자신 제외
+
+            auto it = clientsMap.find(uid);
+            if (it != clientsMap.end())
+            {
+                SOCKET s = it->second->socket;
+                std::string msg = "READY_TO_EXIT|" + nickname + "\n";
+                send(s, msg.c_str(), (int)msg.size(), 0);
+            }
+        }
+    }
 
     if (allReady)
     {

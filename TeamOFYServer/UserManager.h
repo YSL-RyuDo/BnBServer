@@ -39,7 +39,7 @@ public:
 	vector<int> GetCharactersByUserId(const std::string& userId);
 	UserProfile& GetUserProfileById(const std::string& id);
 	void UpdateWinLoss(const std::string& userId, bool isWin, int charIndex);
-
+	int GetAttackByIndex(int index);
 private:
 	Server& server_;
 	ClientHandler* clientHandler_ = nullptr;
@@ -51,5 +51,6 @@ private:
 	vector<UserCharacterEmotes> userEmotes;
 	vector<UserWinLossStats> userStats;
 	vector<UserBallon> userBallons;
+	
 };
 
