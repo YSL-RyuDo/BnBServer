@@ -39,7 +39,7 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
         if (message.empty())
             break;
 
-        if (message.rfind("MOVE|", 0) != 0) 
+        if (message.rfind("MOVE|", 0) != 0 || message.rfind("MELODY_MOVE|", 0) != 0)
         {
             cout << "[수신] 클라이언트 메시지 - IP: " << client->port << ", 메시지: '" << message << "'" << endl;
         }
@@ -481,6 +481,34 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
             roomManager_.BroadcastToRoomExcept(client->socket, forwardMsg);
             std::cout << "[Server] WEAPON_ATTACK 처리 완료 from " << nickname << std::endl;
         }
+        else if (message.rfind("MELODY_MOVE|", 0) == 0)
+        {
+            std::string data = message.substr(strlen("MELODY_MOVE|"));
+
+            size_t first = data.find('|');
+            if (first == std::string::npos) return;
+            std::string nickname = data.substr(0, first);
+
+            size_t second = data.find('|', first + 1);
+            if (second == std::string::npos) return;
+            std::string posStr = data.substr(first + 1, second - first - 1);
+
+            std::string rotYStr = data.substr(second + 1);
+
+            std::string forwardMsg = "MELODY_MOVE|" + nickname + "|" + posStr + "|" + rotYStr + "\n";
+            roomManager_.BroadcastToRoomExcept(client->socket, forwardMsg);
+
+            std::cout << "[Server] Melody 이동 정보 브로드캐스트 (" << nickname << "): " << posStr << ", " << rotYStr << std::endl;
+            }
+        else if (message.rfind("MELODY_DESTROY|", 0) == 0)
+        {
+            std::string nickname = message.substr(strlen("MELODY_DESTROY|"));
+            std::string forwardMsg = "MELODY_DESTROY|" + nickname + "\n";
+
+            roomManager_.BroadcastToRoomExcept(client->socket, forwardMsg);
+            std::cout << "[Server] Melody 제거 요청 처리 완료 from " << nickname << std::endl;
+}
+
         else if (message.rfind("HIT|", 0) == 0)
         {
             std::string data = message.substr(strlen("HIT|")); // weaponIndex|targetNickname
@@ -505,7 +533,6 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
             std::cout << "[서버] " << attackerNickname << " → " << targetNickname
                 << " 에게 " << damage << " 데미지 전달\n";
                 }
-
 
         else if (message.rfind("PLACE_BALLOON|", 0) == 0)
         {
