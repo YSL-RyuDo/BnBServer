@@ -39,7 +39,7 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
         if (message.empty())
             break;
 
-        if (message.rfind("MOVE|", 0) != 0 || message.rfind("MELODY_MOVE|", 0) != 0)
+        if (message.rfind("MOVE|", 0) != 0 && message.rfind("MELODY_MOVE|", 0) != 0)
         {
             cout << "[수신] 클라이언트 메시지 - IP: " << client->port << ", 메시지: '" << message << "'" << endl;
         }
