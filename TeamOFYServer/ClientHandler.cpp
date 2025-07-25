@@ -462,25 +462,57 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
         {
             std::string data = message.substr(strlen("WEAPON_ATTACK|"));
 
+            // 1. 첫 번째 구분자 '|'
             size_t first = data.find('|');
             if (first == std::string::npos) return;
             std::string nickname = data.substr(0, first);
 
+            // 2. 두 번째 구분자 '|'
             size_t second = data.find('|', first + 1);
             if (second == std::string::npos) return;
             std::string charIndexStr = data.substr(first + 1, second - first - 1);
 
+            // 3. 세 번째 구분자 '|'
             size_t third = data.find('|', second + 1);
             if (third == std::string::npos) return;
             std::string positionStr = data.substr(second + 1, third - second - 1);
 
-            std::string rotYStr = data.substr(third + 1);
+            // 4. 네 번째 구분자 '|'
+            size_t fourth = data.find('|', third + 1);
 
-            std::string forwardMsg = "WEAPON_ATTACK|" + nickname + "|" + charIndexStr + "|" + positionStr + "|" + rotYStr + "\n";
+            std::string rotYStr;
+            std::string laserLengthStr;
 
+            if (fourth == std::string::npos)
+            {
+                // laserLength 필드 없음 (기존 메시지)
+                rotYStr = data.substr(third + 1);
+                laserLengthStr = "";
+            }
+            else
+            {
+                // laserLength 필드 있음
+                rotYStr = data.substr(third + 1, fourth - third - 1);
+                laserLengthStr = data.substr(fourth + 1);
+            }
+
+            // 5. 클라이언트로 전송할 메시지 조립
+            std::string forwardMsg;
+            if (!laserLengthStr.empty())
+            {
+                forwardMsg = "WEAPON_ATTACK|" + nickname + "|" + charIndexStr + "|" + positionStr + "|" + rotYStr + "|" + laserLengthStr + "\n";
+            }
+            else
+            {
+                forwardMsg = "WEAPON_ATTACK|" + nickname + "|" + charIndexStr + "|" + positionStr + "|" + rotYStr + "\n";
+            }
+
+            // 6. 룸 내 다른 클라이언트들에게 전송
             roomManager_.BroadcastToRoomExcept(client->socket, forwardMsg);
+
             std::cout << "[Server] WEAPON_ATTACK 처리 완료 from " << nickname << std::endl;
-        }
+            }
+
         else if (message.rfind("MELODY_MOVE|", 0) == 0)
         {
             std::string data = message.substr(strlen("MELODY_MOVE|"));
