@@ -190,7 +190,7 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
             }
 
 
-        else if (message.rfind("ENTER_ROOM|", 0) == 0) {
+        /*else if (message.rfind("ENTER_ROOM|", 0) == 0) {
             string data = message.substr(strlen("ENTER_ROOM|"));
             stringstream ss(data);
             string roomName, password;
@@ -201,8 +201,27 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
             if (!roomManager_.EnterRoom(client, roomName, password, response)) {
             }
             send(client->socket, response.c_str(), (int)response.size(), 0);
-        }
-        
+        }*/
+        else if (message.rfind("ENTER_ROOM|", 0) == 0) {
+            string data = message.substr(strlen("ENTER_ROOM|"));
+            stringstream ss(data);
+            string roomName, password, coopStr;
+            getline(ss, roomName, '|');
+            getline(ss, password, '|');
+            getline(ss, coopStr, '|'); // 협동전 여부 추가
+
+            bool isCoopMode = false;
+            if (!coopStr.empty()) {
+                isCoopMode = (coopStr == "true" || coopStr == "1");
+            }
+
+            string response;
+            if (!roomManager_.EnterRoom(client, roomName, password, isCoopMode, response)) {
+                // 실패 시 추가 처리 가능
+            }
+            send(client->socket, response.c_str(), (int)response.size(), 0);
+            }
+
         else if (message.rfind("ROOM_MESSAGE|", 0) == 0)
         {
             // 기존 처리 코드를 RoomManager에 넘기기

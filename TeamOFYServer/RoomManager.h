@@ -29,7 +29,13 @@ public:
     bool CreateRoom(shared_ptr<ClientInfo> client, const string& roomName, const string& mapName, const string& password, bool isCoopMode);
 
     void BroadcastMessageExcept(SOCKET exceptSocket, const string& message);
-    bool EnterRoom(shared_ptr<ClientInfo> client, const string& roomName, const string& password, string& outResponse);
+    //bool EnterRoom(shared_ptr<ClientInfo> client, const string& roomName, const string& password, string& outResponse);
+    bool EnterRoom(
+        shared_ptr<ClientInfo> client,
+        const string& roomName,
+        const string& password,
+        bool isCoopMode,  // 클라이언트에서 전달된 협동전 여부
+        string& response);
     void HandleRoomChatMessage(shared_ptr<ClientInfo> sender, const string& data);
 
     void ExitRoom(const string& message);
