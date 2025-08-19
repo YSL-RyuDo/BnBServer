@@ -25,7 +25,9 @@ public:
 
     // 방 목록 전체 전송
     void BroadcastRoomlist(shared_ptr<ClientInfo> client);
-    bool CreateRoom(shared_ptr<ClientInfo> client, const string& roomName, const string& mapName, const string& password);
+    //bool CreateRoom(shared_ptr<ClientInfo> client, const string& roomName, const string& mapName, const string& password);
+    bool CreateRoom(shared_ptr<ClientInfo> client, const string& roomName, const string& mapName, const string& password, bool isCoopMode);
+
     void BroadcastMessageExcept(SOCKET exceptSocket, const string& message);
     bool EnterRoom(shared_ptr<ClientInfo> client, const string& roomName, const string& password, string& outResponse);
     void HandleRoomChatMessage(shared_ptr<ClientInfo> sender, const string& data);

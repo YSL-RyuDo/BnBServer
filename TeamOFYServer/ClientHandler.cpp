@@ -148,16 +148,40 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
             userManager_.LogoutUser(client);
             response.clear();
         }
+        //else if (message.rfind("CREATE_ROOM|", 0) == 0) {
+        //    string data = message.substr(strlen("CREATE_ROOM|"));
+        //    stringstream ss(data);
+        //    string roomName, mapName, password;
+
+        //    if (getline(ss, roomName, '|') && getline(ss, mapName, '|')) {
+        //        if (!getline(ss, password)) password = "";
+
+        //        // 룸 매니저에 위임
+        //        roomManager_.CreateRoom(client, roomName, mapName, password);
+
+        //        response.clear();
+        //    }
+        //    else {
+        //        response = "CREATE_ROOM_FORMAT_ERROR\n";
+        //    }
+        //}
         else if (message.rfind("CREATE_ROOM|", 0) == 0) {
             string data = message.substr(strlen("CREATE_ROOM|"));
             stringstream ss(data);
-            string roomName, mapName, password;
+            string roomName, mapName, password, coopStr;
+            bool isCoop = false;
 
+            // roomName, mapName, password, coopStr 순서로 읽기
             if (getline(ss, roomName, '|') && getline(ss, mapName, '|')) {
-                if (!getline(ss, password)) password = "";
+                if (!getline(ss, password, '|')) password = "";
 
-                // 룸 매니저에 위임
-                roomManager_.CreateRoom(client, roomName, mapName, password);
+                if (getline(ss, coopStr, '|')) {
+                    // coopStr이 "true"면 true, 아니면 false
+                    isCoop = (coopStr == "true" || coopStr == "1");
+                }
+
+                // 룸 매니저에 위임 (isCoop 추가)
+                roomManager_.CreateRoom(client, roomName, mapName, password, isCoop);
 
                 response.clear();
             }
@@ -165,6 +189,7 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
                 response = "CREATE_ROOM_FORMAT_ERROR\n";
             }
         }
+
         else if (message.rfind("ENTER_ROOM|", 0) == 0) {
             string data = message.substr(strlen("ENTER_ROOM|"));
             stringstream ss(data);

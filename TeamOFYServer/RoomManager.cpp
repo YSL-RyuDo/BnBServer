@@ -4,6 +4,31 @@
 RoomManager::RoomManager(Server& server, ClientHandler& clientHandler)
     : server_(server), clientHandler_(clientHandler) {}
 
+//void RoomManager::BroadcastRoomlist(shared_ptr<ClientInfo> client)
+//{
+//    string message = "ROOM_LIST|";
+//
+//    {
+//        lock_guard<mutex> lock(roomsMutex);
+//        for (size_t i = 0; i < rooms.size(); ++i) {
+//            const Room& room = rooms[i];
+//            message += room.roomName + "," + room.mapName + "," + (room.password.empty() ? "0" : "1");
+//            if (i != rooms.size() - 1)
+//                message += "|";  // 방 구분자
+//        }
+//    }
+//
+//    message += "\n";
+//    cout << "[룸리스트]" << message << endl;
+//    int sendLen = send(client->socket, message.c_str(), (int)message.size(), 0);
+//    if (sendLen == SOCKET_ERROR) {
+//        std::cout << "[BroadcastRoomlist] 전송 실패: " << WSAGetLastError() << std::endl;
+//    }
+//    else {
+//        std::cout << "[BroadcastRoomlist] 전송 완료: " << message;
+//    }
+//}
+
 void RoomManager::BroadcastRoomlist(shared_ptr<ClientInfo> client)
 {
     string message = "ROOM_LIST|";
@@ -12,7 +37,7 @@ void RoomManager::BroadcastRoomlist(shared_ptr<ClientInfo> client)
         lock_guard<mutex> lock(roomsMutex);
         for (size_t i = 0; i < rooms.size(); ++i) {
             const Room& room = rooms[i];
-            message += room.roomName + "," + room.mapName + "," + (room.password.empty() ? "0" : "1");
+            message += room.roomName + "," + room.mapName + "," + (room.password.empty() ? "0" : "1") + "," + (room.isCoopMode ? "1" : "0");
             if (i != rooms.size() - 1)
                 message += "|";  // 방 구분자
         }
@@ -29,8 +54,66 @@ void RoomManager::BroadcastRoomlist(shared_ptr<ClientInfo> client)
     }
 }
 
+
 // RoomManager 클래스 내
-bool RoomManager::CreateRoom(shared_ptr<ClientInfo> client, const string& roomName, const string& mapName, const string& password) {
+//bool RoomManager::CreateRoom(shared_ptr<ClientInfo> client, const string& roomName, const string& mapName, const string& password) {
+//    if (client->id.empty()) {
+//        cout << "[RoomManager] 로그인 안 된 클라이언트" << endl;
+//        string errorMsg = "ERROR|LOGIN_REQUIRED\n";
+//        send(client->socket, errorMsg.c_str(), (int)errorMsg.size(), 0);
+//        return false;
+//    }
+//
+//    string userListStr;
+//
+//    {
+//        lock_guard<mutex> lock(roomsMutex);
+//
+//        Room newRoom;
+//        newRoom.roomName = roomName;
+//        newRoom.mapName = mapName;
+//        newRoom.password = password;
+//        newRoom.users.push_back(client->id);
+//
+//        rooms.push_back(newRoom);
+//
+//        Room& createdRoom = rooms.back();
+//
+//        for (size_t i = 0; i < createdRoom.users.size(); ++i) {
+//            if (i > 0) userListStr += ",";
+//            string username = createdRoom.users[i];
+//            string rawNickname = clientHandler_.GetNicknameById(username);
+//            string nickname = Trim(rawNickname);
+//            int characterIndex = 0;
+//
+//            auto it = createdRoom.characterSelections.find(username);
+//            if (it != createdRoom.characterSelections.end()) {
+//                characterIndex = it->second;
+//            }
+//
+//            userListStr += nickname + ":" + std::to_string(characterIndex);
+//        }
+//
+//    }
+//    string hasPasswordStr = password.empty() ? "NO_PASSWORD" : "HAS_PASSWORD";
+//
+//    string successMsg = "CREATE_ROOM_SUCCESS|" + roomName + "|" + mapName + "|CREATOR|" + userListStr + "|" + hasPasswordStr + "\n";
+//    cout << successMsg << endl;
+//    send(client->socket, successMsg.c_str(), (int)successMsg.size(), 0);
+//
+//    string broadcastMsg = "ROOM_CREATED|" + roomName + "|" + mapName + "|" + userListStr + "|" + hasPasswordStr + "\n";
+//    BroadcastMessageExcept(client->socket, broadcastMsg);
+//
+//
+//    return true;
+//}
+bool RoomManager::CreateRoom(
+    shared_ptr<ClientInfo> client,
+    const string& roomName,
+    const string& mapName,
+    const string& password,
+    bool isCoopMode) // ← 새 파라미터
+{
     if (client->id.empty()) {
         cout << "[RoomManager] 로그인 안 된 클라이언트" << endl;
         string errorMsg = "ERROR|LOGIN_REQUIRED\n";
@@ -47,10 +130,10 @@ bool RoomManager::CreateRoom(shared_ptr<ClientInfo> client, const string& roomNa
         newRoom.roomName = roomName;
         newRoom.mapName = mapName;
         newRoom.password = password;
+        newRoom.isCoopMode = isCoopMode; // ← 협동전 여부 설정
         newRoom.users.push_back(client->id);
 
         rooms.push_back(newRoom);
-
         Room& createdRoom = rooms.back();
 
         for (size_t i = 0; i < createdRoom.users.size(); ++i) {
@@ -67,20 +150,24 @@ bool RoomManager::CreateRoom(shared_ptr<ClientInfo> client, const string& roomNa
 
             userListStr += nickname + ":" + std::to_string(characterIndex);
         }
-
     }
-    string hasPasswordStr = password.empty() ? "NO_PASSWORD" : "HAS_PASSWORD";
 
-    string successMsg = "CREATE_ROOM_SUCCESS|" + roomName + "|" + mapName + "|CREATOR|" + userListStr + "|" + hasPasswordStr + "\n";
+    string hasPasswordStr = password.empty() ? "NO_PASSWORD" : "HAS_PASSWORD";
+    string coopStr = isCoopMode ? "1" : "0"; // 1 = 협동전, 0 = 개인전
+
+    string successMsg = "CREATE_ROOM_SUCCESS|" + roomName + "|" + mapName + "|CREATOR|"
+        + userListStr + "|" + hasPasswordStr + "|" + coopStr + "\n";
     cout << successMsg << endl;
     send(client->socket, successMsg.c_str(), (int)successMsg.size(), 0);
 
-    string broadcastMsg = "ROOM_CREATED|" + roomName + "|" + mapName + "|" + userListStr + "|" + hasPasswordStr + "\n";
+    string broadcastMsg = "ROOM_CREATED|" + roomName + "|" + mapName + "|"
+        + userListStr + "|" + hasPasswordStr + "|" + coopStr + "\n";
     BroadcastMessageExcept(client->socket, broadcastMsg);
-
 
     return true;
 }
+
+
 
 void RoomManager::BroadcastMessageExcept(SOCKET exceptSocket, const string& message) {
     lock_guard<mutex> lock(server_.clientsMutex);
