@@ -112,8 +112,9 @@ bool RoomManager::CreateRoom(
     const string& roomName,
     const string& mapName,
     const string& password,
-    bool isCoopMode) // ← 새 파라미터
+    bool isCoopMode) // 클라이언트에서 전달된 협동전 여부
 {
+    // 로그인 확인
     if (client->id.empty()) {
         cout << "[RoomManager] 로그인 안 된 클라이언트" << endl;
         string errorMsg = "ERROR|LOGIN_REQUIRED\n";
@@ -126,6 +127,7 @@ bool RoomManager::CreateRoom(
     {
         lock_guard<mutex> lock(roomsMutex);
 
+        // 새 룸 생성
         Room newRoom;
         newRoom.roomName = roomName;
         newRoom.mapName = mapName;
@@ -136,6 +138,7 @@ bool RoomManager::CreateRoom(
         rooms.push_back(newRoom);
         Room& createdRoom = rooms.back();
 
+        // 유저 목록 문자열 생성
         for (size_t i = 0; i < createdRoom.users.size(); ++i) {
             if (i > 0) userListStr += ",";
             string username = createdRoom.users[i];
@@ -152,20 +155,24 @@ bool RoomManager::CreateRoom(
         }
     }
 
+    // 비밀번호 및 협동전 여부 문자열
     string hasPasswordStr = password.empty() ? "NO_PASSWORD" : "HAS_PASSWORD";
     string coopStr = isCoopMode ? "1" : "0"; // 1 = 협동전, 0 = 개인전
 
+    // 클라이언트에게 성공 메시지 전송
     string successMsg = "CREATE_ROOM_SUCCESS|" + roomName + "|" + mapName + "|CREATOR|"
         + userListStr + "|" + hasPasswordStr + "|" + coopStr + "\n";
     cout << successMsg << endl;
     send(client->socket, successMsg.c_str(), (int)successMsg.size(), 0);
 
+    // 다른 클라이언트들에게 방 생성 브로드캐스트
     string broadcastMsg = "ROOM_CREATED|" + roomName + "|" + mapName + "|"
         + userListStr + "|" + hasPasswordStr + "|" + coopStr + "\n";
     BroadcastMessageExcept(client->socket, broadcastMsg);
 
     return true;
 }
+
 
 
 

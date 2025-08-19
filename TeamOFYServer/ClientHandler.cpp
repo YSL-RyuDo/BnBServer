@@ -171,12 +171,11 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
             string roomName, mapName, password, coopStr;
             bool isCoop = false;
 
-            // roomName, mapName, password, coopStr 순서로 읽기
             if (getline(ss, roomName, '|') && getline(ss, mapName, '|')) {
                 if (!getline(ss, password, '|')) password = "";
 
                 if (getline(ss, coopStr, '|')) {
-                    // coopStr이 "true"면 true, 아니면 false
+                    for (auto& c : coopStr) c = tolower(c);
                     isCoop = (coopStr == "true" || coopStr == "1");
                 }
 
@@ -188,7 +187,8 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
             else {
                 response = "CREATE_ROOM_FORMAT_ERROR\n";
             }
-        }
+            }
+
 
         else if (message.rfind("ENTER_ROOM|", 0) == 0) {
             string data = message.substr(strlen("ENTER_ROOM|"));
