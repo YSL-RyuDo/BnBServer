@@ -537,9 +537,19 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
             std::string nickname = message.substr(strlen("MELODY_DESTROY|"));
             std::string forwardMsg = "MELODY_DESTROY|" + nickname + "\n";
 
-            roomManager_.BroadcastToRoomExcept(client->socket, forwardMsg);
+            roomManager_.BroadcastToUserRoom(client->id, forwardMsg);
             std::cout << "[Server] Melody 제거 요청 처리 완료 from " << nickname << std::endl;
-}
+        }
+        else if (message.rfind("HITWALL|", 0) == 0)
+        {
+            std::string wallName = message.substr(strlen("HITWALL|"));
+
+            std::string forwardMsg = "DESTROYWALL|" + wallName + "\n";
+            roomManager_.BroadcastToUserRoom(client->id, forwardMsg);
+
+            std::cout << "[Server] Wall 파괴 브로드캐스트: " << wallName << std::endl;
+        }
+
 
         else if (message.rfind("HIT|", 0) == 0)
         {
