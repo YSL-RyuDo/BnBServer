@@ -44,7 +44,13 @@ public:
     void HandleCharacterChoice(ClientInfo& client, const string& data);
 
     bool TryStartGame(const string& roomName, std::vector<string>& usersOut);
+    bool TryStartCoopGame(const string& roomName,
+        vector<string>& userList,
+        vector<string>& blueTeam,
+        vector<string>& redTeam);
     Room* FindRoomByName(const std::string& roomName);
+    Room* FindRoomByName_NoLock(const std::string& roomName);
+
     string GetGameUserListResponse(const string& roomName);
     void BroadcastToUserRoom(const std::string& senderId, const std::string& message);
     void BroadcastToRoomExcept(SOCKET excludedSocket, const std::string& message);

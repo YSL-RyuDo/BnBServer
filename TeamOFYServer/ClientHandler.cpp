@@ -276,7 +276,7 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
             for (size_t i = 0; i < usersInRoom.size(); ++i)
             {
                 string uid = usersInRoom[i];
-                string nick = GetNicknameById(uid);
+                string nick = Trim(GetNicknameById(uid)); // ID → 닉네임 변환
 
                 int characterIndex = 0;
                 auto itChar = room->characterSelections.find(uid);
@@ -293,14 +293,13 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
             }
 
             string response = "REFRESH_ROOM_SUCCESS|" + room->roomName + "|" + room->mapName + "|" + userListStr + "\n";
+            cout << response << endl;
             roomManager_.BroadcastToUserRoom(userId, response);
 
-            string serverMsg = "[서버] : " + nickname + ", " + newTeam + "로 변경하였습니다";
-            roomManager_.HandleRoomChatMessage(nullptr, serverMsg);
+            string serverMsg = nickname + " has been changed to " + newTeam;
+            roomManager_.SendServerMessageToRoom(room->roomName, serverMsg);
 
         }
-
-
 
         else if (message.rfind("START_GAME|", 0) == 0)
         {
@@ -327,6 +326,46 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
             {
                 string userId = GetIdByNickname(user);
                 //string userId = Trim(rawuserId);
+                auto it = clientsMap.find(userId);
+                if (it != clientsMap.end())
+                {
+                    send(it->second->socket, startMsg.c_str(), (int)startMsg.size(), 0);
+                }
+            }
+        }
+
+        else if (message.rfind("START_COOP_GAME|", 0) == 0)
+        {
+            string roomName = message.substr(strlen("START_COOP_GAME|"));
+
+            vector<string> userList;
+            vector<string> blueTeam;
+            vector<string> redTeam;
+
+            // 방에서 협동전 조건 체크 후 게임 시작 시도
+            if (!roomManager_.TryStartCoopGame(roomName, userList, blueTeam, redTeam))
+            {
+                string failMsg = "START_COOP_GAME_FAIL|";
+                if (userList.empty())
+                    failMsg += "ROOM_NOT_FOUND\n";
+                else if (userList.size() < 4)
+                    failMsg += "NOT_ENOUGH_PLAYERS\n";
+                else
+                    failMsg += "INVALID_TEAM_COMPOSITION\n"; // 팀 구성 조건 불만족
+
+                send(client->socket, failMsg.c_str(), (int)failMsg.size(), 0);
+                return;
+            }
+
+            // 성공
+            string response = "START_GAME_SUCCESS|" + roomName + "\n";
+            send(client->socket, response.c_str(), (int)response.size(), 0);
+
+            // 방 전체 유저에게 게임 시작 알림
+            string startMsg = "GAME_START|" + roomName + "\n";
+            for (const auto& user : userList)
+            {
+                string userId = GetIdByNickname(user);
                 auto it = clientsMap.find(userId);
                 if (it != clientsMap.end())
                 {

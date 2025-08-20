@@ -260,18 +260,16 @@ void RoomManager::HandleRoomChatMessage(shared_ptr<ClientInfo> sender, const str
     }
 }
 
-//임시
 void RoomManager::SendServerMessageToRoom(const std::string& roomName, const std::string& chatMsg)
 {
-    std::string fullMsg = "ROOM_CHAT|" + roomName + "|서버:" + chatMsg + "\n";
+    std::string fullMsg = "ROOM_CHAT|" + roomName + "|Server:" + chatMsg + "\n";
 
     std::lock_guard<std::mutex> lock(roomsMutex);
 
-    Room* room = FindRoomByName(roomName);
+    Room* room = FindRoomByName_NoLock(roomName);
     if (!room) return;
 
     auto& clientsMap = clientHandler_.GetClientsMap();
-
     for (const auto& userId : room->users)
     {
         auto it = clientsMap.find(userId);
@@ -281,6 +279,7 @@ void RoomManager::SendServerMessageToRoom(const std::string& roomName, const std
         }
     }
 }
+
 
 
 void RoomManager::ExitRoom(const std::string& message) {
@@ -491,9 +490,76 @@ bool RoomManager::TryStartGame(const string& roomName, vector<string>& usersOut)
     return false;
 }
 
+bool RoomManager::TryStartCoopGame(const string& roomName,
+    vector<string>& userList,
+    vector<string>& blueTeam,
+    vector<string>& redTeam)
+{
+    lock_guard<mutex> lock(roomsMutex);
+
+    for (auto& room : rooms)
+    {
+        if (room.roomName == roomName)
+        {
+            // 인원 4명 아니면 실패
+            if (room.users.size() != 4)
+                return false;
+
+            userList.clear();
+            blueTeam.clear();
+            redTeam.clear();
+
+            for (const auto& userInfo : room.users)
+            {
+                // userInfo = "닉네임:캐릭터:팀이름"
+                vector<string> tokens;
+                size_t start = 0, end;
+                while ((end = userInfo.find(':', start)) != string::npos) {
+                    tokens.push_back(userInfo.substr(start, end - start));
+                    start = end + 1;
+                }
+                tokens.push_back(userInfo.substr(start));
+
+                if (tokens.size() < 3) continue; // 잘못된 데이터면 무시
+
+                string nickname = Trim(tokens[0]);
+                string team = Trim(tokens[2]);
+
+                userList.push_back(nickname);
+
+                if (team == "BLUE")
+                    blueTeam.push_back(nickname);
+                else if (team == "RED")
+                    redTeam.push_back(nickname);
+            }
+
+            // 팀 인원 조건 확인
+            if (blueTeam.size() == 2 && redTeam.size() == 2)
+            {
+                room.isInGame = true;
+                return true;
+            }
+
+            return false; // 팀 조건 불만족
+        }
+    }
+    return false; // 방 없음
+}
+
+
 Room* RoomManager::FindRoomByName(const std::string& roomName)
 {
     std::lock_guard<std::mutex> lock(roomsMutex);
+    for (auto& room : rooms)
+    {
+        if (room.roomName == roomName)
+            return &room;
+    }
+    return nullptr;
+}
+
+Room* RoomManager::FindRoomByName_NoLock(const std::string& roomName)
+{
     for (auto& room : rooms)
     {
         if (room.roomName == roomName)
