@@ -249,20 +249,17 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
             if (!room)
                 return;
 
-            // 협동전이 아니면 무시
             if (!room->isCoopMode)
                 return;
 
-            // 현재 팀 가져오기
             auto itTeam = room->teamAssignments.find(userId);
             if (itTeam == room->teamAssignments.end())
-                return; // None 또는 할당되지 않은 경우 무시
+                return;
 
             string& currentTeam = itTeam->second;
             if (currentTeam == "None")
                 return;
 
-            // 팀 토글
             string newTeam;
             if (currentTeam == "Blue")
                 newTeam = "Red";
@@ -270,13 +267,12 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
                 newTeam = "Blue";
             currentTeam = newTeam;
 
-            // 방 전체 유저 목록 문자열 생성 (실시간 반영)
             string userListStr;
             auto usersInRoom = roomManager_.GetUserIdsInRoom(roomId);
             for (size_t i = 0; i < usersInRoom.size(); ++i)
             {
                 string uid = usersInRoom[i];
-                string nick = Trim(GetNicknameById(uid)); // ID → 닉네임 변환
+                string nick = Trim(GetNicknameById(uid));
 
                 int characterIndex = 0;
                 auto itChar = room->characterSelections.find(uid);
@@ -301,7 +297,7 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
 
         }
 
-        else if (message.rfind("START_GAME|", 0) == 0)
+        /*else if (message.rfind("START_GAME|", 0) == 0)
         {
             string roomName = message.substr(strlen("START_GAME|"));
             vector<string> userList;
@@ -325,43 +321,71 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
             for (const auto& user : userList)
             {
                 string userId = GetIdByNickname(user);
-                //string userId = Trim(rawuserId);
                 auto it = clientsMap.find(userId);
                 if (it != clientsMap.end())
                 {
                     send(it->second->socket, startMsg.c_str(), (int)startMsg.size(), 0);
                 }
             }
-        }
+        }*/
 
-        else if (message.rfind("START_COOP_GAME|", 0) == 0)
+        else if (message.rfind("START_GAME|", 0) == 0)
         {
-            string roomName = message.substr(strlen("START_COOP_GAME|"));
-
+            string roomName = message.substr(strlen("START_GAME|"));
             vector<string> userList;
-            vector<string> blueTeam;
-            vector<string> redTeam;
 
-            // 방에서 협동전 조건 체크 후 게임 시작 시도
-            if (!roomManager_.TryStartCoopGame(roomName, userList, blueTeam, redTeam))
+            bool isCoop = false;
             {
-                string failMsg = "START_COOP_GAME_FAIL|";
-                if (userList.empty())
-                    failMsg += "ROOM_NOT_FOUND\n";
-                else if (userList.size() < 4)
-                    failMsg += "NOT_ENOUGH_PLAYERS\n";
-                else
-                    failMsg += "INVALID_TEAM_COMPOSITION\n"; // 팀 구성 조건 불만족
-
-                send(client->socket, failMsg.c_str(), (int)failMsg.size(), 0);
-                return;
+                Room* room = roomManager_.FindRoomByName(roomName);
+                if (room == nullptr) {
+                    string failMsg = "START_GAME_FAIL|ROOM_NOT_FOUND\n";
+                    send(client->socket, failMsg.c_str(), (int)failMsg.size(), 0);
+                    return;
+                }
+                isCoop = room->isCoopMode;
             }
 
-            // 성공
+            if (!isCoop)
+            {
+                // 개인전 처리
+                if (!roomManager_.TryStartGame(roomName, userList))
+                {
+                    string failMsg = "START_GAME_FAIL|";
+                    if (userList.empty())
+                        failMsg += "ROOM_NOT_FOUND\n";
+                    else
+                        failMsg += "NOT_ENOUGH_PLAYERS\n";
+
+                    send(client->socket, failMsg.c_str(), (int)failMsg.size(), 0);
+                    return;
+                }
+            }
+            else
+            {
+                // 협동전 처리
+                vector<string> blueTeam;
+                vector<string> redTeam;
+
+                if (!roomManager_.TryStartCoopGame(roomName, userList, blueTeam, redTeam))
+                {
+                    string failMsg = "START_GAME_FAIL|";
+                    if (userList.empty())
+                        failMsg += "ROOM_NOT_FOUND222\n";
+                    else if (userList.size() < 4)
+                        failMsg += "NOT_ENOUGH_PLAYERS\n";
+                    else
+                        failMsg += "INVALID_TEAM_COMPOSITION\n";
+
+                    send(client->socket, failMsg.c_str(), (int)failMsg.size(), 0);
+                    return;
+                }
+            }
+
+            // 성공 응답
             string response = "START_GAME_SUCCESS|" + roomName + "\n";
             send(client->socket, response.c_str(), (int)response.size(), 0);
 
-            // 방 전체 유저에게 게임 시작 알림
+            // 게임 시작 브로드캐스트
             string startMsg = "GAME_START|" + roomName + "\n";
             for (const auto& user : userList)
             {
@@ -374,9 +398,9 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
             }
         }
 
+        
         else if (message.rfind("GET_MAP|", 0) == 0)
         {
-            // message 예: GET_MAP|roomName|mapName
             std::string data = message.substr(strlen("GET_MAP|"));
             std::stringstream ss(data);
             std::string roomName, mapName;
@@ -392,15 +416,13 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
                 return;
             }
 
-            // 맵 데이터와 스폰 좌표 불러오기
             auto result = mapManager_.LoadMapByNameWithSpawns(mapName);
             auto& mapData = result.first;
             auto& allSpawnPoints = result.second;
 
             Room* room = roomManager_.FindRoomByName(roomName);
             for (const auto& userId : room->users) {
-                string nickname = Trim(GetNicknameById(userId)); // 변환
-                // nickname으로 전송 메시지 구성
+                string nickname = Trim(GetNicknameById(userId));
             }
 
             size_t userCount = room->users.size();
@@ -674,30 +696,96 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
         }
 
 
+        //else if (message.rfind("HIT|", 0) == 0)
+        //{
+        //    std::string data = message.substr(strlen("HIT|")); // weaponIndex|targetNickname
+
+        //    size_t delim = data.find('|');
+        //    if (delim == std::string::npos) return;
+
+        //    std::string weaponIndexStr = data.substr(0, delim);
+        //    std::string targetNickname = data.substr(delim + 1);
+
+        //    int weaponIndex = std::stoi(weaponIndexStr);
+        //    int damage = userManager_.GetAttackByIndex(weaponIndex); // 무기 인덱스로 데미지 가져오기
+
+        //    std::string attackerId = client->id;
+        //    std::string attackerNickname = Trim(GetNicknameById(attackerId));
+
+        //    std::string resultMsg = "DAMAGE|" + targetNickname + "|" + std::to_string(damage) + "\n";
+
+        //    // 같은 방 전체에게 데미지 전달
+        //    roomManager_.BroadcastToUserRoom(attackerId, resultMsg);
+
+        //    std::cout << "[서버] " << attackerNickname << " → " << targetNickname
+        //        << " 에게 " << damage << " 데미지 전달\n";
+        //        }
+        
         else if (message.rfind("HIT|", 0) == 0)
         {
-            std::string data = message.substr(strlen("HIT|")); // weaponIndex|targetNickname
+            // 패킷 구조: HIT|weaponIndex|attackerNick|targetNick
+            std::string data = message.substr(strlen("HIT|"));
 
-            size_t delim = data.find('|');
-            if (delim == std::string::npos) return;
+            size_t delim1 = data.find('|');
+            if (delim1 == std::string::npos) return;
+            int weaponIndex = std::stoi(data.substr(0, delim1));
 
-            std::string weaponIndexStr = data.substr(0, delim);
-            std::string targetNickname = data.substr(delim + 1);
+            size_t delim2 = data.find('|', delim1 + 1);
+            if (delim2 == std::string::npos) return;
+            std::string attackerNick = data.substr(delim1 + 1, delim2 - (delim1 + 1));
 
-            int weaponIndex = std::stoi(weaponIndexStr);
-            int damage = userManager_.GetAttackByIndex(weaponIndex); // 무기 인덱스로 데미지 가져오기
+            size_t delim3 = data.find('|', delim2 + 1);
+            std::string targetNick;
+            if (delim3 == std::string::npos)
+                targetNick = data.substr(delim2 + 1);
+            else
+                targetNick = data.substr(delim2 + 1, delim3 - (delim2 + 1));
 
-            std::string attackerId = client->id;
-            std::string attackerNickname = Trim(GetNicknameById(attackerId));
+            // 닉네임 → 유저 ID 변환
+            std::string attackerId = GetIdByNickname(attackerNick);
+            std::string targetId = GetIdByNickname(targetNick);
 
-            std::string resultMsg = "DAMAGE|" + targetNickname + "|" + std::to_string(damage) + "\n";
+            // 이제 attackerId와 targetId로 룸 정보 및 팀 체크 가능
+            Room* room = roomManager_.GetRoomByUserId(attackerId);
+            if (room != nullptr)
+            {
+                std::string attackerTeam = "None";
+                std::string targetTeam = "None";
 
-            // 같은 방 전체에게 데미지 전달
-            roomManager_.BroadcastToUserRoom(attackerId, resultMsg);
+                if (room->isCoopMode)
+                {
+                    for (const auto& userId : room->users)
+                    {
+                        std::string team = "None";
+                        auto teamIt = room->teamAssignments.find(userId);
+                        if (teamIt != room->teamAssignments.end())
+                            team = teamIt->second;
 
-            std::cout << "[서버] " << attackerNickname << " → " << targetNickname
-                << " 에게 " << damage << " 데미지 전달\n";
+                        if (userId == attackerId) attackerTeam = team;
+                        if (userId == targetId)   targetTeam = team;
+                    }
+
+                    // 같은 팀이면 데미지 무효
+                    if (attackerTeam != "None" && attackerTeam == targetTeam)
+                    {
+                        std::cout << "[서버] " << attackerNick << " → " << targetNick
+                            << " (같은 팀, 데미지 무효)\n";
+                        return;
+                    }
                 }
+
+                // 데미지 전송
+                int damage = userManager_.GetAttackByIndex(weaponIndex);
+                std::string resultMsg = "DAMAGE|" + targetNick + "|" + std::to_string(damage) + "\n";
+                roomManager_.BroadcastToUserRoom(attackerId, resultMsg);
+
+                std::cout << "[서버] " << attackerNick << " → " << targetNick
+                    << " 에게 " << damage << " 데미지 전달\n";
+            }
+        }
+
+
+
 
         else if (message.rfind("PLACE_BALLOON|", 0) == 0)
         {

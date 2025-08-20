@@ -58,6 +58,7 @@ public:
     
     std::unordered_map<std::string, std::unordered_set<std::string>> deadUsersByRoom;
     string GetUserRoomId(const std::string& userId);
+    Room* GetRoomByUserId(const std::string& userId);
     vector<std::string> GetUserIdsInRoom(const std::string& roomId);
     bool HandleReadyToExit(const std::string& userId, const std::string& roomId, SOCKET excludeSocket);
     std::unordered_map<std::string, std::unordered_set<std::string>> readyUsersByRoom;

@@ -490,7 +490,8 @@ bool RoomManager::TryStartGame(const string& roomName, vector<string>& usersOut)
     return false;
 }
 
-bool RoomManager::TryStartCoopGame(const string& roomName,
+bool RoomManager::TryStartCoopGame(
+    const string& roomName,
     vector<string>& userList,
     vector<string>& blueTeam,
     vector<string>& redTeam)
@@ -509,27 +510,21 @@ bool RoomManager::TryStartCoopGame(const string& roomName,
             blueTeam.clear();
             redTeam.clear();
 
-            for (const auto& userInfo : room.users)
+            for (const auto& userId : room.users)
             {
-                // userInfo = "닉네임:캐릭터:팀이름"
-                vector<string> tokens;
-                size_t start = 0, end;
-                while ((end = userInfo.find(':', start)) != string::npos) {
-                    tokens.push_back(userInfo.substr(start, end - start));
-                    start = end + 1;
-                }
-                tokens.push_back(userInfo.substr(start));
+                string rawNickname = clientHandler_.GetNicknameById(userId);
+                string nickname = Trim(rawNickname);
 
-                if (tokens.size() < 3) continue; // 잘못된 데이터면 무시
-
-                string nickname = Trim(tokens[0]);
-                string team = Trim(tokens[2]);
+                string team = "None";
+                auto teamIt = room.teamAssignments.find(userId);
+                if (teamIt != room.teamAssignments.end())
+                    team = teamIt->second;
 
                 userList.push_back(nickname);
 
-                if (team == "BLUE")
+                if (team == "Blue" || team == "BLUE")
                     blueTeam.push_back(nickname);
-                else if (team == "RED")
+                else if (team == "Red" || team == "RED")
                     redTeam.push_back(nickname);
             }
 
@@ -547,11 +542,14 @@ bool RoomManager::TryStartCoopGame(const string& roomName,
 }
 
 
+
 Room* RoomManager::FindRoomByName(const std::string& roomName)
 {
     std::lock_guard<std::mutex> lock(roomsMutex);
+    cout << "[DEBUG] START_GAME 요청: '" << roomName << "'" << endl;
     for (auto& room : rooms)
     {
+        cout << "[DEBUG] 방 리스트: '" << room.roomName << "'" << endl;
         if (room.roomName == roomName)
             return &room;
     }
@@ -676,6 +674,23 @@ std::string RoomManager::GetUserRoomId(const std::string& userId) {
 
     return it->roomName;  // 방 구조체에 방 ID가 있다면 이렇게 리턴
 }
+
+// RoomManager.cpp
+Room* RoomManager::GetRoomByUserId(const std::string& userId) {
+    std::lock_guard<std::mutex> lock(roomsMutex);
+
+    auto it = std::find_if(rooms.begin(), rooms.end(), [&](Room& room) {
+        return std::find(room.users.begin(), room.users.end(), userId) != room.users.end();
+        });
+
+    if (it == rooms.end()) {
+        std::cerr << "[GetRoomByUserId] userId가 속한 방을 찾을 수 없음: " << userId << std::endl;
+        return nullptr;
+    }
+
+    return &(*it); // Room* 반환
+}
+
 
 // RoomManager.cpp
 std::vector<std::string> RoomManager::GetUserIdsInRoom(const std::string& roomId)
