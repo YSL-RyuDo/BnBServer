@@ -37,6 +37,7 @@ public:
         bool isCoopMode,  // 클라이언트에서 전달된 협동전 여부
         string& response);
     void HandleRoomChatMessage(shared_ptr<ClientInfo> sender, const string& data);
+    void SendServerMessageToRoom(const std::string& roomName, const std::string& chatMsg);
 
     void ExitRoom(const string& message);
     void SendRoomList(ClientInfo& client);
@@ -48,7 +49,7 @@ public:
     void BroadcastToUserRoom(const std::string& senderId, const std::string& message);
     void BroadcastToRoomExcept(SOCKET excludedSocket, const std::string& message);
     const std::vector<Room>& GetRooms() const { return rooms; }
-
+    
     std::unordered_map<std::string, std::unordered_set<std::string>> deadUsersByRoom;
     string GetUserRoomId(const std::string& userId);
     vector<std::string> GetUserIdsInRoom(const std::string& roomId);

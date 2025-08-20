@@ -4,55 +4,6 @@
 RoomManager::RoomManager(Server& server, ClientHandler& clientHandler)
     : server_(server), clientHandler_(clientHandler) {}
 
-//void RoomManager::BroadcastRoomlist(shared_ptr<ClientInfo> client)
-//{
-//    string message = "ROOM_LIST|";
-//
-//    {
-//        lock_guard<mutex> lock(roomsMutex);
-//        for (size_t i = 0; i < rooms.size(); ++i) {
-//            const Room& room = rooms[i];
-//            message += room.roomName + "," + room.mapName + "," + (room.password.empty() ? "0" : "1");
-//            if (i != rooms.size() - 1)
-//                message += "|";  // 방 구분자
-//        }
-//    }
-//
-//    message += "\n";
-//    cout << "[룸리스트]" << message << endl;
-//    int sendLen = send(client->socket, message.c_str(), (int)message.size(), 0);
-//    if (sendLen == SOCKET_ERROR) {
-//        std::cout << "[BroadcastRoomlist] 전송 실패: " << WSAGetLastError() << std::endl;
-//    }
-//    else {
-//        std::cout << "[BroadcastRoomlist] 전송 완료: " << message;
-//    }
-//}
-
-//void RoomManager::BroadcastRoomlist(shared_ptr<ClientInfo> client)
-//{
-//    string message = "ROOM_LIST|";
-//
-//    {
-//        lock_guard<mutex> lock(roomsMutex);
-//        for (size_t i = 0; i < rooms.size(); ++i) {
-//            const Room& room = rooms[i];
-//            message += room.roomName + "," + room.mapName + "," + (room.password.empty() ? "0" : "1") + "," + (room.isCoopMode ? "1" : "0");
-//            if (i != rooms.size() - 1)
-//                message += "|";  // 방 구분자
-//        }
-//    }
-//
-//    message += "\n";
-//    cout << "[룸리스트]" << message << endl;
-//    int sendLen = send(client->socket, message.c_str(), (int)message.size(), 0);
-//    if (sendLen == SOCKET_ERROR) {
-//        std::cout << "[BroadcastRoomlist] 전송 실패: " << WSAGetLastError() << std::endl;
-//    }
-//    else {
-//        std::cout << "[BroadcastRoomlist] 전송 완료: " << message;
-//    }
-//}
 
 void RoomManager::BroadcastRoomlist(shared_ptr<ClientInfo> client)
 {
@@ -98,58 +49,7 @@ void RoomManager::BroadcastRoomlist(shared_ptr<ClientInfo> client)
         std::cout << "[BroadcastRoomlist] 전송 완료: " << message;
     }
 }
-// RoomManager 클래스 내
-//bool RoomManager::CreateRoom(shared_ptr<ClientInfo> client, const string& roomName, const string& mapName, const string& password) {
-//    if (client->id.empty()) {
-//        cout << "[RoomManager] 로그인 안 된 클라이언트" << endl;
-//        string errorMsg = "ERROR|LOGIN_REQUIRED\n";
-//        send(client->socket, errorMsg.c_str(), (int)errorMsg.size(), 0);
-//        return false;
-//    }
-//
-//    string userListStr;
-//
-//    {
-//        lock_guard<mutex> lock(roomsMutex);
-//
-//        Room newRoom;
-//        newRoom.roomName = roomName;
-//        newRoom.mapName = mapName;
-//        newRoom.password = password;
-//        newRoom.users.push_back(client->id);
-//
-//        rooms.push_back(newRoom);
-//
-//        Room& createdRoom = rooms.back();
-//
-//        for (size_t i = 0; i < createdRoom.users.size(); ++i) {
-//            if (i > 0) userListStr += ",";
-//            string username = createdRoom.users[i];
-//            string rawNickname = clientHandler_.GetNicknameById(username);
-//            string nickname = Trim(rawNickname);
-//            int characterIndex = 0;
-//
-//            auto it = createdRoom.characterSelections.find(username);
-//            if (it != createdRoom.characterSelections.end()) {
-//                characterIndex = it->second;
-//            }
-//
-//            userListStr += nickname + ":" + std::to_string(characterIndex);
-//        }
-//
-//    }
-//    string hasPasswordStr = password.empty() ? "NO_PASSWORD" : "HAS_PASSWORD";
-//
-//    string successMsg = "CREATE_ROOM_SUCCESS|" + roomName + "|" + mapName + "|CREATOR|" + userListStr + "|" + hasPasswordStr + "\n";
-//    cout << successMsg << endl;
-//    send(client->socket, successMsg.c_str(), (int)successMsg.size(), 0);
-//
-//    string broadcastMsg = "ROOM_CREATED|" + roomName + "|" + mapName + "|" + userListStr + "|" + hasPasswordStr + "\n";
-//    BroadcastMessageExcept(client->socket, broadcastMsg);
-//
-//
-//    return true;
-//}
+
 bool RoomManager::CreateRoom(
     shared_ptr<ClientInfo> client,
     const string& roomName,
@@ -242,112 +142,6 @@ void RoomManager::BroadcastMessageExcept(SOCKET exceptSocket, const string& mess
         //cout << "[브로드캐스트 (제외)] → " << otherClient->ip << ":" << otherClient->port << " : " << msgWithNewline;
     }
 }
-
-//bool RoomManager::EnterRoom(shared_ptr<ClientInfo> client, const string& roomName, const string& password, string& outResponse) {
-//    const int maxPlayers = 4;
-//    bool found = false;
-//    bool passwordMatch = false;
-//    string mapName;
-//    string userListStr;
-//
-//    lock_guard<mutex> lock(roomsMutex);
-//    for (auto& room : rooms) {
-//        if (room.roomName == roomName) {
-//            found = true;
-//            cout << "[EnterRoom] 방 찾음: " << roomName << endl;
-//
-//            if (room.password == password) {
-//                cout << "[EnterRoom] 비밀번호 일치" << endl;
-//
-//                if (room.isInGame) {
-//                    outResponse = "GAME_ALREADY_STARTED\n";
-//                    cout << "[Send to Client] " << outResponse;
-//                    return false;
-//                }
-//
-//                if (room.users.size() >= maxPlayers) {
-//                    outResponse = "ROOM_FULL\n";
-//                    cout << "[Send to Client] " << outResponse;
-//                    return false;
-//                }
-//
-//                passwordMatch = true;
-//                mapName = room.mapName;
-//
-//                // 유저가 아직 방에 없으면 추가
-//                if (std::find(room.users.begin(), room.users.end(), client->id) == room.users.end()) {
-//                    room.users.push_back(client->id);
-//                    cout << "[EnterRoom] 사용자 " << client->id << " 입장 처리 완료" << endl;
-//
-//                    // 캐릭터 선택 정보가 없으면 기본값 0으로 초기화
-//                    if (room.characterSelections.find(client->id) == room.characterSelections.end()) {
-//                        room.characterSelections[client->id] = 0;
-//                    }
-//                }
-//                else {
-//                    cout << "[EnterRoom] 사용자 " << client->id << " 이미 입장 상태" << endl;
-//                }
-//
-//                userListStr.clear();
-//                for (size_t i = 0; i < room.users.size(); ++i) {
-//                    if (i > 0) userListStr += ",";
-//
-//                    const std::string& userId = room.users[i];
-//                    std::string rawNickname = clientHandler_.GetNicknameById(userId);
-//                    string nickname = Trim(rawNickname);
-//
-//                    int charIndex = 0;
-//                    auto itChar = room.characterSelections.find(userId);
-//                    if (itChar != room.characterSelections.end()) {
-//                        charIndex = itChar->second;
-//                    }
-//
-//                    userListStr += nickname + ":" + std::to_string(charIndex);
-//                }
-//
-//                cout << "[EnterRoom] 유저 리스트: " << userListStr << endl;
-//
-//                outResponse = "ENTER_ROOM_SUCCESS|" + roomName + "|" + mapName + "|" + userListStr + "\n";
-//                cout << "[Send to Client] " << outResponse;
-//
-//                // 방에 있는 다른 유저들에게 갱신 메시지 전송
-//                string refreshMsg = "REFRESH_ROOM_SUCCESS|" + roomName + "|" + mapName + "|" + userListStr + "\n";
-//                cout << "[Broadcast to Others] " << refreshMsg;
-//
-//                auto& clientsMap = clientHandler_.GetClientsMap();
-//                for (const auto& user : room.users) {
-//                    //if (user == client->id) continue;
-//
-//                    auto it = clientsMap.find(user);
-//                    if (it != clientsMap.end()) {
-//                        send(it->second->socket, refreshMsg.c_str(), (int)refreshMsg.size(), 0);
-//                        cout << "[EnterRoom] 다른 유저 " << user << "에게 갱신 메시지 전송" << endl;
-//                    }
-//                }
-//
-//                return true;
-//            }
-//            else {
-//                cout << "[EnterRoom] 비밀번호 불일치" << endl;
-//            }
-//
-//            break; // 방은 찾았기 때문에 루프 종료
-//        }
-//    }
-//
-//    // 실패 케이스 처리
-//    if (!found) {
-//        outResponse = "ROOM_NOT_FOUND\n";
-//        cout << "[Send to Client] " << outResponse;
-//    }
-//    else if (!passwordMatch) {
-//        outResponse = "WRONG_ROOM_PASSWORD\n";
-//        cout << "[Send to Client] " << outResponse;
-//    }
-//
-//    return false;
-//}
-
 bool RoomManager::EnterRoom(
     shared_ptr<ClientInfo> client,
     const string& roomName,
@@ -465,6 +259,29 @@ void RoomManager::HandleRoomChatMessage(shared_ptr<ClientInfo> sender, const str
         }
     }
 }
+
+//임시
+void RoomManager::SendServerMessageToRoom(const std::string& roomName, const std::string& chatMsg)
+{
+    std::string fullMsg = "ROOM_CHAT|" + roomName + "|서버:" + chatMsg + "\n";
+
+    std::lock_guard<std::mutex> lock(roomsMutex);
+
+    Room* room = FindRoomByName(roomName);
+    if (!room) return;
+
+    auto& clientsMap = clientHandler_.GetClientsMap();
+
+    for (const auto& userId : room->users)
+    {
+        auto it = clientsMap.find(userId);
+        if (it != clientsMap.end())
+        {
+            send(it->second->socket, fullMsg.c_str(), (int)fullMsg.size(), 0);
+        }
+    }
+}
+
 
 void RoomManager::ExitRoom(const std::string& message) {
     std::string data = message.substr(strlen("EXIT_ROOM|"));

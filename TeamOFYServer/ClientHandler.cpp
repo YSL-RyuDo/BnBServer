@@ -148,23 +148,6 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
             userManager_.LogoutUser(client);
             response.clear();
         }
-        //else if (message.rfind("CREATE_ROOM|", 0) == 0) {
-        //    string data = message.substr(strlen("CREATE_ROOM|"));
-        //    stringstream ss(data);
-        //    string roomName, mapName, password;
-
-        //    if (getline(ss, roomName, '|') && getline(ss, mapName, '|')) {
-        //        if (!getline(ss, password)) password = "";
-
-        //        // 룸 매니저에 위임
-        //        roomManager_.CreateRoom(client, roomName, mapName, password);
-
-        //        response.clear();
-        //    }
-        //    else {
-        //        response = "CREATE_ROOM_FORMAT_ERROR\n";
-        //    }
-        //}
         else if (message.rfind("CREATE_ROOM|", 0) == 0) {
             string data = message.substr(strlen("CREATE_ROOM|"));
             stringstream ss(data);
@@ -188,20 +171,6 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
                 response = "CREATE_ROOM_FORMAT_ERROR\n";
             }
             }
-
-
-        /*else if (message.rfind("ENTER_ROOM|", 0) == 0) {
-            string data = message.substr(strlen("ENTER_ROOM|"));
-            stringstream ss(data);
-            string roomName, password;
-            getline(ss, roomName, '|');
-            getline(ss, password);
-
-            string response;
-            if (!roomManager_.EnterRoom(client, roomName, password, response)) {
-            }
-            send(client->socket, response.c_str(), (int)response.size(), 0);
-        }*/
         else if (message.rfind("ENTER_ROOM|", 0) == 0) {
             string data = message.substr(strlen("ENTER_ROOM|"));
             stringstream ss(data);
@@ -221,7 +190,6 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
             }
             send(client->socket, response.c_str(), (int)response.size(), 0);
             }
-
         else if (message.rfind("ROOM_MESSAGE|", 0) == 0)
         {
             // 기존 처리 코드를 RoomManager에 넘기기
@@ -262,6 +230,78 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
             string data = message.substr(strlen("CHOOSE_CHARACTER|"));
             roomManager_.HandleCharacterChoice(*client, data);
         }
+        
+        else if (message.rfind("TEAMCHANGE|", 0) == 0)
+        {
+            string nickname = message.substr(strlen("TEAMCHANGE|"));
+
+            // 닉네임 → 클라이언트 ID 변환
+            string userId = GetIdByNickname(nickname);
+            if (userId.empty())
+                return;
+
+            // 유저가 속한 방 찾기
+            string roomId = roomManager_.GetUserRoomId(userId);
+            if (roomId.empty())
+                return;
+
+            Room* room = roomManager_.FindRoomByName(roomId);
+            if (!room)
+                return;
+
+            // 협동전이 아니면 무시
+            if (!room->isCoopMode)
+                return;
+
+            // 현재 팀 가져오기
+            auto itTeam = room->teamAssignments.find(userId);
+            if (itTeam == room->teamAssignments.end())
+                return; // None 또는 할당되지 않은 경우 무시
+
+            string& currentTeam = itTeam->second;
+            if (currentTeam == "None")
+                return;
+
+            // 팀 토글
+            string newTeam;
+            if (currentTeam == "Blue")
+                newTeam = "Red";
+            else if (currentTeam == "Red")
+                newTeam = "Blue";
+            currentTeam = newTeam;
+
+            // 방 전체 유저 목록 문자열 생성 (실시간 반영)
+            string userListStr;
+            auto usersInRoom = roomManager_.GetUserIdsInRoom(roomId);
+            for (size_t i = 0; i < usersInRoom.size(); ++i)
+            {
+                string uid = usersInRoom[i];
+                string nick = GetNicknameById(uid);
+
+                int characterIndex = 0;
+                auto itChar = room->characterSelections.find(uid);
+                if (itChar != room->characterSelections.end())
+                    characterIndex = itChar->second;
+
+                string team = "None";
+                auto itTeam2 = room->teamAssignments.find(uid);
+                if (itTeam2 != room->teamAssignments.end())
+                    team = itTeam2->second;
+
+                if (i > 0) userListStr += ",";
+                userListStr += nick + ":" + std::to_string(characterIndex) + ":" + team;
+            }
+
+            string response = "REFRESH_ROOM_SUCCESS|" + room->roomName + "|" + room->mapName + "|" + userListStr + "\n";
+            roomManager_.BroadcastToUserRoom(userId, response);
+
+            string serverMsg = "[서버] : " + nickname + ", " + newTeam + "로 변경하였습니다";
+            roomManager_.HandleRoomChatMessage(nullptr, serverMsg);
+
+        }
+
+
+
         else if (message.rfind("START_GAME|", 0) == 0)
         {
             string roomName = message.substr(strlen("START_GAME|"));
