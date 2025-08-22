@@ -1,4 +1,4 @@
-#include "UserManager.h"
+Ôªø#include "UserManager.h"
 #include "Server.h"
 
 UserManager::UserManager(Server& server)
@@ -8,19 +8,19 @@ vector<UserAccount> UserManager::LoadAccountUsers(const string& filename) {
     vector<UserAccount> loadedUsers;
     ifstream file(filename);
     if (!file.is_open()) {
-        std::cerr << "∆ƒ¿œ ø≠±‚ Ω«∆–: " << filename << std::endl;
+        std::cerr << "ÌååÏùº Ïó¥Í∏∞ Ïã§Ìå®: " << filename << std::endl;
         return loadedUsers;
     }
 
     string line;
     if (!getline(file, line)) {
-        std::cerr << "«Ï¥ı ¿–±‚ Ω«∆–" << std::endl;
+        std::cerr << "Ìó§Îçî ÏùΩÍ∏∞ Ïã§Ìå®" << std::endl;
         return loadedUsers;
     }
 
     int count = 0;
     while (getline(file, line)) {
-        if (line.empty()) continue; // ∫Û ¡Ÿ ∞«≥ ∂Ÿ±‚
+        if (line.empty()) continue; // Îπà Ï§Ñ Í±¥ÎÑàÎõ∞Í∏∞
 
         stringstream ss(line);
         string id, pw, nick, levelStr, expStr;
@@ -31,15 +31,15 @@ vector<UserAccount> UserManager::LoadAccountUsers(const string& filename) {
                 count++;
             }
             catch (const std::exception& e) {
-                std::cerr << "º˝¿⁄ ∫Ø»Ø ø¿∑˘: " << e.what() << " | ∂Û¿Œ: " << line << std::endl;
+                std::cerr << "Ïà´Ïûê Î≥ÄÌôò Ïò§Î•ò: " << e.what() << " | ÎùºÏù∏: " << line << std::endl;
             }
         }
         else {
-            std::cerr << "∆ƒΩÃ Ω«∆– ∂Û¿Œ: " << line << std::endl;
+            std::cerr << "ÌååÏã± Ïã§Ìå® ÎùºÏù∏: " << line << std::endl;
         }
     }
 
-    std::cerr << "∑ŒµÂµ» ªÁøÎ¿⁄ ºˆ: " << count << std::endl;
+    std::cerr << "Î°úÎìúÎêú ÏÇ¨Ïö©Ïûê Ïàò: " << count << std::endl;
 
     {
         lock_guard<mutex> lock(usersMutex);
@@ -55,13 +55,13 @@ std::vector<UserProfile> UserManager::LoadUserProfiles(const std::string& filena
     std::vector<UserProfile> loadedProfiles;
 
     if (!file.is_open()) {
-        std::cerr << "∆ƒ¿œ ø≠±‚ Ω«∆–: " << filename << std::endl;
+        std::cerr << "ÌååÏùº Ïó¥Í∏∞ Ïã§Ìå®: " << filename << std::endl;
         return loadedProfiles;
     }
 
     std::string line;
     if (!std::getline(file, line)) {
-        std::cerr << "«Ï¥ı ¿–±‚ Ω«∆–: " << filename << std::endl;
+        std::cerr << "Ìó§Îçî ÏùΩÍ∏∞ Ïã§Ìå®: " << filename << std::endl;
         return loadedProfiles;
     }
 
@@ -88,7 +88,7 @@ std::vector<UserProfile> UserManager::LoadUserProfiles(const std::string& filena
             loadedProfiles.push_back(profile);
         }
         else {
-            std::cerr << "UserProfile.csv ∆ƒΩÃ ø¿∑˘ ∂Û¿Œ: " << line << std::endl;
+            std::cerr << "UserProfile.csv ÌååÏã± Ïò§Î•ò ÎùºÏù∏: " << line << std::endl;
         }
     }
 
@@ -103,13 +103,13 @@ std::vector<UserCharacters> UserManager::LoadUserCharacters(const std::string& f
     std::vector<UserCharacters> loadedCharacters;
 
     if (!file.is_open()) {
-        std::cerr << "∆ƒ¿œ ø≠±‚ Ω«∆–: " << filename << std::endl;
+        std::cerr << "ÌååÏùº Ïó¥Í∏∞ Ïã§Ìå®: " << filename << std::endl;
         return loadedCharacters;
     }
 
     std::string line;
     if (!std::getline(file, line)) {
-        std::cerr << "«Ï¥ı ¿–±‚ Ω«∆–: " << filename << std::endl;
+        std::cerr << "Ìó§Îçî ÏùΩÍ∏∞ Ïã§Ìå®: " << filename << std::endl;
         return loadedCharacters;
     }
 
@@ -131,7 +131,7 @@ std::vector<UserCharacters> UserManager::LoadUserCharacters(const std::string& f
             loadedCharacters.push_back(characters);
         }
         else {
-            std::cerr << "UserCharacters.csv ∆ƒΩÃ ø¿∑˘ ∂Û¿Œ: " << line << std::endl;
+            std::cerr << "UserCharacters.csv ÌååÏã± Ïò§Î•ò ÎùºÏù∏: " << line << std::endl;
         }
     }
 
@@ -139,20 +139,19 @@ std::vector<UserCharacters> UserManager::LoadUserCharacters(const std::string& f
     return userCharacters;
 }
 
-// LoadUserCharacterEmotes
-std::vector<UserCharacterEmotes> UserManager::LoadUserCharacterEmotes(const std::string& filename)
+std::vector<UserCharacterEmotes> UserManager::LoadUserEmotes(const std::string& filename)
 {
     std::ifstream file(filename);
     std::vector<UserCharacterEmotes> loadedEmotes;
 
     if (!file.is_open()) {
-        std::cerr << "∆ƒ¿œ ø≠±‚ Ω«∆–: " << filename << std::endl;
+        std::cerr << "ÌååÏùº Ïó¥Í∏∞ Ïã§Ìå®: " << filename << std::endl;
         return loadedEmotes;
     }
 
     std::string line;
     if (!std::getline(file, line)) {
-        std::cerr << "«Ï¥ı ¿–±‚ Ω«∆–: " << filename << std::endl;
+        std::cerr << "Ìó§Îçî ÏùΩÍ∏∞ Ïã§Ìå®: " << filename << std::endl;
         return loadedEmotes;
     }
 
@@ -171,7 +170,7 @@ std::vector<UserCharacterEmotes> UserManager::LoadUserCharacterEmotes(const std:
             loadedEmotes.push_back(emotes);
         }
         else {
-            std::cerr << "UserCharacterEmotes.csv ∆ƒΩÃ ø¿∑˘ ∂Û¿Œ: " << line << std::endl;
+            std::cerr << "UserCharacterEmotes.csv ÌååÏã± Ïò§Î•ò ÎùºÏù∏: " << line << std::endl;
         }
     }
 
@@ -179,19 +178,19 @@ std::vector<UserCharacterEmotes> UserManager::LoadUserCharacterEmotes(const std:
     return userEmotes;
 }
 
-std::vector<UserBallon> UserManager::LoadUserBallons(const std::string& filename)
+std::vector<UserBallons> UserManager::LoadUserBallons(const std::string& filename)
 {
     std::ifstream file(filename);
-    std::vector<UserBallon> loadedBallons;
+    std::vector<UserBallons> loadedBallons;
 
     if (!file.is_open()) {
-        std::cerr << "∆ƒ¿œ ø≠±‚ Ω«∆–: " << filename << std::endl;
+        std::cerr << "ÌååÏùº Ïó¥Í∏∞ Ïã§Ìå®: " << filename << std::endl;
         return loadedBallons;
     }
 
     std::string line;
     if (!std::getline(file, line)) {
-        std::cerr << "«Ï¥ı ¿–±‚ Ω«∆–: " << filename << std::endl;
+        std::cerr << "Ìó§Îçî ÏùΩÍ∏∞ Ïã§Ìå®: " << filename << std::endl;
         return loadedBallons;
     }
 
@@ -199,18 +198,29 @@ std::vector<UserBallon> UserManager::LoadUserBallons(const std::string& filename
         if (line.empty()) continue;
 
         std::stringstream ss(line);
-        UserBallon ballon;
+        UserBallons ballon;
 
-        if (std::getline(ss, ballon.id, ',') &&
-            std::getline(ss, line, ',') && (ballon.balloon0 = std::stoi(line), true) &&
-            std::getline(ss, line, ',') && (ballon.balloon1 = std::stoi(line), true) &&
-            std::getline(ss, line, ',') && (ballon.balloon2 = std::stoi(line), true) &&
-            std::getline(ss, line) && (ballon.balloon3 = std::stoi(line), true))
-        {
-            loadedBallons.push_back(ballon);
+        try {
+            if (std::getline(ss, ballon.id, ',') &&
+                std::getline(ss, line, ',') && (ballon.balloon0 = std::stoi(line), true) &&
+                std::getline(ss, line, ',') && (ballon.balloon1 = std::stoi(line), true) &&
+                std::getline(ss, line, ',') && (ballon.balloon2 = std::stoi(line), true) &&
+                std::getline(ss, line, ',') && (ballon.balloon3 = std::stoi(line), true) &&
+                std::getline(ss, line, ',') && (ballon.balloon4 = std::stoi(line), true) &&
+                std::getline(ss, line, ',') && (ballon.balloon5 = std::stoi(line), true) &&
+                std::getline(ss, line, ',') && (ballon.balloon6 = std::stoi(line), true) &&
+                std::getline(ss, line, ',') && (ballon.balloon7 = std::stoi(line), true) &&
+                std::getline(ss, line, ',') && (ballon.balloon8 = std::stoi(line), true) &&
+                std::getline(ss, line) && (ballon.balloon9 = std::stoi(line), true))
+            {
+                loadedBallons.push_back(ballon);
+            }
+            else {
+                std::cerr << "UserBallons.csv ÌååÏã± Ïò§Î•ò ÎùºÏù∏: " << line << std::endl;
+            }
         }
-        else {
-            std::cerr << "UserBallon.csv ∆ƒΩÃ ø¿∑˘ ∂Û¿Œ: " << line << std::endl;
+        catch (const std::exception& e) {
+            std::cerr << "Ïà´Ïûê Î≥ÄÌôò Ïò§Î•ò ÎùºÏù∏: " << line << " | " << e.what() << std::endl;
         }
     }
 
@@ -224,13 +234,13 @@ std::vector<UserWinLossStats> UserManager::LoadUserWinLossStats(const std::strin
     std::vector<UserWinLossStats> loadedStats;
 
     if (!file.is_open()) {
-        std::cerr << "∆ƒ¿œ ø≠±‚ Ω«∆–: " << filename << std::endl;
+        std::cerr << "ÌååÏùº Ïó¥Í∏∞ Ïã§Ìå®: " << filename << std::endl;
         return loadedStats;
     }
 
     std::string line;
     if (!std::getline(file, line)) {
-        std::cerr << "«Ï¥ı ¿–±‚ Ω«∆–: " << filename << std::endl;
+        std::cerr << "Ìó§Îçî ÏùΩÍ∏∞ Ïã§Ìå®: " << filename << std::endl;
         return loadedStats;
     }
 
@@ -261,7 +271,7 @@ std::vector<UserWinLossStats> UserManager::LoadUserWinLossStats(const std::strin
             loadedStats.push_back(stats);
         }
         else {
-            std::cerr << "UserWinLossStats.csv ∆ƒΩÃ ø¿∑˘ ∂Û¿Œ: " << line << std::endl;
+            std::cerr << "UserWinLossStats.csv ÌååÏã± Ïò§Î•ò ÎùºÏù∏: " << line << std::endl;
         }
     }
 
@@ -269,88 +279,418 @@ std::vector<UserWinLossStats> UserManager::LoadUserWinLossStats(const std::strin
     return userStats;
 }
 
-void UserManager::SaveUsers(const vector<UserAccount>& users, const string& filename) {
-    ofstream file(filename);
+vector<UserIcons> UserManager::LoadUserIcons(const string& filename)
+{
+    std::ifstream file(filename);
+    std::vector<UserIcons> loadedIcons;
+
     if (!file.is_open()) {
-        cout << "[ø¿∑˘] ªÁøÎ¿⁄ ¡§∫∏ ¿˙¿Â Ω«∆–" << endl;
-        return;
+        std::cerr << "ÌååÏùº Ïó¥Í∏∞ Ïã§Ìå®: " << filename << std::endl;
+        return loadedIcons;
     }
-    file << "id,password,nickname,level,exp\n";
-    for (const auto& user : users) {
-        file << user.id << "," << user.password << "," << user.nickname << "\n";
+
+    std::string line;
+    // Ï≤´ Ï§ÑÏùÄ Ìó§Îçî (Î¨¥Ïãú)
+    if (!std::getline(file, line)) {
+        std::cerr << "Ìó§Îçî ÏùΩÍ∏∞ Ïã§Ìå®: " << filename << std::endl;
+        return loadedIcons;
     }
+
+    while (std::getline(file, line)) {
+        if (line.empty()) continue;
+
+        std::stringstream ss(line);
+        UserIcons icon;
+
+        if (std::getline(ss, icon.id, ',') &&
+            std::getline(ss, line, ',') && (icon.icon0 = std::stoi(line), true) &&
+            std::getline(ss, line, ',') && (icon.icon1 = std::stoi(line), true) &&
+            std::getline(ss, line, ',') && (icon.icon2 = std::stoi(line), true) &&
+            std::getline(ss, line, ',') && (icon.icon3 = std::stoi(line), true) &&
+            std::getline(ss, line, ',') && (icon.icon4 = std::stoi(line), true) &&
+            std::getline(ss, line, ',') && (icon.icon5 = std::stoi(line), true) &&
+            std::getline(ss, line, ',') && (icon.icon6 = std::stoi(line), true) &&
+            std::getline(ss, line, ',') && (icon.icon7 = std::stoi(line), true) &&
+            std::getline(ss, line, ',') && (icon.icon8 = std::stoi(line), true) &&
+            std::getline(ss, line) && (icon.icon9 = std::stoi(line), true))
+        {
+            loadedIcons.push_back(icon);
+        }
+        else {
+            std::cerr << "UserIcon.csv ÌååÏã± Ïò§Î•ò ÎùºÏù∏: " << line << std::endl;
+        }
+    }
+
+    return loadedIcons;
 }
 
-bool UserManager::SaveUserProfilesToFile(const std::string& filename)
-{
-    std::ofstream outFile(filename, std::ios::trunc);  // ±‚¡∏ ∆ƒ¿œ µ§æÓæ≤±‚
-    if (!outFile.is_open())
-    {
-        std::cerr << "∆ƒ¿œ ø≠±‚ Ω«∆–: " << filename << std::endl;
-        return false;
-    }
+bool UserManager::RegisterUserAccount(const UserAccount& user) {
+    std::ofstream outFile("UsersAccount.csv", std::ios::app);
+    if (!outFile.is_open()) return false;
 
-    // «Ï¥ı ¿€º∫ (« ø‰«œ∏È)
-    outFile << "id,level,exp,icon,money0,money1,emo0,emo1,emo2,emo3,balloon\n";
+    outFile << user.id << "," << user.password << "," << user.nickname << "\n";
+    return true;
+}
+bool UserManager::RegisterUserProfile(const UserProfile& profile) {
+    std::ofstream profileFile("UserProfile.csv", std::ios::app);
+    if (!profileFile.is_open()) return false;
 
-    for (const auto& profile : userProfiles)
-    {
-        outFile << profile.id << ","
-            << profile.level << ","
-            << profile.exp << ","
-            << profile.icon << ","
-            << profile.money0 << ","
-            << profile.money1 << ","
-            << profile.emo0 << ","
-            << profile.emo1 << ","
-            << profile.emo2 << ","
-            << profile.emo3 << ","
-            << profile.balloon << "\n";
-    }
+    profileFile << profile.id << "," << profile.level << "," << profile.exp << "," << profile.icon << ","
+        << profile.money0 << "," << profile.money1 << ","
+        << profile.emo0 << "," << profile.emo1 << "," << profile.emo2 << "," << profile.emo3 << ","
+        << profile.balloon << "\n";
+    return true;
+}
+bool UserManager::RegisterUserCharacters(const UserCharacters& characters) {
+    std::ofstream charFile("UserCharacters.csv", std::ios::app);
+    if (!charFile.is_open()) return false;
 
-    outFile.close();
+    charFile << characters.id << ","
+        << characters.char0 << "," << characters.char1 << "," << characters.char2 << ","
+        << characters.char3 << "," << characters.char4 << "," << characters.char5 << ","
+        << characters.char6 << "\n";
+    return true;
+}
+bool UserManager::RegisterUserEmotes(const UserCharacterEmotes& emotes) {
+    std::ofstream emoteFile("UserEmotes.csv", std::ios::app);
+    if (!emoteFile.is_open()) return false;
+
+    emoteFile << emotes.id << ","
+        << emotes.emo0 << "," << emotes.emo1 << "," << emotes.emo2 << "," << emotes.emo3 << ","
+        << emotes.emo4 << "," << emotes.emo5 << "," << emotes.emo6 << "," << emotes.emo7 << ","
+        << emotes.emo8 << "," << emotes.emo9 << "," << emotes.emo10 << "," << emotes.emo11 << ","
+        << emotes.emo12 << "," << emotes.emo13 << "," << emotes.emo14 << "," << emotes.emo15 << ","
+        << emotes.emo16 << "," << emotes.emo17 << "," << emotes.emo18 << "," << emotes.emo19 << ","
+        << emotes.emo20 << "," << emotes.emo21 << "," << emotes.emo22 << "," << emotes.emo23 << ","
+        << emotes.emo24 << "," << emotes.emo25 << "," << emotes.emo26 << "," << emotes.emo27 << ","
+        << emotes.emo28 << "," << emotes.emo29 << "," << emotes.emo30 << "," << emotes.emo31 << ","
+        << emotes.emo32 << "," << emotes.emo33 << "," << emotes.emo34 << "," << emotes.emo35
+        << "\n";
+
+    return true;
+}
+bool UserManager::RegisterUserWinLossStats(const UserWinLossStats& stats) {
+    std::ofstream statsFile("UserWinLossStats.csv", std::ios::app);
+    if (!statsFile.is_open()) return false;
+
+    statsFile << stats.id << ","
+        << stats.winCount << "," << stats.loseCount << ","
+        << stats.char0_win << "," << stats.char0_lose << ","
+        << stats.char1_win << "," << stats.char1_lose << ","
+        << stats.char2_win << "," << stats.char2_lose << ","
+        << stats.char3_win << "," << stats.char3_lose << ","
+        << stats.char4_win << "," << stats.char4_lose << ","
+        << stats.char5_win << "," << stats.char5_lose << ","
+        << stats.char6_win << "," << stats.char6_lose
+        << "\n";
+
+    return true;
+}
+bool UserManager::RegisterUserBallons(const UserBallons& ballon) {
+    std::ofstream ballonFile("UserBalloon.csv", std::ios::app);
+    if (!ballonFile.is_open()) return false;
+
+    ballonFile << ballon.id << ","
+        << ballon.balloon0 << "," << ballon.balloon1 << "," << ballon.balloon2 << "," << ballon.balloon3 << ","
+        << ballon.balloon4 << "," << ballon.balloon5 << "," << ballon.balloon6 << "," << ballon.balloon7 << ","
+        << ballon.balloon8 << "," << ballon.balloon9
+        << "\n";
+
+    return true;
+}
+bool UserManager::RegisterUserIcons(const UserIcons& icon) {
+    std::ofstream iconFile("UserIcon.csv", std::ios::app);
+    if (!iconFile.is_open()) return false;
+
+    iconFile << icon.id << ","
+        << icon.icon0 << "," << icon.icon1 << "," << icon.icon2 << "," << icon.icon3 << ","
+        << icon.icon4 << "," << icon.icon5 << "," << icon.icon6 << "," << icon.icon7 << ","
+        << icon.icon8 << "," << icon.icon9
+        << "\n";
+
     return true;
 }
 
-bool UserManager::SaveUserWinLossStats(const std::string& filename)
+// Users.csv
+bool UserManager::SaveUserAccount(const std::string& userId)
 {
-    std::ofstream outFile(filename, std::ios::trunc);
-    if (!outFile.is_open())
+    std::ifstream inFile("UsersAccount.csv");
+    if (!inFile.is_open()) return false;
+    std::ofstream tempFile("temp.csv");
+    if (!tempFile.is_open()) return false;
+
+    std::string line;
+    bool header = true;
+    while (std::getline(inFile, line))
     {
-        std::cerr << "∆ƒ¿œ ø≠±‚ Ω«∆–: " << filename << std::endl;
-        return false;
+        if (header)
+        {
+            tempFile << line << "\n";
+            header = false;
+            continue;
+        }
+
+        std::string id = line.substr(0, line.find(','));
+        if (id == userId)
+        {
+            auto it = std::find_if(users.begin(), users.end(), [&](const UserAccount& u) { return u.id == userId; });
+            if (it != users.end())
+                tempFile << it->id << "," << it->password << "," << it->nickname << "\n";
+        }
+        else tempFile << line << "\n";
     }
 
-    outFile << "id,winCount,LoseCount,char0_win,char0_lose,char1_win,char1_lose,char2_win,char2_lose,char3_win,char3_lose,char4_win,char4_lose,char5_win,char5_lose,char6_win,char6_lose\n";
+    inFile.close();
+    tempFile.close();
+    std::remove("UsersAccount.csv");
+    std::rename("temp.csv", "UsersAccount.csv");
+    return true;
+}
 
-    for (const auto& stats : userStats)
+// UserProfiles.csv
+bool UserManager::SaveUserProfile(const std::string& userId)
+{
+    std::ifstream inFile("UserProfile.csv");
+    if (!inFile.is_open()) return false;
+    std::ofstream tempFile("temp.csv");
+    if (!tempFile.is_open()) return false;
+
+    std::string line;
+    bool header = true;
+    while (std::getline(inFile, line))
     {
-        outFile << stats.id << ","
-            << stats.winCount << ","
-            << stats.loseCount << ","
-            << stats.char0_win << ","
-            << stats.char0_lose << ","
-            << stats.char1_win << ","
-            << stats.char1_lose << ","
-            << stats.char2_win << ","
-            << stats.char2_lose << ","
-            << stats.char3_win << ","
-            << stats.char3_lose << ","
-            << stats.char4_win << ","
-            << stats.char4_lose << ","
-            << stats.char5_win << ","
-            << stats.char5_lose << ","
-            << stats.char6_win << ","
-            << stats.char6_lose << "\n";
+        if (header)
+        {
+            tempFile << line << "\n";
+            header = false;
+            continue;
+        }
+
+        std::string id = line.substr(0, line.find(','));
+        if (id == userId)
+        {
+            auto it = std::find_if(userProfiles.begin(), userProfiles.end(), [&](const UserProfile& p) { return p.id == userId; });
+            if (it != userProfiles.end())
+                tempFile << it->id << "," << it->level << "," << it->exp << "," << it->icon << ","
+                << it->money0 << "," << it->money1 << ","
+                << it->emo0 << "," << it->emo1 << "," << it->emo2 << "," << it->emo3 << ","
+                << it->balloon << "\n";
+        }
+        else tempFile << line << "\n";
     }
 
-    outFile.close();
+    inFile.close();
+    tempFile.close();
+    std::remove("UserProfile.csv");
+    std::rename("temp.csv", "UserProfile.csv");
+    return true;
+}
+
+// UserCharacters.csv
+bool UserManager::SaveUserCharacters(const std::string& userId)
+{
+    std::ifstream inFile("UserCharacters.csv");
+    if (!inFile.is_open()) return false;
+    std::ofstream tempFile("temp.csv");
+    if (!tempFile.is_open()) return false;
+
+    std::string line;
+    bool header = true;
+    while (std::getline(inFile, line))
+    {
+        if (header)
+        {
+            tempFile << line << "\n";
+            header = false;
+            continue;
+        }
+
+        std::string id = line.substr(0, line.find(','));
+        if (id == userId)
+        {
+            auto it = std::find_if(userCharacters.begin(), userCharacters.end(), [&](const UserCharacters& c) { return c.id == userId; });
+            if (it != userCharacters.end())
+                tempFile << it->id << "," << it->char0 << "," << it->char1 << "," << it->char2 << ","
+                << it->char3 << "," << it->char4 << "," << it->char5 << "," << it->char6 << "\n";
+        }
+        else tempFile << line << "\n";
+    }
+
+    inFile.close();
+    tempFile.close();
+    std::remove("UserCharacters.csv");
+    std::rename("temp.csv", "UserCharacters.csv");
+    return true;
+}
+
+// UserEmotes.csv
+bool UserManager::SaveUserEmotes(const std::string& userId)
+{
+    std::ifstream inFile("UserEmotes.csv");
+    if (!inFile.is_open()) return false;
+    std::ofstream tempFile("temp.csv");
+    if (!tempFile.is_open()) return false;
+
+    std::string line;
+    bool header = true;
+    while (std::getline(inFile, line))
+    {
+        if (header)
+        {
+            tempFile << line << "\n";
+            header = false;
+            continue;
+        }
+
+        std::string id = line.substr(0, line.find(','));
+        if (id == userId)
+        {
+            auto it = std::find_if(userEmotes.begin(), userEmotes.end(), [&](const UserCharacterEmotes& e) { return e.id == userId; });
+            if (it != userEmotes.end())
+            {
+                tempFile << it->id
+                    << "," << it->emo0 << "," << it->emo1 << "," << it->emo2 << "," << it->emo3
+                    << "," << it->emo4 << "," << it->emo5 << "," << it->emo6 << "," << it->emo7
+                    << "," << it->emo8 << "," << it->emo9 << "," << it->emo10 << "," << it->emo11
+                    << "," << it->emo12 << "," << it->emo13 << "," << it->emo14 << "," << it->emo15
+                    << "," << it->emo16 << "," << it->emo17 << "," << it->emo18 << "," << it->emo19
+                    << "," << it->emo20 << "," << it->emo21 << "," << it->emo22 << "," << it->emo23
+                    << "," << it->emo24 << "," << it->emo25 << "," << it->emo26 << "," << it->emo27
+                    << "," << it->emo28 << "," << it->emo29 << "," << it->emo30 << "," << it->emo31
+                    << "," << it->emo32 << "," << it->emo33 << "," << it->emo34 << "," << it->emo35
+                    << "\n";
+
+            }
+        }
+        else tempFile << line << "\n";
+    }
+
+    inFile.close();
+    tempFile.close();
+    std::remove("UserEmotes.csv");
+    std::rename("temp.csv", "UserEmotes.csv");
+    return true;
+}
+
+// UserWinLossStats.csv
+bool UserManager::SaveUserWinLossStats(const std::string& userId)
+{
+    std::ifstream inFile("UserWinLossStats.csv");
+    if (!inFile.is_open()) return false;
+    std::ofstream tempFile("temp.csv");
+    if (!tempFile.is_open()) return false;
+
+    std::string line;
+    bool header = true;
+    while (std::getline(inFile, line))
+    {
+        if (header)
+        {
+            tempFile << line << "\n";
+            header = false;
+            continue;
+        }
+
+        std::string id = line.substr(0, line.find(','));
+        if (id == userId)
+        {
+            auto it = std::find_if(userStats.begin(), userStats.end(), [&](const UserWinLossStats& s) { return s.id == userId; });
+            if (it != userStats.end())
+                tempFile << it->id << "," << it->winCount << "," << it->loseCount << ","
+                << it->char0_win << "," << it->char0_lose << "," << it->char1_win << "," << it->char1_lose << ","
+                << it->char2_win << "," << it->char2_lose << "," << it->char3_win << "," << it->char3_lose << ","
+                << it->char4_win << "," << it->char4_lose << "," << it->char5_win << "," << it->char5_lose << ","
+                << it->char6_win << "," << it->char6_lose << "\n";
+        }
+        else tempFile << line << "\n";
+    }
+
+    inFile.close();
+    tempFile.close();
+    std::remove("UserWinLossStats.csv");
+    std::rename("temp.csv", "UserWinLossStats.csv");
+    return true;
+}
+
+// UserBallons.csv
+bool UserManager::SaveUserBallons(const std::string& userId)
+{
+    std::ifstream inFile("UserBalloon.csv");
+    if (!inFile.is_open()) return false;
+    std::ofstream tempFile("temp.csv");
+    if (!tempFile.is_open()) return false;
+
+    std::string line;
+    bool header = true;
+    while (std::getline(inFile, line))
+    {
+        if (header)
+        {
+            tempFile << line << "\n";
+            header = false;
+            continue;
+        }
+
+        std::string id = line.substr(0, line.find(','));
+        if (id == userId)
+        {
+            auto it = std::find_if(userBallons.begin(), userBallons.end(), [&](const UserBallons& b) { return b.id == userId; });
+            if (it != userBallons.end())
+                tempFile << it->id << "," << it->balloon0 << "," << it->balloon1 << "," << it->balloon2 << "," << it->balloon3
+                << "," << it->balloon4 << "," << it->balloon5 << "," << it->balloon6 << "," << it->balloon7
+                << "," << it->balloon8 << "," << it->balloon9 << "\n";
+        }
+        else tempFile << line << "\n";
+    }
+
+    inFile.close();
+    tempFile.close();
+    std::remove("UserBalloon.csv");
+    std::rename("temp.csv", "UserBalloon.csv");
+    return true;
+}
+
+// UserIcons.csv
+bool UserManager::SaveUserIcons(const std::string& userId)
+{
+    std::ifstream inFile("UserIcon.csv");
+    if (!inFile.is_open()) return false;
+    std::ofstream tempFile("temp.csv");
+    if (!tempFile.is_open()) return false;
+
+    std::string line;
+    bool header = true;
+    while (std::getline(inFile, line))
+    {
+        if (header)
+        {
+            tempFile << line << "\n";
+            header = false;
+            continue;
+        }
+
+        std::string id = line.substr(0, line.find(','));
+        if (id == userId)
+        {
+            auto it = std::find_if(userIcons.begin(), userIcons.end(), [&](const UserIcons& i) { return i.id == userId; });
+            if (it != userIcons.end())
+                tempFile << it->id << "," << it->icon0 << "," << it->icon1 << "," << it->icon2 << "," << it->icon3
+                << "," << it->icon4 << "," << it->icon5 << "," << it->icon6 << "," << it->icon7
+                << "," << it->icon8 << "," << it->icon9 << "\n";
+        }
+        else tempFile << line << "\n";
+    }
+
+    inFile.close();
+    tempFile.close();
+    std::remove("UserIcon.csv");
+    std::rename("temp.csv", "UserIcon.csv");
     return true;
 }
 
 
 string UserManager::CheckLogin(const string& id, const string& pw) {
-    lock_guard<mutex> lock(usersMutex); // ≥ª∫Œø°º≠ ¿·±›
+    lock_guard<mutex> lock(usersMutex); // ÎÇ¥Î∂ÄÏóêÏÑú Ïû†Í∏à
 
     for (const auto& user : users) {
         if (user.id == id) {
@@ -371,98 +711,53 @@ string UserManager::CheckLogin(const string& id, const string& pw) {
 string UserManager::RegisterUser(const string& id, const string& pw, const string& nickname) {
     lock_guard<mutex> lock(usersMutex);
 
+    // Ï§ëÎ≥µ Ï≤¥ÌÅ¨
     for (const auto& user : users) {
-        if (user.id == id)
-            return "DUPLICATE_ID|\n";
-        if (user.nickname == nickname)
-            return "DUPLICATE_NICK|\n";
+        if (user.id == id) return "DUPLICATE_ID|\n";
+        if (user.nickname == nickname) return "DUPLICATE_NICK|\n";
     }
 
-    if (pw.empty())
-        return "EMPTY_PASSWORD|\n";
+    if (pw.empty()) return "EMPTY_PASSWORD|\n";
 
-    UserAccount newUser = { id, pw, nickname};
+    UserAccount newUser{ id, pw, nickname };
+    if (!RegisterUserAccount(newUser)) return "FILE_WRITE_ERROR|\n";
 
-    // ¿Ø¿˙ ∑Œ±◊¿Œ ∆ƒ¿œø° ¿˙¿Â
-    ofstream outFile("UsersAccount.csv", ios::app);
-    if (!outFile.is_open())
-        return "FILE_WRITE_ERROR|\n";
-
-    outFile << newUser.id << "," << newUser.password << "," << newUser.nickname << "\n";
-    outFile.close();
-
-    // ¿Ø¿˙ «¡∑Œ«  ∆ƒ¿œø° ¿˙¿Â
     UserProfile newProfile;
     newProfile.id = id;
+    if (!RegisterUserProfile(newProfile)) return "PROFILE_FILE_WRITE_ERROR|\n";
 
-    ofstream profileFile("UserProfile.csv", ios::app);
-    if (!profileFile.is_open())
-        return "PROFILE_FILE_WRITE_ERROR|\n";
-
-    profileFile << newProfile.id << "," << newProfile.level << "," << newProfile.exp << "," << newProfile.icon << ","
-        << newProfile.money0 << "," << newProfile.money1 << ","
-        << newProfile.emo0 << "," << newProfile.emo1 << "," << newProfile.emo2 << "," << newProfile.emo3 << "," << newProfile.balloon << "\n";
-    profileFile.close();
-
-    //UserCharacters √ ±‚»≠ π◊ ¿˙¿Â
     UserCharacters newCharacters;
     newCharacters.id = id;
-    ofstream charFile("UserCharacters.csv", ios::app);
-    if (!charFile.is_open())
-        return "CHARACTER_FILE_WRITE_ERROR|\n";
-    charFile << newCharacters.id << ","
-        << newCharacters.char0 << "," << newCharacters.char1 << "," << newCharacters.char2 << ","
-        << newCharacters.char3 << "," << newCharacters.char4 << "," << newCharacters.char5 << ","
-        << newCharacters.char6 << "\n";
-    charFile.close();
+    if (!RegisterUserCharacters(newCharacters)) return "CHARACTER_FILE_WRITE_ERROR|\n";
 
-    // UserCharacterEmotes √ ±‚»≠ π◊ ¿˙¿Â
     UserCharacterEmotes newEmotes;
     newEmotes.id = id;
-    ofstream emoteFile("UserCharacterEmotes.csv", ios::app);
-    if (!emoteFile.is_open())
-        return "EMOTE_FILE_WRITE_ERROR|\n";
-    emoteFile << newEmotes.id << ","
-        << newEmotes.emo0 << "," << newEmotes.emo1 << "," << newEmotes.emo2 << "," << newEmotes.emo3 << "\n";
-    emoteFile.close();
+    if (!RegisterUserEmotes(newEmotes)) return "EMOTE_FILE_WRITE_ERROR|\n";
 
-    // UserWinLossStats √ ±‚»≠ π◊ ¿˙¿Â
     UserWinLossStats newStats;
     newStats.id = id;
-    ofstream statsFile("UserWinLossStats.csv", ios::app);
-    if (!statsFile.is_open())
-        return "STATS_FILE_WRITE_ERROR|\n";
-    statsFile << newStats.id << ","
-        << newStats.winCount << "," << newStats.loseCount << ","
-        << newStats.char0_win << "," << newStats.char0_lose << ","
-        << newStats.char1_win << "," << newStats.char1_lose << ","
-        << newStats.char2_win << "," << newStats.char2_lose << ","
-        << newStats.char3_win << "," << newStats.char3_lose << ","
-        << newStats.char4_win << "," << newStats.char4_lose << ","
-        << newStats.char5_win << "," << newStats.char5_lose << ","
-        << newStats.char6_win << "," << newStats.char6_lose << "\n";
-    statsFile.close();
+    if (!RegisterUserWinLossStats(newStats)) return "STATS_FILE_WRITE_ERROR|\n";
 
-    UserBallon newBallon;
+    UserBallons newBallon;
     newBallon.id = id;
-    ofstream ballonFile("UserBalloon.csv", ios::app);
-    if (!ballonFile.is_open())
-        return "BALLOON_FILE_WRITE_ERROR|\n";
-    ballonFile << newBallon.id << ","
-        << newBallon.balloon0 << ","
-        << newBallon.balloon1 << ","
-        << newBallon.balloon2 << ","
-        << newBallon.balloon3 << "\n";
-    ballonFile.close();
+    if (!RegisterUserBallons(newBallon)) return "BALLOON_FILE_WRITE_ERROR|\n";
 
+    UserIcons newIcon;
+    newIcon.id = id;
+    if (!RegisterUserIcons(newIcon)) return "ICON_FILE_WRITE_ERROR|\n";
+
+    // Î©îÎ™®Î¶¨ ÏÉÅ Ïª®ÌÖåÏù¥ÎÑàÏóê Ï∂îÍ∞Ä
     users.push_back(newUser);
     userProfiles.push_back(newProfile);
     userCharacters.push_back(newCharacters);
     userEmotes.push_back(newEmotes);
     userStats.push_back(newStats);
     userBallons.push_back(newBallon);
+    userIcons.push_back(newIcon);
+
     return "REGISTER_SUCCESS|\n";
 }
+
 
 void UserManager::BroadcastLobbyUserList() {
     std::string message = "LOBBY_USER_LIST";
@@ -480,12 +775,12 @@ void UserManager::BroadcastLobbyUserList() {
             if (itUser != users.end()) {
                 const std::string& nickname = itUser->nickname;
 
-                // UserProfileø°º≠ ∑π∫ß √£±‚
+                // UserProfileÏóêÏÑú Î†àÎ≤® Ï∞æÍ∏∞
                 auto itProfile = std::find_if(userProfiles.begin(), userProfiles.end(), [&](const UserProfile& p) {
                     return p.id == c->id;
                     });
 
-                int level = 1;  // ±‚∫ª ∑π∫ß
+                int level = 1;  // Í∏∞Î≥∏ Î†àÎ≤®
                 if (itProfile != userProfiles.end()) {
                     level = itProfile->level;
                 }
@@ -493,7 +788,7 @@ void UserManager::BroadcastLobbyUserList() {
                 message += "|" + nickname + "," + std::to_string(level);
             }
             else {
-                // UserAccount∞° æ¯¿∏∏È id∑Œ ±‚∫ª ∑π∫ß 1 ¿¸º€
+                // UserAccountÍ∞Ä ÏóÜÏúºÎ©¥ idÎ°ú Í∏∞Î≥∏ Î†àÎ≤® 1 Ï†ÑÏÜ°
                 message += "|" + c->id + ",1";
             }
         }
@@ -504,13 +799,13 @@ void UserManager::BroadcastLobbyUserList() {
             if (c->id.empty()) continue;
             int sendLen = send(c->socket, message.c_str(), (int)message.size(), 0);
             if (sendLen == SOCKET_ERROR) {
-                std::cout << "[BroadcastLobbyUserList] send ø¿∑˘ - user: "
-                    << c->id << ", ø¿∑˘ ƒ⁄µÂ: " << WSAGetLastError() << std::endl;
+                std::cout << "[BroadcastLobbyUserList] send Ïò§Î•ò - user: "
+                    << c->id << ", Ïò§Î•ò ÏΩîÎìú: " << WSAGetLastError() << std::endl;
             }
         }
     }
 
-    cout << "[BroadcastLobbyUserList] ∏ﬁΩ√¡ˆ ¿¸º€ øœ∑·: " << message;
+    cout << "[BroadcastLobbyUserList] Î©îÏãúÏßÄ Ï†ÑÏÜ° ÏôÑÎ£å: " << message;
 }
 
 void UserManager::SendUserInfoByNickname(shared_ptr<ClientInfo> client, const string& nickname)
@@ -563,28 +858,28 @@ void UserManager::LogoutUser(std::shared_ptr<ClientInfo> client) {
 
     auto& clients = server_.GetClients();
 
-    // clients ∏ÆΩ∫∆Æø°º≠ «ÿ¥Á ≈¨∂Û¿Ãæ∆Æ ¡§∫∏ √ ±‚»≠
+    // clients Î¶¨Ïä§Ìä∏ÏóêÏÑú Ìï¥Îãπ ÌÅ¥ÎùºÏù¥Ïñ∏Ìä∏ Ï†ïÎ≥¥ Ï¥àÍ∏∞Ìôî
     for (auto& c : clients) {
         if (c->socket == client->socket) {
-            c->id.clear();      // ¥–≥◊¿” √ ±‚»≠
+            c->id.clear();      // ÎãâÎÑ§ÏûÑ Ï¥àÍ∏∞Ìôî
             break;
         }
     }
 
-    std::cout << "[UserManager] ¿Ø¿˙ ∑Œ±◊æ∆øÙ √≥∏Æ øœ∑·: " << client->id << std::endl;
+    std::cout << "[UserManager] Ïú†Ï†Ä Î°úÍ∑∏ÏïÑÏõÉ Ï≤òÎ¶¨ ÏôÑÎ£å: " << client->id << std::endl;
     BroadcastLobbyUserList();
 }
 
 std::vector<int> UserManager::GetEmotionsByUserId(const std::string& userId) {
     std::ifstream file("UserProfile.csv");
     if (!file.is_open()) {
-        std::cerr << "[GET_EMO] UserProfile.csv ø≠±‚ Ω«∆–" << std::endl;
+        std::cerr << "[GET_EMO] UserProfile.csv Ïó¥Í∏∞ Ïã§Ìå®" << std::endl;
         return {};
     }
 
     std::string ID = Trim(userId);
     std::string line;
-    if (!std::getline(file, line)) return {}; // «Ï¥ı Ω∫≈µ
+    if (!std::getline(file, line)) return {}; // Ìó§Îçî Ïä§ÌÇµ
 
     while (std::getline(file, line)) {
         std::stringstream ss(line);
@@ -613,27 +908,27 @@ std::vector<int> UserManager::GetEmotionsByUserId(const std::string& userId) {
                     };
                 }
                 catch (const std::exception& e) {
-                    std::cerr << "[GET_EMO] stoi ∫Ø»Ø Ω«∆–: " << e.what() << std::endl;
+                    std::cerr << "[GET_EMO] stoi Î≥ÄÌôò Ïã§Ìå®: " << e.what() << std::endl;
                     return {};
                 }
             }
         }
     }
 
-    std::cerr << "[GET_EMO] ¿œƒ°«œ¥¬ ID æ¯¿Ω: " << userId << std::endl;
+    std::cerr << "[GET_EMO] ÏùºÏπòÌïòÎäî ID ÏóÜÏùå: " << userId << std::endl;
     return {};
 }
 
 int UserManager::GetBalloonByUserId(const std::string& userId) {
     std::ifstream file("UserProfile.csv");
     if (!file.is_open()) {
-        std::cerr << "[GET_BALLOON] UserProfile.csv ø≠±‚ Ω«∆–" << std::endl;
+        std::cerr << "[GET_BALLOON] UserProfile.csv Ïó¥Í∏∞ Ïã§Ìå®" << std::endl;
         return -1;
     }
 
     std::string ID = Trim(userId);
     std::string line;
-    if (!std::getline(file, line)) return -1; // «Ï¥ı Ω∫≈µ
+    if (!std::getline(file, line)) return -1; // Ìó§Îçî Ïä§ÌÇµ
 
     while (std::getline(file, line)) {
         std::stringstream ss(line);
@@ -654,17 +949,17 @@ int UserManager::GetBalloonByUserId(const std::string& userId) {
 
             if (Trim(id) == ID) {
                 try {
-                    return std::stoi(balloonStr); // µ¸ «œ≥™∏∏ π›»Ø
+                    return std::stoi(balloonStr); // Îî± ÌïòÎÇòÎßå Î∞òÌôò
                 }
                 catch (const std::exception& e) {
-                    std::cerr << "[GET_BALLOON] stoi Ω«∆–: " << e.what() << std::endl;
+                    std::cerr << "[GET_BALLOON] stoi Ïã§Ìå®: " << e.what() << std::endl;
                     return -1;
                 }
             }
         }
     }
 
-    std::cerr << "[GET_BALLOON] ¿œƒ°«œ¥¬ ID æ¯¿Ω: " << userId << std::endl;
+    std::cerr << "[GET_BALLOON] ÏùºÏπòÌïòÎäî ID ÏóÜÏùå: " << userId << std::endl;
     return -1;
 }
 
@@ -673,7 +968,7 @@ std::vector<int> UserManager::GetCharactersByUserId(const std::string& userId)
     std::ifstream file("UserCharacters.csv");
     std::string line;
 
-    // √π ¡Ÿ¿∫ «Ï¥ı¥œ±Ó skip
+    // Ï≤´ Ï§ÑÏùÄ Ìó§ÎçîÎãàÍπå skip
     std::getline(file, line);
 
     while (std::getline(file, line)) {
@@ -691,7 +986,7 @@ std::vector<int> UserManager::GetCharactersByUserId(const std::string& userId)
         }
     }
 
-    return {}; // √£¡ˆ ∏¯«— ∞ÊøÏ
+    return {}; // Ï∞æÏßÄ Î™ªÌïú Í≤ΩÏö∞
 }
 
 UserProfile& UserManager::GetUserProfileById(const std::string& id)
@@ -746,17 +1041,31 @@ void UserManager::UpdateWinLoss(const std::string& userId, bool isWin, int charI
     }
 }
 
+UserWinLossStats& UserManager::GetUserWinLossStatsById(const std::string& id) {
+    for (auto& stats : userStats) {
+        if (stats.id == id)
+            return stats;
+    }
+
+    // IDÍ∞Ä Ï°¥Ïû¨ÌïòÏßÄ ÏïäÏúºÎ©¥ ÏÉà Í∞ùÏ≤¥Î•º Ï∂îÍ∞Ä ÌõÑ Î∞òÌôò
+    UserWinLossStats newStats;
+    newStats.id = id;
+    userStats.push_back(newStats);
+    return userStats.back();
+}
+
+
 int UserManager::GetAttackByIndex(int index)
 {
     std::ifstream file("CharStat.csv");
     if (!file.is_open()) {
-        std::cerr << "[GetAttackByIndex] CharStat.csv ø≠±‚ Ω«∆–" << std::endl;
+        std::cerr << "[GetAttackByIndex] CharStat.csv Ïó¥Í∏∞ Ïã§Ìå®" << std::endl;
         return 0;
     }
 
     std::string line;
     if (!std::getline(file, line)) {
-        std::cerr << "[GetAttackByIndex] «Ï¥ı ¿–±‚ Ω«∆–" << std::endl;
+        std::cerr << "[GetAttackByIndex] Ìó§Îçî ÏùΩÍ∏∞ Ïã§Ìå®" << std::endl;
         return 0;
     }
 
@@ -777,12 +1086,12 @@ int UserManager::GetAttackByIndex(int index)
                 }
             }
             catch (const std::exception& e) {
-                std::cerr << "[GetAttackByIndex] ∫Ø»Ø ø¿∑˘: " << e.what() << " | ∂Û¿Œ: " << line << std::endl;
+                std::cerr << "[GetAttackByIndex] Î≥ÄÌôò Ïò§Î•ò: " << e.what() << " | ÎùºÏù∏: " << line << std::endl;
                 return 0;
             }
         }
     }
 
-    std::cerr << "[GetAttackByIndex] ¿Œµ¶Ω∫ " << index << "ø° «ÿ¥Á«œ¥¬ ∞¯∞›∑¬ æ¯¿Ω" << std::endl;
+    std::cerr << "[GetAttackByIndex] Ïù∏Îç±Ïä§ " << index << "Ïóê Ìï¥ÎãπÌïòÎäî Í≥µÍ≤©Î†• ÏóÜÏùå" << std::endl;
     return 0;
 }
