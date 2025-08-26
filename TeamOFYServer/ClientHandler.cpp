@@ -49,12 +49,9 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
         //    cout << "로그인 요청 감지" << endl;
         //    string loginData = message.substr(strlen("LOGIN|"));
         //    size_t commaPos = loginData.find(',');
-
         //    string id = (commaPos != string::npos) ? loginData.substr(0, commaPos) : "";
         //    string pw = (commaPos != string::npos) ? loginData.substr(commaPos + 1) : "";
-
         //    response = userManager_.CheckLogin(id, pw);
-
         //    string nick;
         //    if (response.rfind("LOGIN_SUCCESS|", 0) == 0) {
         //        size_t colonPos = response.find('|');
@@ -65,14 +62,11 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
         //            getline(ss, id, ',');
         //            getline(ss, pw, ',');
         //            getline(ss, nickname, ',');
-
         //            client->id = id;
         //            client->nickname = nickname;
         //        }
-
         //        {
         //            lock_guard<mutex> lock(server_.clientsMutex);
-
         //            for (auto& c : server_.GetClients()) {
         //                if (c->socket == client->socket) {
         //                    c->id = client->id;  // 덮어쓰기
@@ -80,14 +74,11 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
         //                    break;
         //                }
         //            }
-
         //            clientsMap[id] = client;  // nickname은 유일하므로 map은 그냥 덮어쓰기
         //        }
         //    }
-
         //    SendToClient(client, response);
         //}
-
         if (message.rfind("LOGIN|", 0) == 0) {
             cout << "로그인 요청 감지" << endl;
             string loginData = message.substr(strlen("LOGIN|"));
@@ -141,7 +132,6 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
 
             SendToClient(client, response);
         }
-
         else if (message.rfind("REGISTER|", 0) == 0) {
             cout << "[ProcessMessages] 회원가입 요청 감지" << endl;
 
@@ -173,7 +163,6 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
             server_.RemoveClient(client);
             return;
         }
-
         else if (message.rfind("GET_USER_INFO|", 0) == 0)
         {
             string nickname = message.substr(strlen("GET_USER_INFO|"));
@@ -218,6 +207,40 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
             userManager_.LogoutUser(client);  // 필요하다면 유저 상태 갱신
             response = "LOGOUT_SUCCESS|\n";
 }
+
+        else if (message.rfind("GETINFO|", 0) == 0)
+        {
+            std::string nickname = Trim(message.substr(strlen("GETINFO|")));
+            std::string userId = Trim(GetIdByNickname(nickname));
+            if (userId.empty())
+            {
+                std::cerr << "[GETINFO] 존재하지 않는 닉네임: " << nickname << std::endl;
+                return;
+            }
+
+            try
+            {
+                UserProfile& profile = userManager_.GetUserProfileById(userId);
+                UserWinLossStats& stats = userManager_.GetUserWinLossStatsById(userId);
+                UserCharacterEmotes& emotes = userManager_.GetUserEmotesById(userId);
+                UserBallons& ballons = userManager_.GetUserBallonsById(userId); // ← 새로 추가
+
+                if (clientsMap.count(userId) && clientsMap[userId])
+                {
+                    auto client = clientsMap[userId];
+                    SendSetInfo(client, nickname, profile);
+                    SendWinRate(client, nickname, stats);
+                    SendUserEmotes(client, nickname);
+                    SendUserBallons(client, nickname); // ← 새로 추가
+                }
+            }
+            catch (const std::exception& e)
+            {
+                std::cerr << "[GETINFO] 처리 실패: " << e.what() << std::endl;
+            }
+            }
+
+
         else if (message.rfind("CREATE_ROOM|", 0) == 0) {
             string data = message.substr(strlen("CREATE_ROOM|"));
             stringstream ss(data);
@@ -239,7 +262,7 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
             else {
                 response = "CREATE_ROOM_FORMAT_ERROR\n";
             }
-            }
+        }
         else if (message.rfind("ENTER_ROOM|", 0) == 0) {
             string data = message.substr(strlen("ENTER_ROOM|"));
             stringstream ss(data);
@@ -297,8 +320,7 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
         {
             string data = message.substr(strlen("CHOOSE_CHARACTER|"));
             roomManager_.HandleCharacterChoice(*client, data);
-        }
-        
+        } 
         else if (message.rfind("TEAMCHANGE|", 0) == 0)
         {
             string nickname = message.substr(strlen("TEAMCHANGE|"));
@@ -362,7 +384,6 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
             roomManager_.SendServerMessageToRoom(room->roomName, serverMsg);
 
         }
-
         else if (message.rfind("START_GAME|", 0) == 0)
         {
             string roomName = message.substr(strlen("START_GAME|"));
@@ -628,7 +649,6 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
                 roomManager_.BroadcastMessageExcept(client->socket, resultMsg);
             }
         }
-
         else if (message.rfind("WEAPON_ATTACK|", 0) == 0)
         {
             std::string data = message.substr(strlen("WEAPON_ATTACK|"));
@@ -679,7 +699,6 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
 
             std::cout << "[Server] WEAPON_ATTACK 처리 완료 from " << nickname << std::endl;
             }
-
         else if (message.rfind("MELODY_MOVE|", 0) == 0)
         {
             std::string data = message.substr(strlen("MELODY_MOVE|"));
@@ -741,7 +760,6 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
                 std::cout << "[서버] DESTROY_BLOCK 브로드캐스트: " << blockName << std::endl;
             }
         }
-
         else if (message.rfind("HIT|", 0) == 0)
         {
             // 패킷 구조: HIT|weaponIndex|attackerNick|targetNick
@@ -1089,7 +1107,6 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
                 }
             }
         }
-
         else if (message.rfind("READY_TO_EXIT|", 0) == 0)
         {
             std::string nickname = message.substr(strlen("READY_TO_EXIT|"));
@@ -1132,4 +1149,137 @@ bool ClientHandler::GetUserPositionById(const std::string& userId, std::pair<flo
 
     outPos = it->second;
     return true;
+}
+
+// SETINFO 패킷 전송 함수
+void ClientHandler::SendSetInfo(std::shared_ptr<ClientInfo> client, const std::string& nickname, const UserProfile& profile)
+{
+    std::stringstream ss;
+    ss << "SETINFO|"
+        << nickname << ","
+        << profile.level << ","
+        << profile.exp << ","
+        << profile.icon << ","
+        << profile.emo0 << ","
+        << profile.emo1 << ","
+        << profile.emo2 << ","
+        << profile.emo3 << ","
+        << profile.balloon;
+
+    std::string msg = ss.str() + "\n";
+    SendToClient(client, msg);
+    std::cout << "[SETINFO] 전송: " << msg;
+}
+
+// WINRATE 패킷 전송 함수
+void ClientHandler::SendWinRate(std::shared_ptr<ClientInfo> client, const std::string& nickname, const UserWinLossStats& stats)
+{
+    struct CharWinLose { int index; int win; int lose; int total; };
+    std::vector<CharWinLose> charStats;
+    for (int i = 0; i <= 6; ++i)
+    {
+        int win = 0, lose = 0;
+        switch (i)
+        {
+        case 0: win = stats.char0_win; lose = stats.char0_lose; break;
+        case 1: win = stats.char1_win; lose = stats.char1_lose; break;
+        case 2: win = stats.char2_win; lose = stats.char2_lose; break;
+        case 3: win = stats.char3_win; lose = stats.char3_lose; break;
+        case 4: win = stats.char4_win; lose = stats.char4_lose; break;
+        case 5: win = stats.char5_win; lose = stats.char5_lose; break;
+        case 6: win = stats.char6_win; lose = stats.char6_lose; break;
+        }
+        charStats.push_back({ i, win, lose, win + lose });
+    }
+
+    std::sort(charStats.begin(), charStats.end(),
+        [](const CharWinLose& a, const CharWinLose& b) { return a.total > b.total; });
+
+    std::stringstream ss;
+    ss << "WINRATE|"
+        << nickname << "," << stats.winCount << "," << stats.loseCount;
+
+    for (int i = 0; i < 3; ++i)
+    {
+        ss << "," << charStats[i].index
+            << "," << charStats[i].win
+            << "," << charStats[i].lose;
+    }
+
+    std::string msg = ss.str() + "\n";
+    SendToClient(client, msg);
+    std::cout << "[WINRATE] 전송: " << msg;
+}
+
+// 클라이언트에게 GETMYEMO 패킷 전송
+void ClientHandler::SendUserEmotes(std::shared_ptr<ClientInfo> client, const std::string& nickname)
+{
+    std::string userId = Trim(GetIdByNickname(nickname));
+    if (userId.empty())
+    {
+        std::cerr << "[GETMYEMO] 존재하지 않는 닉네임: " << nickname << std::endl;
+        return;
+    }
+
+    UserCharacterEmotes& emotes = userManager_.GetUserEmotesById(userId);
+
+    std::stringstream ss;
+    ss << "GETMYEMO|" << nickname;
+
+    int emoteArray[36] = {
+        emotes.emo0, emotes.emo1, emotes.emo2, emotes.emo3,
+        emotes.emo4, emotes.emo5, emotes.emo6, emotes.emo7,
+        emotes.emo8, emotes.emo9, emotes.emo10, emotes.emo11,
+        emotes.emo12, emotes.emo13, emotes.emo14, emotes.emo15,
+        emotes.emo16, emotes.emo17, emotes.emo18, emotes.emo19,
+        emotes.emo20, emotes.emo21, emotes.emo22, emotes.emo23,
+        emotes.emo24, emotes.emo25, emotes.emo26, emotes.emo27,
+        emotes.emo28, emotes.emo29, emotes.emo30, emotes.emo31,
+        emotes.emo32, emotes.emo33, emotes.emo34, emotes.emo35
+    };
+
+    // 1인 인덱스만 전송
+    for (int i = 0; i < 36; ++i) {
+        if (emoteArray[i] == 1)
+            ss << "," << i;
+    }
+
+    std::string msg = ss.str() + "\n";
+    SendToClient(client, msg);
+    std::cout << "[GETMYEMO] 전송: " << msg;
+}
+
+// 클라이언트에게 GETMYBALLOON 패킷 전송
+void ClientHandler::SendUserBallons(std::shared_ptr<ClientInfo> client, const std::string& nickname)
+{
+    // 닉네임 → ID
+    std::string userId = Trim(GetIdByNickname(nickname));
+    if (userId.empty())
+    {
+        std::cerr << "[GETMYBALLOON] 존재하지 않는 닉네임: " << nickname << std::endl;
+        return;
+    }
+
+    // UserManager에서 해당 ID의 물풍선 데이터 가져오기 (참조 반환)
+    UserBallons& ballons = userManager_.GetUserBallonsById(userId);
+
+    std::stringstream ss;
+    ss << "GETMYBALLOON|" << nickname;
+
+    int ballonArray[10] = {
+        ballons.balloon0, ballons.balloon1, ballons.balloon2, ballons.balloon3,
+        ballons.balloon4, ballons.balloon5, ballons.balloon6, ballons.balloon7,
+        ballons.balloon8, ballons.balloon9
+    };
+
+    // 값이 1인 인덱스만 추가
+    for (int i = 0; i < 10; ++i)
+    {
+        if (ballonArray[i] == 1) // 1 = 보유
+            ss << "," << i;      // 인덱스만 전송
+    }
+
+    std::string msg = ss.str() + "\n";
+    SendToClient(client, msg);
+    std::cout << "[GETMYBALLOON] 전송: " << msg;
 }

@@ -13,7 +13,7 @@
 #include "MapManager.h"
 #include "Player.h"
 #include "CharacterStatsManager.h"
-
+using namespace std;
 class Server;
 class ClientHandler {
 public:
@@ -48,6 +48,10 @@ public:
 
     bool GetUserPositionById(const std::string& userId, std::pair<float, float>& outPos);
 
+    void SendSetInfo(std::shared_ptr<ClientInfo> client, const std::string& nickname, const UserProfile& profile);
+    void SendWinRate(std::shared_ptr<ClientInfo> client, const std::string& nickname, const UserWinLossStats& stats);
+    void SendUserEmotes(std::shared_ptr<ClientInfo> client, const std::string& nickname);
+    void SendUserBallons(std::shared_ptr<ClientInfo> client, const std::string& nickname);
     //vector<shared_ptr<ClientInfo>> clients;
 private:
     Server& server_;

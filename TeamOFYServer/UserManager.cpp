@@ -150,6 +150,8 @@ std::vector<UserCharacterEmotes> UserManager::LoadUserEmotes(const std::string& 
     }
 
     std::string line;
+
+    // 헤더 읽기
     if (!std::getline(file, line)) {
         std::cerr << "헤더 읽기 실패: " << filename << std::endl;
         return loadedEmotes;
@@ -161,19 +163,65 @@ std::vector<UserCharacterEmotes> UserManager::LoadUserEmotes(const std::string& 
         std::stringstream ss(line);
         UserCharacterEmotes emotes;
 
-        if (std::getline(ss, emotes.id, ',') &&
-            std::getline(ss, line, ',') && (emotes.emo0 = std::stoi(line), true) &&
-            std::getline(ss, line, ',') && (emotes.emo1 = std::stoi(line), true) &&
-            std::getline(ss, line, ',') && (emotes.emo2 = std::stoi(line), true) &&
-            std::getline(ss, line) && (emotes.emo3 = std::stoi(line), true))
-        {
-            loadedEmotes.push_back(emotes);
+        // ID 읽기
+        if (!std::getline(ss, emotes.id, ',')) {
+            std::cerr << "UserCharacterEmotes.csv 파싱 오류 (ID) 라인: " << line << std::endl;
+            continue;
         }
-        else {
-            std::cerr << "UserCharacterEmotes.csv 파싱 오류 라인: " << line << std::endl;
+
+        // emo0~emo35 읽기
+        for (int i = 0; i < 36; ++i) {
+            std::string value;
+            if (!std::getline(ss, value, ',')) {
+                std::cerr << "UserCharacterEmotes.csv 파싱 오류 (emo" << i << ") 라인: " << line << std::endl;
+                break;
+            }
+
+            int intValue = std::stoi(value);
+            switch (i) {
+            case 0: emotes.emo0 = intValue; break;
+            case 1: emotes.emo1 = intValue; break;
+            case 2: emotes.emo2 = intValue; break;
+            case 3: emotes.emo3 = intValue; break;
+            case 4: emotes.emo4 = intValue; break;
+            case 5: emotes.emo5 = intValue; break;
+            case 6: emotes.emo6 = intValue; break;
+            case 7: emotes.emo7 = intValue; break;
+            case 8: emotes.emo8 = intValue; break;
+            case 9: emotes.emo9 = intValue; break;
+            case 10: emotes.emo10 = intValue; break;
+            case 11: emotes.emo11 = intValue; break;
+            case 12: emotes.emo12 = intValue; break;
+            case 13: emotes.emo13 = intValue; break;
+            case 14: emotes.emo14 = intValue; break;
+            case 15: emotes.emo15 = intValue; break;
+            case 16: emotes.emo16 = intValue; break;
+            case 17: emotes.emo17 = intValue; break;
+            case 18: emotes.emo18 = intValue; break;
+            case 19: emotes.emo19 = intValue; break;
+            case 20: emotes.emo20 = intValue; break;
+            case 21: emotes.emo21 = intValue; break;
+            case 22: emotes.emo22 = intValue; break;
+            case 23: emotes.emo23 = intValue; break;
+            case 24: emotes.emo24 = intValue; break;
+            case 25: emotes.emo25 = intValue; break;
+            case 26: emotes.emo26 = intValue; break;
+            case 27: emotes.emo27 = intValue; break;
+            case 28: emotes.emo28 = intValue; break;
+            case 29: emotes.emo29 = intValue; break;
+            case 30: emotes.emo30 = intValue; break;
+            case 31: emotes.emo31 = intValue; break;
+            case 32: emotes.emo32 = intValue; break;
+            case 33: emotes.emo33 = intValue; break;
+            case 34: emotes.emo34 = intValue; break;
+            case 35: emotes.emo35 = intValue; break;
+            }
         }
+
+        loadedEmotes.push_back(emotes);
     }
 
+    // 멤버 벡터에 저장
     userEmotes = std::move(loadedEmotes);
     return userEmotes;
 }
@@ -224,8 +272,11 @@ std::vector<UserBallons> UserManager::LoadUserBallons(const std::string& filenam
         }
     }
 
-    return loadedBallons;
+    // 멤버 벡터에 저장
+    userBallons = std::move(loadedBallons);
+    return userBallons;
 }
+
 
 // LoadUserWinLossStats
 std::vector<UserWinLossStats> UserManager::LoadUserWinLossStats(const std::string& filename)
@@ -1052,6 +1103,74 @@ UserWinLossStats& UserManager::GetUserWinLossStatsById(const std::string& id) {
     newStats.id = id;
     userStats.push_back(newStats);
     return userStats.back();
+}
+
+UserCharacterEmotes& UserManager::GetUserEmotesById(const std::string& userId) {
+    // 기존 벡터에서 검색
+    for (auto& emotes : userEmotes) {
+        if (emotes.id == userId)
+            return emotes;
+    }
+
+    // ID가 존재하지 않으면 새 객체를 추가 후 반환
+    UserCharacterEmotes newEmotes;
+    newEmotes.id = userId;
+
+    // 모든 이모티콘 0으로 초기화 (미보유)
+    for (int i = 0; i < 36; ++i) {
+        switch (i) {
+        case 0: newEmotes.emo0 = 0; break;
+        case 1: newEmotes.emo1 = 0; break;
+        case 2: newEmotes.emo2 = 0; break;
+        case 3: newEmotes.emo3 = 0; break;
+        case 4: newEmotes.emo4 = 0; break;
+        case 5: newEmotes.emo5 = 0; break;
+        case 6: newEmotes.emo6 = 0; break;
+        case 7: newEmotes.emo7 = 0; break;
+        case 8: newEmotes.emo8 = 0; break;
+        case 9: newEmotes.emo9 = 0; break;
+        case 10: newEmotes.emo10 = 0; break;
+        case 11: newEmotes.emo11 = 0; break;
+        case 12: newEmotes.emo12 = 0; break;
+        case 13: newEmotes.emo13 = 0; break;
+        case 14: newEmotes.emo14 = 0; break;
+        case 15: newEmotes.emo15 = 0; break;
+        case 16: newEmotes.emo16 = 0; break;
+        case 17: newEmotes.emo17 = 0; break;
+        case 18: newEmotes.emo18 = 0; break;
+        case 19: newEmotes.emo19 = 0; break;
+        case 20: newEmotes.emo20 = 0; break;
+        case 21: newEmotes.emo21 = 0; break;
+        case 22: newEmotes.emo22 = 0; break;
+        case 23: newEmotes.emo23 = 0; break;
+        case 24: newEmotes.emo24 = 0; break;
+        case 25: newEmotes.emo25 = 0; break;
+        case 26: newEmotes.emo26 = 0; break;
+        case 27: newEmotes.emo27 = 0; break;
+        case 28: newEmotes.emo28 = 0; break;
+        case 29: newEmotes.emo29 = 0; break;
+        case 30: newEmotes.emo30 = 0; break;
+        case 31: newEmotes.emo31 = 0; break;
+        case 32: newEmotes.emo32 = 0; break;
+        case 33: newEmotes.emo33 = 0; break;
+        case 34: newEmotes.emo34 = 0; break;
+        case 35: newEmotes.emo35 = 0; break;
+        }
+    }
+
+    userEmotes.push_back(newEmotes);
+    return userEmotes.back();
+}
+
+UserBallons& UserManager::GetUserBallonsById(const std::string& id)
+{
+    for (auto& b : userBallons)
+        if (b.id == id) return b;
+
+    UserBallons newBallon;
+    newBallon.id = id;
+    userBallons.push_back(newBallon);
+    return userBallons.back();
 }
 
 
