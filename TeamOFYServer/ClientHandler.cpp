@@ -223,22 +223,23 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
                 UserProfile& profile = userManager_.GetUserProfileById(userId);
                 UserWinLossStats& stats = userManager_.GetUserWinLossStatsById(userId);
                 UserCharacterEmotes& emotes = userManager_.GetUserEmotesById(userId);
-                UserBallons& ballons = userManager_.GetUserBallonsById(userId); // ← 새로 추가
+                UserBallons& ballons = userManager_.GetUserBallonsById(userId);
 
-                if (clientsMap.count(userId) && clientsMap[userId])
+                // 요청자(client)한테 조회 결과 전송
+                if (client)
                 {
-                    auto client = clientsMap[userId];
                     SendSetInfo(client, nickname, profile);
                     SendWinRate(client, nickname, stats);
                     SendUserEmotes(client, nickname);
-                    SendUserBallons(client, nickname); // ← 새로 추가
+                    SendUserBallons(client, nickname);
                 }
             }
             catch (const std::exception& e)
             {
                 std::cerr << "[GETINFO] 처리 실패: " << e.what() << std::endl;
             }
-            }
+        }
+
 
 
         else if (message.rfind("CREATE_ROOM|", 0) == 0) {
