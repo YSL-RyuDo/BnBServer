@@ -80,40 +80,6 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
         }
         string response;
 
-        //if (message.rfind("LOGIN|", 0) == 0) {
-        //    cout << "로그인 요청 감지" << endl;
-        //    string loginData = message.substr(strlen("LOGIN|"));
-        //    size_t commaPos = loginData.find(',');
-        //    string id = (commaPos != string::npos) ? loginData.substr(0, commaPos) : "";
-        //    string pw = (commaPos != string::npos) ? loginData.substr(commaPos + 1) : "";
-        //    response = userManager_.CheckLogin(id, pw);
-        //    string nick;
-        //    if (response.rfind("LOGIN_SUCCESS|", 0) == 0) {
-        //        size_t colonPos = response.find('|');
-        //        if (colonPos != string::npos) {
-        //            string userData = response.substr(colonPos + 1);
-        //            stringstream ss(userData);
-        //            string id, pw, nickname, levelStr, expStr;
-        //            getline(ss, id, ',');
-        //            getline(ss, pw, ',');
-        //            getline(ss, nickname, ',');
-        //            client->id = id;
-        //            client->nickname = nickname;
-        //        }
-        //        {
-        //            lock_guard<mutex> lock(server_.clientsMutex);
-        //            for (auto& c : server_.GetClients()) {
-        //                if (c->socket == client->socket) {
-        //                    c->id = client->id;  // 덮어쓰기
-        //                    c->nickname = client->nickname;
-        //                    break;
-        //                }
-        //            }
-        //            clientsMap[id] = client;  // nickname은 유일하므로 map은 그냥 덮어쓰기
-        //        }
-        //    }
-        //    SendToClient(client, response);
-        //}
         if (message.rfind("LOGIN|", 0) == 0) {
             cout << "로그인 요청 감지" << endl;
             string loginData = message.substr(strlen("LOGIN|"));
@@ -348,6 +314,141 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
                 std::cerr << "[GET_ICON_INFO] 처리 실패: " << e.what() << std::endl;
             }
             }
+        else if (message.rfind("EMO_CHANGE|", 0) == 0)
+        {
+            std::string data = message.substr(strlen("EMO_CHANGE|"));
+            std::stringstream ss(data);
+
+            std::string nickname;
+            std::string aStr, bStr;
+
+            if (!std::getline(ss, nickname, ',') ||
+                !std::getline(ss, aStr, ',') ||
+                !std::getline(ss, bStr))
+                return;
+
+            int emoA = std::stoi(aStr); // 변경당하는 (슬롯에 있어야 함)
+            int emoB = std::stoi(bStr); // 변경하려는
+
+            if (emoA == emoB)
+                return;
+
+            std::string userId = Trim(GetIdByNickname(nickname));
+            if (userId.empty())
+                return;
+
+            UserProfile& profile = userManager_.GetUserProfileById(userId);
+            UserCharacterEmotes& emotes = userManager_.GetUserEmotesById(userId);
+
+            // 1️ B 보유 여부 검사
+            auto hasEmo = [&](int emo) -> bool {
+                switch (emo)
+                {
+                case 0: return emotes.emo0;
+                case 1: return emotes.emo1;
+                case 2: return emotes.emo2;
+                case 3: return emotes.emo3;
+                case 4: return emotes.emo4;
+                case 5: return emotes.emo5;
+                case 6: return emotes.emo6;
+                case 7: return emotes.emo7;
+                case 8: return emotes.emo8;
+                case 9: return emotes.emo9;
+                case 10: return emotes.emo10;
+                case 11: return emotes.emo11;
+                case 12: return emotes.emo12;
+                case 13: return emotes.emo13;
+                case 14: return emotes.emo14;
+                case 15: return emotes.emo15;
+                case 16: return emotes.emo16;
+                case 17: return emotes.emo17;
+                case 18: return emotes.emo18;
+                case 19: return emotes.emo19;
+                case 20: return emotes.emo20;
+                case 21: return emotes.emo21;
+                case 22: return emotes.emo22;
+                case 23: return emotes.emo23;
+                case 24: return emotes.emo24;
+                case 25: return emotes.emo25;
+                case 26: return emotes.emo26;
+                case 27: return emotes.emo27;
+                case 28: return emotes.emo28;
+                case 29: return emotes.emo29;
+                case 30: return emotes.emo30;
+                case 31: return emotes.emo31;
+                case 32: return emotes.emo32;
+                case 33: return emotes.emo33;
+                case 34: return emotes.emo34;
+                case 35: return emotes.emo35;
+                default: return false;
+                }
+                };
+
+            if (!hasEmo(emoB))
+            {
+                send(client->socket,
+                    "EMO_CHANGE_FAIL|NOT_OWNED\n",
+                    26, 0);
+                return;
+            }
+
+            // 2️ 슬롯 찾기
+            int* slots[4] = {
+                &profile.emo0,
+                &profile.emo1,
+                &profile.emo2,
+                &profile.emo3
+            };
+
+            int idxA = -1;
+            int idxB = -1;
+
+            for (int i = 0; i < 4; ++i)
+            {
+                if (*slots[i] == emoA) idxA = i;
+                if (*slots[i] == emoB) idxB = i;
+            }
+
+            // A는 반드시 슬롯에 있어야 함
+            if (idxA == -1)
+            {
+                send(client->socket,
+                    "EMO_CHANGE_FAIL|NOT_EQUIPPED\n",
+                    30, 0);
+                return;
+            }
+
+            // 3️ 처리
+            if (idxB != -1)
+            {
+                // 슬롯 (스왑)
+                std::swap(*slots[idxA], *slots[idxB]);
+            }
+            else
+            {
+                // 슬롯 (교체)
+                *slots[idxA] = emoB;
+            }
+
+            userManager_.SaveUserProfile(userId);
+
+            send(client->socket,
+                ("EMO_CHANGE_OK|" + nickname + "\n").c_str(),
+                (int)nickname.size() + 15,
+                0);
+
+            std::cout << "[EMO_CHANGE] 성공: "
+                << nickname << " "
+                << emoA << " -> " << emoB << std::endl;
+        }
+        else if (message.rfind("BALLOON_CHANGE|", 0) == 0)
+        {
+            //구현해야함
+        }
+        else if (message.rfind("ICON_CHANGE|", 0) == 0)
+        {
+            //구현해야함
+        }
 
         else if (message.rfind("CREATE_ROOM|", 0) == 0) {
             string data = message.substr(strlen("CREATE_ROOM|"));
