@@ -56,6 +56,9 @@ public:
 	UserWinLossStats& GetUserWinLossStatsById(const std::string& id);
 	UserCharacterEmotes& GetUserEmotesById(const std::string& userId);
 	UserBallons& GetUserBallonsById(const std::string& userId);
+	UserIcons& GetUserIconsById(const std::string& userId);
+
+
 	void UpdateWinLoss(const std::string& userId, bool isWin, int charIndex);
 	int GetAttackByIndex(int index);
 

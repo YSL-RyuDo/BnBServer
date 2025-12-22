@@ -904,22 +904,43 @@ void UserManager::BroadcastLobbyChatMessage(const string& nickname, const string
     cout << "[LobbyChat] " << nickname << ": " << message << endl;
 }
 
-void UserManager::LogoutUser(std::shared_ptr<ClientInfo> client) {
-    std::lock_guard<std::mutex> lock(server_.GetClientsMutex());
+void UserManager::LogoutUser(std::shared_ptr<ClientInfo> client)
+{
+    std::string userId = client->id;
 
-    auto& clients = server_.GetClients();
-
-    // clients 리스트에서 해당 클라이언트 정보 초기화
-    for (auto& c : clients) {
-        if (c->socket == client->socket) {
-            c->id.clear();      // 닉네임 초기화
-            break;
-        }
+    {
+        std::lock_guard<std::mutex> lock(server_.GetClientsMutex());
+        client->id.clear();
     }
 
-    std::cout << "[UserManager] 유저 로그아웃 처리 완료: " << client->id << std::endl;
+    // 핵심 추가
+    if (!userId.empty())
+    {
+        clientHandler_->RemoveLoginSession(userId);
+    }
+
+    std::cout << "[UserManager] 유저 로그아웃 처리 완료: " << userId << std::endl;
+
     BroadcastLobbyUserList();
 }
+
+
+//void UserManager::LogoutUser(std::shared_ptr<ClientInfo> client) {
+//    std::lock_guard<std::mutex> lock(server_.GetClientsMutex());
+//
+//    auto& clients = server_.GetClients();
+//
+//    // clients 리스트에서 해당 클라이언트 정보 초기화
+//    for (auto& c : clients) {
+//        if (c->socket == client->socket) {
+//            c->id.clear();      // 닉네임 초기화
+//            break;
+//        }
+//    }
+//
+//    std::cout << "[UserManager] 유저 로그아웃 처리 완료: " << client->id << std::endl;
+//    BroadcastLobbyUserList();
+//}
 
 std::vector<int> UserManager::GetEmotionsByUserId(const std::string& userId) {
     std::ifstream file("UserProfile.csv");
@@ -1171,6 +1192,21 @@ UserBallons& UserManager::GetUserBallonsById(const std::string& id)
     newBallon.id = id;
     userBallons.push_back(newBallon);
     return userBallons.back();
+}
+
+UserIcons& UserManager::GetUserIconsById(const std::string& userId)
+{
+    for (auto& icon : userIcons)
+    {
+        if (icon.id == userId)
+            return icon;
+    }
+
+    // 없으면 새로 생성
+    UserIcons newIcon;
+    newIcon.id = userId;
+    userIcons.push_back(newIcon);
+    return userIcons.back();
 }
 
 

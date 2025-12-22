@@ -798,3 +798,99 @@ bool RoomManager::HandleReadyToExit(const std::string& userId, const std::string
 
     return allReady;
 }
+
+void RoomManager::ForceExitRoomByUserId(const std::string& userId)
+{
+    std::string roomName;
+    bool roomDeleted = false;
+    std::string userListStr;
+
+    {
+        std::lock_guard<std::mutex> lock(roomsMutex);
+
+        auto it = std::find_if(rooms.begin(), rooms.end(),
+            [&](const Room& r) {
+                return std::find(r.users.begin(), r.users.end(), userId) != r.users.end();
+            });
+
+        if (it == rooms.end())
+            return; // 방에 없음
+
+        Room& room = *it;
+        roomName = room.roomName;
+
+        // 유저 제거
+        room.users.erase(
+            std::remove(room.users.begin(), room.users.end(), userId),
+            room.users.end()
+        );
+
+        // 부가 정보 정리
+        room.characterSelections.erase(userId);
+        room.teamAssignments.erase(userId);
+
+        // 방이 비었으면 삭제
+        if (room.users.empty())
+        {
+            rooms.erase(it);
+            roomDeleted = true;
+        }
+        else
+        {
+            // 남은 유저 리스트 문자열 생성
+            for (size_t i = 0; i < room.users.size(); ++i)
+            {
+                if (i > 0) userListStr += ",";
+
+                std::string uid = room.users[i];
+                std::string nickname = Trim(clientHandler_.GetNicknameById(uid));
+
+                int charIndex = 0;
+                auto cit = room.characterSelections.find(uid);
+                if (cit != room.characterSelections.end())
+                    charIndex = cit->second;
+
+                std::string team = "None";
+                if (room.isCoopMode)
+                {
+                    auto tit = room.teamAssignments.find(uid);
+                    if (tit != room.teamAssignments.end())
+                        team = tit->second;
+                }
+
+                userListStr += nickname + ":" +
+                    std::to_string(charIndex) + ":" + team;
+            }
+        }
+    }
+
+    // 방 삭제됨 → 전체 룸 리스트 브로드캐스트
+    if (roomDeleted)
+    {
+        std::lock_guard<std::mutex> lock(server_.clientsMutex);
+        for (auto& c : server_.GetClients())
+        {
+            SendRoomList(*c);
+        }
+        return;
+    }
+
+    // 방 남아있음 → 방 내부 갱신 브로드캐스트
+    std::string refreshMsg =
+        "REFRESH_ROOM_SUCCESS|" + roomName + "|" + userListStr + "\n";
+
+    std::lock_guard<std::mutex> lock(server_.clientsMutex);
+    auto& clientsMap = clientHandler_.GetClientsMap();
+
+    for (const auto& uid : GetUserIdsInRoom(roomName))
+    {
+        auto it = clientsMap.find(uid);
+        if (it != clientsMap.end())
+        {
+            send(it->second->socket,
+                refreshMsg.c_str(),
+                (int)refreshMsg.size(),
+                0);
+        }
+    }
+}

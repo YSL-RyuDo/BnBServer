@@ -52,7 +52,10 @@ public:
     void SendWinRate(std::shared_ptr<ClientInfo> client, const std::string& nickname, const UserWinLossStats& stats);
     void SendUserEmotes(std::shared_ptr<ClientInfo> client, const std::string& nickname);
     void SendUserBallons(std::shared_ptr<ClientInfo> client, const std::string& nickname);
-    //vector<shared_ptr<ClientInfo>> clients;
+    void SendUserIcons(std::shared_ptr<ClientInfo> client, const std::string& nickname);
+
+    void OnClientDisconnected(shared_ptr<ClientInfo> client);
+    void RemoveLoginSession(const std::string& userId);
 private:
     Server& server_;
     UserManager& userManager_;

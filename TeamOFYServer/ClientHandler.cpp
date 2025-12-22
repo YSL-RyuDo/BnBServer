@@ -1,4 +1,4 @@
-#include "ClientHandler.h"
+ï»¿#include "ClientHandler.h"
 #include "Server.h"
 
 ClientHandler::ClientHandler(Server& server, UserManager& userManager, RoomManager& roomManager, MapManager& mapManager, Player& player)
@@ -6,20 +6,55 @@ ClientHandler::ClientHandler(Server& server, UserManager& userManager, RoomManag
 
 ClientHandler::~ClientHandler() {}
 
-void ClientHandler::HandleClient(shared_ptr<ClientInfo> client) {
+//void ClientHandler::HandleClient(shared_ptr<ClientInfo> client) {
+//    char buffer[1025];
+//
+//    while (true) {
+//        int recvLen = recv(client->socket, buffer, sizeof(buffer) - 1, 0);
+//        if (recvLen <= 0) break;
+//
+//        buffer[recvLen] = '\0';
+//        string recvStr(buffer);
+//        ProcessMessages(client, recvStr);
+//    };
+//    closesocket(client->socket);
+//    server_.RemoveClient(client);
+//}
+
+void ClientHandler::HandleClient(shared_ptr<ClientInfo> client)
+{
     char buffer[1025];
 
-    while (true) {
+    while (true)
+    {
         int recvLen = recv(client->socket, buffer, sizeof(buffer) - 1, 0);
-        if (recvLen <= 0) break;
+        if (recvLen <= 0)
+        {
+            // recv == 0 ë˜ëŠ” ì˜¤ë¥˜ ë°œìƒ
+            break;
+        }
 
         buffer[recvLen] = '\0';
         string recvStr(buffer);
         ProcessMessages(client, recvStr);
-    };
-    closesocket(client->socket);
+    }
+
+    std::cout << "[DISCONNECT] client socket closed\n";
+
+    // 1. ë¡œê·¸ì¸ ìƒíƒœë©´ ë°© ì •ë¦¬ + ë¡œê·¸ì•„ì›ƒ
+    if (!client->id.empty())
+    {
+        // ë°©ì— ìˆìœ¼ë©´ ê°•ì œ í‡´ì¥ + ë°© ë¹„ë©´ ì‚­ì œ
+        roomManager_.ForceExitRoomByUserId(client->id);
+
+        // ë¡œê·¸ì•„ì›ƒ ì²˜ë¦¬ + ë¡œë¹„ ìœ ì € ë¦¬ìŠ¤íŠ¸ ê°±ì‹ 
+        userManager_.LogoutUser(client);
+    }
+
+    // 2. ì„œë²„ í´ë¼ì´ì–¸íŠ¸ ëª©ë¡ì—ì„œ ì œê±°
     server_.RemoveClient(client);
 }
+
 
 void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const std::string& recvStr)
 {
@@ -41,12 +76,12 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
 
         if (message.rfind("MOVE|", 0) != 0 && message.rfind("MELODY_MOVE|", 0) != 0)
         {
-            cout << "[¼ö½Å] Å¬¶óÀÌ¾ğÆ® ¸Ş½ÃÁö - IP: " << client->port << ", ¸Ş½ÃÁö: '" << message << "'" << endl;
+            cout << "[ìˆ˜ì‹ ] í´ë¼ì´ì–¸íŠ¸ ë©”ì‹œì§€ - IP: " << client->port << ", ë©”ì‹œì§€: '" << message << "'" << endl;
         }
         string response;
 
         //if (message.rfind("LOGIN|", 0) == 0) {
-        //    cout << "·Î±×ÀÎ ¿äÃ» °¨Áö" << endl;
+        //    cout << "ë¡œê·¸ì¸ ìš”ì²­ ê°ì§€" << endl;
         //    string loginData = message.substr(strlen("LOGIN|"));
         //    size_t commaPos = loginData.find(',');
         //    string id = (commaPos != string::npos) ? loginData.substr(0, commaPos) : "";
@@ -69,35 +104,35 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
         //            lock_guard<mutex> lock(server_.clientsMutex);
         //            for (auto& c : server_.GetClients()) {
         //                if (c->socket == client->socket) {
-        //                    c->id = client->id;  // µ¤¾î¾²±â
+        //                    c->id = client->id;  // ë®ì–´ì“°ê¸°
         //                    c->nickname = client->nickname;
         //                    break;
         //                }
         //            }
-        //            clientsMap[id] = client;  // nicknameÀº À¯ÀÏÇÏ¹Ç·Î mapÀº ±×³É µ¤¾î¾²±â
+        //            clientsMap[id] = client;  // nicknameì€ ìœ ì¼í•˜ë¯€ë¡œ mapì€ ê·¸ëƒ¥ ë®ì–´ì“°ê¸°
         //        }
         //    }
         //    SendToClient(client, response);
         //}
         if (message.rfind("LOGIN|", 0) == 0) {
-            cout << "·Î±×ÀÎ ¿äÃ» °¨Áö" << endl;
+            cout << "ë¡œê·¸ì¸ ìš”ì²­ ê°ì§€" << endl;
             string loginData = message.substr(strlen("LOGIN|"));
             size_t commaPos = loginData.find(',');
 
             string id = (commaPos != string::npos) ? loginData.substr(0, commaPos) : "";
             string pw = (commaPos != string::npos) ? loginData.substr(commaPos + 1) : "";
 
-            // ÀÌ¹Ì ·Î±×ÀÎÇÑ À¯ÀúÀÎÁö È®ÀÎ
+            // ì´ë¯¸ ë¡œê·¸ì¸í•œ ìœ ì €ì¸ì§€ í™•ì¸
             {
                 lock_guard<mutex> lock(server_.clientsMutex);
                 if (clientsMap.find(id) != clientsMap.end()) {
-                    // ÀÌ¹Ì Á¢¼ÓÁßÀÎ ¾ÆÀÌµğ
+                    // ì´ë¯¸ ì ‘ì†ì¤‘ì¸ ì•„ì´ë””
                     SendToClient(client, "ALREADY_LOGGED_IN|\n");
                     return;
                 }
             }
 
-            // ½ÇÁ¦ ·Î±×ÀÎ °ËÁõ
+            // ì‹¤ì œ ë¡œê·¸ì¸ ê²€ì¦
             response = userManager_.CheckLogin(id, pw);
 
             if (response.rfind("LOGIN_SUCCESS|", 0) == 0) {
@@ -125,7 +160,7 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
                         }
                     }
 
-                    // ·Î±×ÀÎ ¼º°ø ½Ã ¸Ê¿¡ µî·Ï
+                    // ë¡œê·¸ì¸ ì„±ê³µ ì‹œ ë§µì— ë“±ë¡
                     clientsMap[id] = client;
                 }
             }
@@ -133,29 +168,29 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
             SendToClient(client, response);
         }
         else if (message.rfind("REGISTER|", 0) == 0) {
-            cout << "[ProcessMessages] È¸¿ø°¡ÀÔ ¿äÃ» °¨Áö" << endl;
+            cout << "[ProcessMessages] íšŒì›ê°€ì… ìš”ì²­ ê°ì§€" << endl;
 
             string data = message.substr(strlen("REGISTER|"));
             stringstream ss(data);
             string id, pw, nick;
             if (getline(ss, id, ',') && getline(ss, pw, ',') && getline(ss, nick)) {
-                cout << "[ProcessMessages] È¸¿ø°¡ÀÔ µ¥ÀÌÅÍ ÆÄ½Ì ¿Ï·á - id: " << id << ", pw: " << pw << ", nick: " << nick << endl;
+                cout << "[ProcessMessages] íšŒì›ê°€ì… ë°ì´í„° íŒŒì‹± ì™„ë£Œ - id: " << id << ", pw: " << pw << ", nick: " << nick << endl;
                 response = userManager_.RegisterUser(id, pw, nick);
             }
             else {
                 response = "REGISTER_ERROR|\n";
-                cout << "[ProcessMessages] È¸¿ø°¡ÀÔ µ¥ÀÌÅÍ Çü½Ä ¿À·ù" << endl;
+                cout << "[ProcessMessages] íšŒì›ê°€ì… ë°ì´í„° í˜•ì‹ ì˜¤ë¥˜" << endl;
             }
             SendToClient(client, response);
         }
         else if (message == "QUIT|")
         {
-            cout << "[ProcessMessages] Å¬¶óÀÌ¾ğÆ® Á¾·á ¿äÃ» ¼ö½Å" << endl;
+            cout << "[ProcessMessages] í´ë¼ì´ì–¸íŠ¸ ì¢…ë£Œ ìš”ì²­ ìˆ˜ì‹ " << endl;
 
             {
                 lock_guard<mutex> lock(server_.clientsMutex);
                 if (!client->id.empty()) {
-                    clientsMap.erase(client->id); // °èÁ¤ ¿¬°á ÇØÁ¦
+                    clientsMap.erase(client->id); // ê³„ì • ì—°ê²° í•´ì œ
                 }
             }
 
@@ -171,19 +206,19 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
         }
         else if (message == "GET_LOBBY_USER_LIST|")
         {
-            cout << "Á¢¼Ó À¯Àú¸®½ºÆ® ¿äÃ» °¨Áö" << endl;
+            cout << "ì ‘ì† ìœ ì €ë¦¬ìŠ¤íŠ¸ ìš”ì²­ ê°ì§€" << endl;
             userManager_.BroadcastLobbyUserList();
         }
         else if (message == "GET_ROOM_LIST|")
         {
-            cout << "¹æ »ı¼º ¸®½ºÆ® ¿äÃ» °¨Áö" << endl;
+            cout << "ë°© ìƒì„± ë¦¬ìŠ¤íŠ¸ ìš”ì²­ ê°ì§€" << endl;
             roomManager_.BroadcastRoomlist(client);
         }
         else if (message.rfind("LOBBY_MESSAGE|", 0) == 0)
         {
-            cout << "[ProcessMessages] ·Îºñ ¸Ş½ÃÁö ¼ö½Å" << endl;
+            cout << "[ProcessMessages] ë¡œë¹„ ë©”ì‹œì§€ ìˆ˜ì‹ " << endl;
 
-            string data = message.substr(strlen("LOBBY_MESSAGE|")); // "´Ğ³×ÀÓ:¸Ş½ÃÁö"
+            string data = message.substr(strlen("LOBBY_MESSAGE|")); // "ë‹‰ë„¤ì„:ë©”ì‹œì§€"
             size_t delimPos = data.find(':');
 
             if (delimPos != string::npos) {
@@ -194,17 +229,17 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
                 response.clear();
             }
             else {
-                cerr << "[ProcessMessages] Ã¤ÆÃ ¸Ş½ÃÁö Æ÷¸Ë ¿À·ù: " << data << endl;
+                cerr << "[ProcessMessages] ì±„íŒ… ë©”ì‹œì§€ í¬ë§· ì˜¤ë¥˜: " << data << endl;
             }
         }
         else if (message.rfind("LOGOUT|", 0) == 0) {
             {
                 lock_guard<mutex> lock(server_.clientsMutex);
                 if (!client->id.empty()) {
-                    clientsMap.erase(client->id); // Á¢¼ÓÁß ¸ñ·Ï¿¡¼­ Á¦°Å
+                    clientsMap.erase(client->id); // ì ‘ì†ì¤‘ ëª©ë¡ì—ì„œ ì œê±°
                 }
             }
-            userManager_.LogoutUser(client);  // ÇÊ¿äÇÏ´Ù¸é À¯Àú »óÅÂ °»½Å
+            userManager_.LogoutUser(client);  // í•„ìš”í•˜ë‹¤ë©´ ìœ ì € ìƒíƒœ ê°±ì‹ 
             response = "LOGOUT_SUCCESS|\n";
 }
 
@@ -214,7 +249,7 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
             std::string userId = Trim(GetIdByNickname(nickname));
             if (userId.empty())
             {
-                std::cerr << "[GETINFO] Á¸ÀçÇÏÁö ¾Ê´Â ´Ğ³×ÀÓ: " << nickname << std::endl;
+                std::cerr << "[GETINFO] ì¡´ì¬í•˜ì§€ ì•ŠëŠ” ë‹‰ë„¤ì„: " << nickname << std::endl;
                 return;
             }
 
@@ -224,23 +259,95 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
                 UserWinLossStats& stats = userManager_.GetUserWinLossStatsById(userId);
                 UserCharacterEmotes& emotes = userManager_.GetUserEmotesById(userId);
                 UserBallons& ballons = userManager_.GetUserBallonsById(userId);
+                UserIcons& icons = userManager_.GetUserIconsById(userId);
 
-                // ¿äÃ»ÀÚ(client)ÇÑÅ× Á¶È¸ °á°ú Àü¼Û
+                // ìš”ì²­ì(client)í•œí…Œ ì¡°íšŒ ê²°ê³¼ ì „ì†¡
                 if (client)
                 {
                     SendSetInfo(client, nickname, profile);
                     SendWinRate(client, nickname, stats);
                     SendUserEmotes(client, nickname);
                     SendUserBallons(client, nickname);
+                    SendUserIcons(client, nickname);
                 }
             }
             catch (const std::exception& e)
             {
-                std::cerr << "[GETINFO] Ã³¸® ½ÇÆĞ: " << e.what() << std::endl;
+                std::cerr << "[GETINFO] ì²˜ë¦¬ ì‹¤íŒ¨: " << e.what() << std::endl;
             }
         }
+        else if (message.rfind("GET_BALLOON_INFO|", 0) == 0)
+        {
+            std::string nickname = Trim(message.substr(strlen("GET_BALLOON_INFO|")));
+            std::string userId = Trim(GetIdByNickname(nickname));
+            if (userId.empty())
+            {
+                std::cerr << "[GETINFO] ì¡´ì¬í•˜ì§€ ì•ŠëŠ” ë‹‰ë„¤ì„: " << nickname << std::endl;
+                return;
+            }
 
+            try
+            {
+                UserBallons& ballons = userManager_.GetUserBallonsById(userId);
 
+                // ìš”ì²­ì(client)í•œí…Œ ì¡°íšŒ ê²°ê³¼ ì „ì†¡
+                if (client)
+                {
+                    SendUserBallons(client, nickname);
+                }
+            }
+            catch (const std::exception& e)
+            {
+                std::cerr << "[GETINFO] ì²˜ë¦¬ ì‹¤íŒ¨: " << e.what() << std::endl;
+            }
+        }
+        else if (message.rfind("GET_EMO_INFO|", 0) == 0)
+        {
+            std::string nickname = Trim(message.substr(strlen("GET_EMO_INFO|")));
+            std::string userId = Trim(GetIdByNickname(nickname));
+            if (userId.empty())
+            {
+                std::cerr << "[GETINFO] ì¡´ì¬í•˜ì§€ ì•ŠëŠ” ë‹‰ë„¤ì„: " << nickname << std::endl;
+                return;
+            }
+
+            try
+            {
+                UserCharacterEmotes& emotes = userManager_.GetUserEmotesById(userId);
+
+                // ìš”ì²­ì(client)í•œí…Œ ì¡°íšŒ ê²°ê³¼ ì „ì†¡
+                if (client)
+                {
+                    SendUserEmotes(client, nickname);
+                }
+            }
+            catch (const std::exception& e)
+            {
+                std::cerr << "[GETINFO] ì²˜ë¦¬ ì‹¤íŒ¨: " << e.what() << std::endl;
+            }
+        }
+        else if (message.rfind("GET_ICON_INFO|", 0) == 0)
+        {
+            std::string nickname = Trim(message.substr(strlen("GET_ICON_INFO|")));
+            std::string userId = Trim(GetIdByNickname(nickname));
+            if (userId.empty())
+            {
+                std::cerr << "[GET_ICON_INFO] ì¡´ì¬í•˜ì§€ ì•ŠëŠ” ë‹‰ë„¤ì„: " << nickname << std::endl;
+                return;
+            }
+
+            try
+            {
+                if (client)
+                {
+                    SendUserIcons(client, nickname);
+                }
+            }
+            catch (const std::exception& e)
+            {
+                std::cerr << "[GET_ICON_INFO] ì²˜ë¦¬ ì‹¤íŒ¨: " << e.what() << std::endl;
+            }
+            }
 
         else if (message.rfind("CREATE_ROOM|", 0) == 0) {
             string data = message.substr(strlen("CREATE_ROOM|"));
@@ -270,7 +377,7 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
             string roomName, password, coopStr;
             getline(ss, roomName, '|');
             getline(ss, password, '|');
-            getline(ss, coopStr, '|'); // Çùµ¿Àü ¿©ºÎ Ãß°¡
+            getline(ss, coopStr, '|'); // í˜‘ë™ì „ ì—¬ë¶€ ì¶”ê°€
 
             bool isCoopMode = false;
             if (!coopStr.empty()) {
@@ -294,17 +401,17 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
         else if (message.rfind("GET_CHARACTER|", 0) == 0)
         {
             std::string nickname = message.substr(strlen("GET_CHARACTER|"));
-            nickname = Trim(nickname); // °ø¹é Á¦°Å
+            nickname = Trim(nickname); // ê³µë°± ì œê±°
 
             std::string userId = Trim(GetIdByNickname(nickname));
             if (userId.empty()) {
-                std::cerr << "[GET_CHARACTER] ´Ğ³×ÀÓ¿¡ ÇØ´çÇÏ´Â ID ¾øÀ½: " << nickname << std::endl;
+                std::cerr << "[GET_CHARACTER] ë‹‰ë„¤ì„ì— í•´ë‹¹í•˜ëŠ” ID ì—†ìŒ: " << nickname << std::endl;
                 return;
             }
 
             std::vector<int> charList = userManager_.GetCharactersByUserId(userId);
             if (charList.empty()) {
-                std::cerr << "[GET_CHARACTER] ÇØ´ç À¯ÀúÀÇ Ä³¸¯ÅÍ Á¤º¸ ¾øÀ½: " << userId << std::endl;
+                std::cerr << "[GET_CHARACTER] í•´ë‹¹ ìœ ì €ì˜ ìºë¦­í„° ì •ë³´ ì—†ìŒ: " << userId << std::endl;
                 return;
             }
 
@@ -403,7 +510,7 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
 
             if (!isCoop)
             {
-                // °³ÀÎÀü Ã³¸®
+                // ê°œì¸ì „ ì²˜ë¦¬
                 if (!roomManager_.TryStartGame(roomName, userList))
                 {
                     string failMsg = "START_GAME_FAIL|";
@@ -418,7 +525,7 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
             }
             else
             {
-                // Çùµ¿Àü Ã³¸®
+                // í˜‘ë™ì „ ì²˜ë¦¬
                 vector<string> blueTeam;
                 vector<string> redTeam;
 
@@ -459,12 +566,12 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
 
             if (!getline(ss, roomName, '|') || !getline(ss, mapName))
             {
-                std::cerr << "[GET_MAP] ¸Ş½ÃÁö Çü½Ä ¿À·ù: " << message << std::endl;
+                std::cerr << "[GET_MAP] ë©”ì‹œì§€ í˜•ì‹ ì˜¤ë¥˜: " << message << std::endl;
                 return;
             }
 
             if (!characterStatsManager_.LoadFromName("CharStat")) {
-                std::cerr << "[GET_MAP] CharStat.csv ·Îµù ½ÇÆĞ" << std::endl;
+                std::cerr << "[GET_MAP] CharStat.csv ë¡œë”© ì‹¤íŒ¨" << std::endl;
                 return;
             }
 
@@ -481,7 +588,7 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
 
             if (userCount > allSpawnPoints.size())
             {
-                std::cerr << "[GET_MAP] ½ºÆù ÁÂÇ¥ ºÎÁ·" << std::endl;
+                std::cerr << "[GET_MAP] ìŠ¤í° ì¢Œí‘œ ë¶€ì¡±" << std::endl;
                 return;
             }
 
@@ -544,9 +651,9 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
             charInfoStr += "\n";
 
 
-            std::cout << "[¼­¹ö Ä³¸¯ÅÍ Àü¼Û] " << charInfoStr;
+            std::cout << "[ì„œë²„ ìºë¦­í„° ì „ì†¡] " << charInfoStr;
             std::string response = "MAP_DATA|" + mapName + "|" + mapDataStr + "|" + spawnStr + "\n";
-            std::cout << "[¼­¹ö MAP_DATA Àü¼Û] " << response;
+            std::cout << "[ì„œë²„ MAP_DATA ì „ì†¡] " << response;
             std::lock_guard<std::mutex> lock(server_.GetClientsMutex());
             auto& clientsMap = GetClientsMap();
 
@@ -575,7 +682,7 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
 
             string userId = Trim(GetIdByNickname(nickname));
             if (userId.empty()) {
-                std::cerr << "[GET_EMO] ´Ğ³×ÀÓ¿¡ ÇØ´çÇÏ´Â ID ¾øÀ½: " << nickname << std::endl;
+                std::cerr << "[GET_EMO] ë‹‰ë„¤ì„ì— í•´ë‹¹í•˜ëŠ” ID ì—†ìŒ: " << nickname << std::endl;
                 return;
             }
 
@@ -589,7 +696,7 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
 
             std::string userId = Trim(GetIdByNickname(nickname));
             if (userId.empty()) {
-                std::cerr << "[GET_EMO] ´Ğ³×ÀÓ¿¡ ÇØ´çÇÏ´Â ID ¾øÀ½: " << nickname << std::endl;
+                std::cerr << "[GET_EMO] ë‹‰ë„¤ì„ì— í•´ë‹¹í•˜ëŠ” ID ì—†ìŒ: " << nickname << std::endl;
                 return;
             }
 
@@ -609,13 +716,13 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
             std::string nickname, emoIndexStr;
 
             if (!getline(ss, nickname, '|') || !getline(ss, emoIndexStr)) {
-                std::cerr << "[EMO_CLICK] ¸Ş½ÃÁö Çü½Ä ¿À·ù: " << message << std::endl;
+                std::cerr << "[EMO_CLICK] ë©”ì‹œì§€ í˜•ì‹ ì˜¤ë¥˜: " << message << std::endl;
                 return;
             }
 
             std::string senderId = Trim(GetIdByNickname(nickname));
             if (senderId.empty()) {
-                std::cerr << "[EMO_CLICK] ´Ğ³×ÀÓ¿¡¼­ ID º¯È¯ ½ÇÆĞ: " << nickname << std::endl;
+                std::cerr << "[EMO_CLICK] ë‹‰ë„¤ì„ì—ì„œ ID ë³€í™˜ ì‹¤íŒ¨: " << nickname << std::endl;
                 return;
             }
 
@@ -646,7 +753,7 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
                 std::string resultMsg = "MOVE_RESULT|" + username + "," +
                     std::to_string(pos.first) + "," + std::to_string(pos.second);
                 
-                // º¸³»´Â Å¬¶óÀÌ¾ğÆ® ¼ÒÄÏÀ» Á¦¿ÜÇÏ°í °°Àº ¹æ À¯Àúµé¿¡°Ô Àü¼Û
+                // ë³´ë‚´ëŠ” í´ë¼ì´ì–¸íŠ¸ ì†Œì¼“ì„ ì œì™¸í•˜ê³  ê°™ì€ ë°© ìœ ì €ë“¤ì—ê²Œ ì „ì†¡
                 roomManager_.BroadcastMessageExcept(client->socket, resultMsg);
             }
         }
@@ -654,22 +761,22 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
         {
             std::string data = message.substr(strlen("WEAPON_ATTACK|"));
 
-            // 1. Ã¹ ¹øÂ° ±¸ºĞÀÚ '|'
+            // 1. ì²« ë²ˆì§¸ êµ¬ë¶„ì '|'
             size_t first = data.find('|');
             if (first == std::string::npos) return;
             std::string nickname = data.substr(0, first);
 
-            // 2. µÎ ¹øÂ° ±¸ºĞÀÚ '|'
+            // 2. ë‘ ë²ˆì§¸ êµ¬ë¶„ì '|'
             size_t second = data.find('|', first + 1);
             if (second == std::string::npos) return;
             std::string charIndexStr = data.substr(first + 1, second - first - 1);
 
-            // 3. ¼¼ ¹øÂ° ±¸ºĞÀÚ '|'
+            // 3. ì„¸ ë²ˆì§¸ êµ¬ë¶„ì '|'
             size_t third = data.find('|', second + 1);
             if (third == std::string::npos) return;
             std::string positionStr = data.substr(second + 1, third - second - 1);
 
-            // 4. ³× ¹øÂ° ±¸ºĞÀÚ '|'
+            // 4. ë„¤ ë²ˆì§¸ êµ¬ë¶„ì '|'
             size_t fourth = data.find('|', third + 1);
 
             std::string rotYStr;
@@ -698,7 +805,7 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
 
             roomManager_.BroadcastToRoomExcept(client->socket, forwardMsg);
 
-            std::cout << "[Server] WEAPON_ATTACK Ã³¸® ¿Ï·á from " << nickname << std::endl;
+            std::cout << "[Server] WEAPON_ATTACK ì²˜ë¦¬ ì™„ë£Œ from " << nickname << std::endl;
             }
         else if (message.rfind("MELODY_MOVE|", 0) == 0)
         {
@@ -717,7 +824,7 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
             std::string forwardMsg = "MELODY_MOVE|" + nickname + "|" + posStr + "|" + rotYStr + "\n";
             roomManager_.BroadcastToRoomExcept(client->socket, forwardMsg);
 
-            std::cout << "[Server] Melody ÀÌµ¿ Á¤º¸ ºê·ÎµåÄ³½ºÆ® (" << nickname << "): " << posStr << ", " << rotYStr << std::endl;
+            std::cout << "[Server] Melody ì´ë™ ì •ë³´ ë¸Œë¡œë“œìºìŠ¤íŠ¸ (" << nickname << "): " << posStr << ", " << rotYStr << std::endl;
             }
         else if (message.rfind("MELODY_DESTROY|", 0) == 0)
         {
@@ -725,7 +832,7 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
             std::string forwardMsg = "MELODY_DESTROY|" + nickname + "\n";
 
             roomManager_.BroadcastToUserRoom(client->id, forwardMsg);
-            std::cout << "[Server] Melody Á¦°Å ¿äÃ» Ã³¸® ¿Ï·á from " << nickname << std::endl;
+            std::cout << "[Server] Melody ì œê±° ìš”ì²­ ì²˜ë¦¬ ì™„ë£Œ from " << nickname << std::endl;
         }
         else if (message.rfind("HITWALL|", 0) == 0)
         {
@@ -734,13 +841,13 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
             std::string forwardMsg = "DESTROYWALL|" + wallName + "\n";
             roomManager_.BroadcastToUserRoom(client->id, forwardMsg);
 
-            std::cout << "[Server] Wall ÆÄ±« ºê·ÎµåÄ³½ºÆ®: " << wallName << std::endl;
+            std::cout << "[Server] Wall íŒŒê´´ ë¸Œë¡œë“œìºìŠ¤íŠ¸: " << wallName << std::endl;
         }
         else if (message.rfind("DESTROY_SPELL|", 0) == 0)
         {
             std::string spellName = message.substr(strlen("DESTROY_SPELL|"));
             roomManager_.BroadcastToUserRoom(client->id, message);
-            std::cout << "[Server] ½ºÆç Á¦°Å ÆĞÅ¶ ºê·ÎµåÄ³½ºÆ®: " << spellName << "\n";
+            std::cout << "[Server] ìŠ¤í  ì œê±° íŒ¨í‚· ë¸Œë¡œë“œìºìŠ¤íŠ¸: " << spellName << "\n";
         }
         else if (message.rfind("DESTROY_BLOCK|", 0) == 0)
         {
@@ -750,7 +857,7 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
             if (blockName.empty())
                 return;
 
-            std::cout << "[¼­¹ö] ºí·Ï ÆÄ±« ¿äÃ» ¼ö½Å: " << blockName << std::endl;
+            std::cout << "[ì„œë²„] ë¸”ë¡ íŒŒê´´ ìš”ì²­ ìˆ˜ì‹ : " << blockName << std::endl;
 
             std::string broadcastMsg = "DESTROY_BLOCK|" + blockName + "\n";
 
@@ -758,12 +865,12 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
             if (room != nullptr)
             {
                 roomManager_.BroadcastToUserRoom(client->id, broadcastMsg);
-                std::cout << "[¼­¹ö] DESTROY_BLOCK ºê·ÎµåÄ³½ºÆ®: " << blockName << std::endl;
+                std::cout << "[ì„œë²„] DESTROY_BLOCK ë¸Œë¡œë“œìºìŠ¤íŠ¸: " << blockName << std::endl;
             }
         }
         else if (message.rfind("HIT|", 0) == 0)
         {
-            // ÆĞÅ¶ ±¸Á¶: HIT|weaponIndex|attackerNick|targetNick
+            // íŒ¨í‚· êµ¬ì¡°: HIT|weaponIndex|attackerNick|targetNick
             std::string data = message.substr(strlen("HIT|"));
 
             size_t delim1 = data.find('|');
@@ -781,11 +888,11 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
             else
                 targetNick = data.substr(delim2 + 1, delim3 - (delim2 + 1));
 
-            // ´Ğ³×ÀÓ ¡æ À¯Àú ID º¯È¯
+            // ë‹‰ë„¤ì„ â†’ ìœ ì € ID ë³€í™˜
             std::string attackerId = GetIdByNickname(attackerNick);
             std::string targetId = GetIdByNickname(targetNick);
 
-            // ÀÌÁ¦ attackerId¿Í targetId·Î ·ë Á¤º¸ ¹× ÆÀ Ã¼Å© °¡´É
+            // ì´ì œ attackerIdì™€ targetIdë¡œ ë£¸ ì •ë³´ ë° íŒ€ ì²´í¬ ê°€ëŠ¥
             Room* room = roomManager_.GetRoomByUserId(attackerId);
             if (room != nullptr)
             {
@@ -805,22 +912,22 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
                         if (userId == targetId)   targetTeam = team;
                     }
 
-                    // °°Àº ÆÀÀÌ¸é µ¥¹ÌÁö ¹«È¿
+                    // ê°™ì€ íŒ€ì´ë©´ ë°ë¯¸ì§€ ë¬´íš¨
                     if (attackerTeam != "None" && attackerTeam == targetTeam)
                     {
-                        std::cout << "[¼­¹ö] " << attackerNick << " ¡æ " << targetNick
-                            << " (°°Àº ÆÀ, µ¥¹ÌÁö ¹«È¿)\n";
+                        std::cout << "[ì„œë²„] " << attackerNick << " â†’ " << targetNick
+                            << " (ê°™ì€ íŒ€, ë°ë¯¸ì§€ ë¬´íš¨)\n";
                         return;
                     }
                 }
 
-                // µ¥¹ÌÁö Àü¼Û
+                // ë°ë¯¸ì§€ ì „ì†¡
                 int damage = userManager_.GetAttackByIndex(weaponIndex);
                 std::string resultMsg = "DAMAGE|" + targetNick + "|" + std::to_string(damage) + "\n";
                 roomManager_.BroadcastToUserRoom(attackerId, resultMsg);
 
-                std::cout << "[¼­¹ö] " << attackerNick << " ¡æ " << targetNick
-                    << " ¿¡°Ô " << damage << " µ¥¹ÌÁö Àü´Ş\n";
+                std::cout << "[ì„œë²„] " << attackerNick << " â†’ " << targetNick
+                    << " ì—ê²Œ " << damage << " ë°ë¯¸ì§€ ì „ë‹¬\n";
             }
         }
         else if (message.rfind("PLACE_BALLOON|", 0) == 0)
@@ -837,7 +944,7 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
             if (secondBar == std::string::npos) return;
 
             std::string posStr = rest.substr(0, secondBar); // "x,z"
-            std::string typeStr = rest.substr(secondBar + 1); // Ç³¼± Å¸ÀÔ
+            std::string typeStr = rest.substr(secondBar + 1); // í’ì„  íƒ€ì…
 
             size_t commaPos = posStr.find(',');
             if (commaPos == std::string::npos) return;
@@ -851,7 +958,7 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
 
             std::ostringstream oss;
             oss << "PLACE_BALLOON_RESULT|" << nickname << "|"
-                << x << "," << z << "|" << type << "\n";  // <-- ¿©±â \n
+                << x << "," << z << "|" << type << "\n";  // <-- ì—¬ê¸° \n
 
 
             std::string result = oss.str();
@@ -872,7 +979,7 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
 
             std::string nickname = data.substr(0, firstBarPos);
             std::string posStr = data.substr(firstBarPos + 1, secondBarPos - firstBarPos - 1); // x,z
-            std::string typeStr = data.substr(secondBarPos + 1); // Å¸ÀÔ
+            std::string typeStr = data.substr(secondBarPos + 1); // íƒ€ì…
 
             size_t commaPos = posStr.find(',');
             if (commaPos == std::string::npos) return;
@@ -940,31 +1047,31 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
         }
         else if (message.rfind("DEAD|", 0) == 0)
         {
-            // 1. Á×Àº À¯Àú Á¤º¸
+            // 1. ì£½ì€ ìœ ì € ì •ë³´
             std::string deadNickname = message.substr(strlen("DEAD|"));
             std::string deadUserId = Trim(GetIdByNickname(deadNickname));
             std::string roomId = roomManager_.GetUserRoomId(deadUserId);
             if (roomId.empty()) return;
 
-            // 2. Áßº¹ Ã³¸® ¹æÁö
+            // 2. ì¤‘ë³µ ì²˜ë¦¬ ë°©ì§€
             auto& deadSet = roomManager_.deadUsersByRoom[roomId];
             if (deadSet.find(deadUserId) != deadSet.end()) return;
             deadSet.insert(deadUserId);
 
-            // 3. PLAYER_DEAD ÆĞÅ¶ ºê·ÎµåÄ³½ºÆ®
+            // 3. PLAYER_DEAD íŒ¨í‚· ë¸Œë¡œë“œìºìŠ¤íŠ¸
             std::ostringstream deadMsg;
             deadMsg << "PLAYER_DEAD|" << deadNickname << "\n";
             roomManager_.BroadcastToUserRoom(deadUserId, deadMsg.str());
             std::cout << "[Server] PLAYER_DEAD broadcast: " << deadMsg.str();
 
-            // 4. ¹æ °´Ã¼ °¡Á®¿À±â
+            // 4. ë°© ê°ì²´ ê°€ì ¸ì˜¤ê¸°
             Room* room = roomManager_.FindRoomByName(roomId);
             if (!room) return;
 
-            // 5. ¹æ ÀüÃ¼ À¯Àú ID
+            // 5. ë°© ì „ì²´ ìœ ì € ID
             std::vector<std::string> roomUserIds = roomManager_.GetUserIdsInRoom(roomId);
 
-            // 6. »ì¾ÆÀÖ´Â À¯Àú¿Í ÆÀº° ¸ñ·Ï
+            // 6. ì‚´ì•„ìˆëŠ” ìœ ì €ì™€ íŒ€ë³„ ëª©ë¡
             std::unordered_map<std::string, std::vector<std::string>> aliveTeams;
             for (const auto& userId : roomUserIds)
             {
@@ -979,7 +1086,7 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
                 aliveTeams[team].push_back(nickname);
             }
 
-            // --- °³ÀÎÀü Ã³¸® ---
+            // --- ê°œì¸ì „ ì²˜ë¦¬ ---
             if (!room->isCoopMode)
             {
                 if (!aliveTeams.empty() && aliveTeams.begin()->second.size() == 1)
@@ -991,7 +1098,7 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
                     roomManager_.BroadcastToUserRoom(deadUserId, winMsg.str());
                     std::cout << "[Server] WIN packet sent to: " << winnerNickname << "\n";
 
-                    // º¸»ó Ã³¸®
+                    // ë³´ìƒ ì²˜ë¦¬
                     std::ostringstream rewardMsg;
                     rewardMsg << "REWARD_RESULT";
 
@@ -1037,7 +1144,7 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
                     std::cout << "[Server] REWARD_RESULT broadcast: " << rewardMsg.str();
                 }
             }
-            // --- ÆÀÀü Ã³¸® ---
+            // --- íŒ€ì „ ì²˜ë¦¬ ---
             else
             {
                 if (aliveTeams.size() == 1)
@@ -1046,7 +1153,7 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
                     std::string survivingTeam = it->first;
                     std::vector<std::string> survivingNicknames = it->second;
 
-                    // TEAM_WIN ÆĞÅ¶ »ı¼º (ÆÀ ÀÌ¸§, ´Ğ³×ÀÓ1, ´Ğ³×ÀÓ2...)
+                    // TEAM_WIN íŒ¨í‚· ìƒì„± (íŒ€ ì´ë¦„, ë‹‰ë„¤ì„1, ë‹‰ë„¤ì„2...)
                     std::ostringstream teamWinMsg;
                     teamWinMsg << "TEAM_WIN|" << survivingTeam;
                     for (const auto& nick : survivingNicknames)
@@ -1056,7 +1163,7 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
                     roomManager_.BroadcastToUserRoom(deadUserId, teamWinMsg.str());
                     std::cout << "[Server] TEAM_WIN broadcast: " << teamWinMsg.str();
 
-                    // º¸»ó Ã³¸®
+                    // ë³´ìƒ ì²˜ë¦¬
                     std::ostringstream rewardMsg;
                     rewardMsg << "REWARD_RESULT";
 
@@ -1132,12 +1239,12 @@ bool ClientHandler::SendToClient(std::shared_ptr<ClientInfo> client, const std::
     int sendLen = send(client->socket, response.c_str(), static_cast<int>(response.size()), 0);
     if (sendLen == SOCKET_ERROR)
     {
-        std::cout << "[SendToClient] send ¿À·ù - IP: " << client->ip << ", Æ÷Æ®: " << client->port
-            << ", ¿À·ù ÄÚµå: " << WSAGetLastError() << std::endl;
+        std::cout << "[SendToClient] send ì˜¤ë¥˜ - IP: " << client->ip << ", í¬íŠ¸: " << client->port
+            << ", ì˜¤ë¥˜ ì½”ë“œ: " << WSAGetLastError() << std::endl;
         return false;
     }
 
-    std::cout << "[SendToClient] Å¬¶óÀÌ¾ğÆ® ÀÀ´ä Àü¼Û - IP: " << client->ip << ":" << client->port
+    std::cout << "[SendToClient] í´ë¼ì´ì–¸íŠ¸ ì‘ë‹µ ì „ì†¡ - IP: " << client->ip << ":" << client->port
         << " -> " << response;
     return true;
 } 
@@ -1152,7 +1259,7 @@ bool ClientHandler::GetUserPositionById(const std::string& userId, std::pair<flo
     return true;
 }
 
-// SETINFO ÆĞÅ¶ Àü¼Û ÇÔ¼ö
+// SETINFO íŒ¨í‚· ì „ì†¡ í•¨ìˆ˜
 void ClientHandler::SendSetInfo(std::shared_ptr<ClientInfo> client, const std::string& nickname, const UserProfile& profile)
 {
     std::stringstream ss;
@@ -1169,10 +1276,10 @@ void ClientHandler::SendSetInfo(std::shared_ptr<ClientInfo> client, const std::s
 
     std::string msg = ss.str() + "\n";
     SendToClient(client, msg);
-    std::cout << "[SETINFO] Àü¼Û: " << msg;
+    std::cout << "[SETINFO] ì „ì†¡: " << msg;
 }
 
-// WINRATE ÆĞÅ¶ Àü¼Û ÇÔ¼ö
+// WINRATE íŒ¨í‚· ì „ì†¡ í•¨ìˆ˜
 void ClientHandler::SendWinRate(std::shared_ptr<ClientInfo> client, const std::string& nickname, const UserWinLossStats& stats)
 {
     struct CharWinLose { int index; int win; int lose; int total; };
@@ -1209,16 +1316,16 @@ void ClientHandler::SendWinRate(std::shared_ptr<ClientInfo> client, const std::s
 
     std::string msg = ss.str() + "\n";
     SendToClient(client, msg);
-    std::cout << "[WINRATE] Àü¼Û: " << msg;
+    std::cout << "[WINRATE] ì „ì†¡: " << msg;
 }
 
-// Å¬¶óÀÌ¾ğÆ®¿¡°Ô GETMYEMO ÆĞÅ¶ Àü¼Û
+// í´ë¼ì´ì–¸íŠ¸ì—ê²Œ GETMYEMO íŒ¨í‚· ì „ì†¡
 void ClientHandler::SendUserEmotes(std::shared_ptr<ClientInfo> client, const std::string& nickname)
 {
     std::string userId = Trim(GetIdByNickname(nickname));
     if (userId.empty())
     {
-        std::cerr << "[GETMYEMO] Á¸ÀçÇÏÁö ¾Ê´Â ´Ğ³×ÀÓ: " << nickname << std::endl;
+        std::cerr << "[GETMYEMO] ì¡´ì¬í•˜ì§€ ì•ŠëŠ” ë‹‰ë„¤ì„: " << nickname << std::endl;
         return;
     }
 
@@ -1239,7 +1346,7 @@ void ClientHandler::SendUserEmotes(std::shared_ptr<ClientInfo> client, const std
         emotes.emo32, emotes.emo33, emotes.emo34, emotes.emo35
     };
 
-    // 1ÀÎ ÀÎµ¦½º¸¸ Àü¼Û
+    // 1ì¸ ì¸ë±ìŠ¤ë§Œ ì „ì†¡
     for (int i = 0; i < 36; ++i) {
         if (emoteArray[i] == 1)
             ss << "," << i;
@@ -1247,21 +1354,21 @@ void ClientHandler::SendUserEmotes(std::shared_ptr<ClientInfo> client, const std
 
     std::string msg = ss.str() + "\n";
     SendToClient(client, msg);
-    std::cout << "[GETMYEMO] Àü¼Û: " << msg;
+    std::cout << "[GETMYEMO] ì „ì†¡: " << msg;
 }
 
-// Å¬¶óÀÌ¾ğÆ®¿¡°Ô GETMYBALLOON ÆĞÅ¶ Àü¼Û
+// í´ë¼ì´ì–¸íŠ¸ì—ê²Œ GETMYBALLOON íŒ¨í‚· ì „ì†¡
 void ClientHandler::SendUserBallons(std::shared_ptr<ClientInfo> client, const std::string& nickname)
 {
-    // ´Ğ³×ÀÓ ¡æ ID
+    // ë‹‰ë„¤ì„ â†’ ID
     std::string userId = Trim(GetIdByNickname(nickname));
     if (userId.empty())
     {
-        std::cerr << "[GETMYBALLOON] Á¸ÀçÇÏÁö ¾Ê´Â ´Ğ³×ÀÓ: " << nickname << std::endl;
+        std::cerr << "[GETMYBALLOON] ì¡´ì¬í•˜ì§€ ì•ŠëŠ” ë‹‰ë„¤ì„: " << nickname << std::endl;
         return;
     }
 
-    // UserManager¿¡¼­ ÇØ´ç IDÀÇ ¹°Ç³¼± µ¥ÀÌÅÍ °¡Á®¿À±â (ÂüÁ¶ ¹İÈ¯)
+    // UserManagerì—ì„œ í•´ë‹¹ IDì˜ ë¬¼í’ì„  ë°ì´í„° ê°€ì ¸ì˜¤ê¸° (ì°¸ì¡° ë°˜í™˜)
     UserBallons& ballons = userManager_.GetUserBallonsById(userId);
 
     std::stringstream ss;
@@ -1273,14 +1380,107 @@ void ClientHandler::SendUserBallons(std::shared_ptr<ClientInfo> client, const st
         ballons.balloon8, ballons.balloon9
     };
 
-    // °ªÀÌ 1ÀÎ ÀÎµ¦½º¸¸ Ãß°¡
+    // ê°’ì´ 1ì¸ ì¸ë±ìŠ¤ë§Œ ì¶”ê°€
     for (int i = 0; i < 10; ++i)
     {
-        if (ballonArray[i] == 1) // 1 = º¸À¯
-            ss << "," << i;      // ÀÎµ¦½º¸¸ Àü¼Û
+        if (ballonArray[i] == 1) // 1 = ë³´ìœ 
+            ss << "," << i;      // ì¸ë±ìŠ¤ë§Œ ì „ì†¡
     }
 
     std::string msg = ss.str() + "\n";
     SendToClient(client, msg);
-    std::cout << "[GETMYBALLOON] Àü¼Û: " << msg;
+    std::cout << "[GETMYBALLOON] ì „ì†¡: " << msg;
 }
+
+void ClientHandler::SendUserIcons(
+    std::shared_ptr<ClientInfo> client,
+    const std::string& nickname)
+{
+    std::string userId = Trim(GetIdByNickname(nickname));
+    if (userId.empty() || !client)
+        return;
+
+    UserProfile& profile = userManager_.GetUserProfileById(userId);
+    UserIcons& icons = userManager_.GetUserIconsById(userId);
+
+    std::stringstream packet;
+    std::stringstream log;
+
+    // ===== íŒ¨í‚· ì‹œì‘ =====
+    packet << "GETMYICON|" << nickname;
+
+    // ===== ì½˜ì†” ë¡œê·¸ =====
+    log << "[GETMYICON] ë‹‰ë„¤ì„=" << nickname
+        << " ì¥ì°©ì•„ì´ì½˜=" << profile.icon
+        << " ë³´ìœ  ì•„ì´ì½˜: ";
+
+    // ë³´ìœ  ì—¬ë¶€ ë°°ì—´
+    int values[10] = {
+        icons.icon0, icons.icon1, icons.icon2, icons.icon3,
+        icons.icon4, icons.icon5, icons.icon6, icons.icon7,
+        icons.icon8, icons.icon9
+    };
+
+    bool first = true;
+    for (int i = 0; i < 10; ++i)
+    {
+        if (values[i])
+        {
+            packet << "," << i;
+
+            if (!first) log << ",";
+            log << i;
+            first = false;
+        }
+    }
+
+    packet << "\n";
+
+    // ===== ì „ì†¡ =====
+    send(client->socket,
+        packet.str().c_str(),
+        (int)packet.str().size(),
+        0);
+
+    // ===== ì½˜ì†” ì¶œë ¥ =====
+    std::cout << log.str() << std::endl;
+}
+
+// ClientHandler::HandleClient ì¢…ë£Œ ì‹œ
+void ClientHandler::OnClientDisconnected(shared_ptr<ClientInfo> client)
+{
+    if (!client) return;
+    if (!client->id.empty())
+    {
+        // ë°© ê²€ì‚¬
+        Room* room = roomManager_.GetRoomByUserId(client->id);
+
+        if (room)
+        {
+            // ë°©ì—ì„œ ê°•ì œ ì œê±°
+            roomManager_.ForceExitRoomByUserId(client->id);
+        }
+
+        // ë¡œê·¸ì•„ì›ƒ
+        userManager_.LogoutUser(client);
+    }
+
+    // ì„œë²„ì—ì„œ í´ë¼ì´ì–¸íŠ¸ ì œê±°
+    server_.RemoveClient(client);
+}
+
+void ClientHandler::RemoveLoginSession(const std::string& userId)
+{
+    // ì„œë²„ì˜ ê¸°ì¡´ clientsMutex ì‚¬ìš©
+    std::lock_guard<std::mutex> lock(server_.clientsMutex);
+
+    auto it = clientsMap.find(userId);
+    if (it != clientsMap.end())
+    {
+        clientsMap.erase(it);
+        std::cout << "[ClientHandler] ë¡œê·¸ì¸ ì„¸ì…˜ ì œê±°: " << userId << std::endl;
+    }
+}
+
+
+
