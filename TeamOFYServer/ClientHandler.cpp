@@ -6,21 +6,6 @@ ClientHandler::ClientHandler(Server& server, UserManager& userManager, RoomManag
 
 ClientHandler::~ClientHandler() {}
 
-//void ClientHandler::HandleClient(shared_ptr<ClientInfo> client) {
-//    char buffer[1025];
-//
-//    while (true) {
-//        int recvLen = recv(client->socket, buffer, sizeof(buffer) - 1, 0);
-//        if (recvLen <= 0) break;
-//
-//        buffer[recvLen] = '\0';
-//        string recvStr(buffer);
-//        ProcessMessages(client, recvStr);
-//    };
-//    closesocket(client->socket);
-//    server_.RemoveClient(client);
-//}
-
 void ClientHandler::HandleClient(shared_ptr<ClientInfo> client)
 {
     char buffer[1025];
@@ -432,10 +417,7 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
 
             userManager_.SaveUserProfile(userId);
 
-            send(client->socket,
-                ("EMO_CHANGE_OK|" + nickname + "\n").c_str(),
-                (int)nickname.size() + 15,
-                0);
+            SendSetInfo(client, nickname, profile);
 
             std::cout << "[EMO_CHANGE] 성공: "
                 << nickname << " "
@@ -443,12 +425,127 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
         }
         else if (message.rfind("BALLOON_CHANGE|", 0) == 0)
         {
-            //구현해야함
+            std::string data = message.substr(strlen("BALLOON_CHANGE|"));
+            std::stringstream ss(data);
+
+            std::string nickname;
+            std::string aStr, bStr;
+
+            if (!std::getline(ss, nickname, ',') ||
+                !std::getline(ss, aStr, ',') ||
+                !std::getline(ss, bStr))
+                return;
+
+            int fromBalloon = std::stoi(aStr); // 변경당하는 (현재 장착)
+            int toBalloon = std::stoi(bStr); // 변경하려는
+
+            if (fromBalloon == toBalloon)
+                return;
+
+            std::string userId = Trim(GetIdByNickname(nickname));
+            if (userId.empty())
+                return;
+
+            UserProfile& profile = userManager_.GetUserProfileById(userId);
+            UserBallons& ballons = userManager_.GetUserBallonsById(userId);
+
+            // 1️ 장착 중인지 확인
+            if (profile.balloon != fromBalloon)
+            {
+                send(client->socket,
+                    "BALLOON_CHANGE_FAIL|NOT_EQUIPPED\n",
+                    35, 0);
+                return;
+            }
+
+            // 2️ 보유 여부 확인
+            int values[10] = {
+                ballons.balloon0, ballons.balloon1, ballons.balloon2,
+                ballons.balloon3, ballons.balloon4, ballons.balloon5,
+                ballons.balloon6, ballons.balloon7, ballons.balloon8,
+                ballons.balloon9
+            };
+
+            if (toBalloon < 0 || toBalloon >= 10 || values[toBalloon] == 0)
+            {
+                send(client->socket,
+                    "BALLOON_CHANGE_FAIL|NOT_OWNED\n",
+                    33, 0);
+                return;
+            }
+
+            // 3️ 교체
+            profile.balloon = toBalloon;
+            userManager_.SaveUserProfile(userId);
+
+            // 4️ 결과 전송
+            SendSetInfo(client, nickname, profile);
+
+            std::cout << "[BALLOON_CHANGE] 성공: "
+                << nickname << " "
+                << fromBalloon << " -> " << toBalloon << std::endl;
         }
         else if (message.rfind("ICON_CHANGE|", 0) == 0)
         {
-            //구현해야함
-        }
+            std::string data = message.substr(strlen("ICON_CHANGE|"));
+            std::stringstream ss(data);
+
+            std::string nickname;
+            std::string aStr, bStr;
+
+            if (!std::getline(ss, nickname, ',') ||
+                !std::getline(ss, aStr, ',') ||
+                !std::getline(ss, bStr))
+                return;
+
+            int fromIcon = std::stoi(aStr); // 변경당하는
+            int toIcon = std::stoi(bStr); // 변경하려는
+
+            if (fromIcon == toIcon)
+                return;
+
+            std::string userId = Trim(GetIdByNickname(nickname));
+            if (userId.empty())
+                return;
+
+            UserProfile& profile = userManager_.GetUserProfileById(userId);
+            UserIcons& icons = userManager_.GetUserIconsById(userId);
+
+            // 1️ 장착 중인지 확인
+            if (profile.icon != fromIcon)
+            {
+                send(client->socket,
+                    "ICON_CHANGE_FAIL|NOT_EQUIPPED\n",
+                    32, 0);
+                return;
+            }
+
+            // 2️ 보유 여부 확인
+            int values[10] = {
+                icons.icon0, icons.icon1, icons.icon2, icons.icon3,
+                icons.icon4, icons.icon5, icons.icon6, icons.icon7,
+                icons.icon8, icons.icon9
+            };
+
+            if (toIcon < 0 || toIcon >= 10 || values[toIcon] == 0)
+            {
+                send(client->socket,
+                    "ICON_CHANGE_FAIL|NOT_OWNED\n",
+                    30, 0);
+                return;
+            }
+
+            // 3️ 교체
+            profile.icon = toIcon;
+            userManager_.SaveUserProfile(userId);
+
+            // 4️ 결과 전송
+            SendSetInfo(client, nickname, profile);
+
+            std::cout << "[ICON_CHANGE] 성공: "
+                << nickname << " "
+                << fromIcon << " -> " << toIcon << std::endl;
+                }
 
         else if (message.rfind("CREATE_ROOM|", 0) == 0) {
             string data = message.substr(strlen("CREATE_ROOM|"));
