@@ -1,4 +1,5 @@
 #include "Server.h"
+#include "StoreData.h"
 
 Server::Server()
     : roomManager_(*this, handler_),
@@ -62,6 +63,11 @@ void Server::Run() {
     auto loadedStats = userManager_.LoadUserWinLossStats("UserWinLossStats.csv");
     auto loadedBalloon = userManager_.LoadUserBallons("UserBalloon.csv");
     auto loadedIcon = userManager_.LoadUserIcons("UserIcon.csv");
+    StoreData::LoadStoreCharacters("StoreCharacters.csv");
+    StoreData::LoadStoreBalloons("StoreBalloon.csv");
+    StoreData::LoadStoreEmotes("StoreEmotes.csv");
+    StoreData::LoadStoreIcons("StoreIcons.csv");
+
     if (loadedUsers.empty()) {
         cerr << "users.csv 로드 실패 또는 내용 없음" << endl;
         return;

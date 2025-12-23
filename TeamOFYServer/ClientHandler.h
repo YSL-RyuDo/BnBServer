@@ -53,6 +53,11 @@ public:
     void SendUserEmotes(std::shared_ptr<ClientInfo> client, const std::string& nickname);
     void SendUserBallons(std::shared_ptr<ClientInfo> client, const std::string& nickname);
     void SendUserIcons(std::shared_ptr<ClientInfo> client, const std::string& nickname);
+    void SendCoinInfo(std::shared_ptr<ClientInfo> client, const std::string& nickname);
+    void SendStoreCharList(std::shared_ptr<ClientInfo> client,const std::string& nickname);
+    void SendStoreBalloonList(std::shared_ptr<ClientInfo> client, const std::string& nickname);
+    void SendStoreEmoList(std::shared_ptr<ClientInfo> client, const std::string& nickname);
+    void SendStoreIconList(std::shared_ptr<ClientInfo> client, const std::string& nickname);
 
     void OnClientDisconnected(shared_ptr<ClientInfo> client);
     void RemoveLoginSession(const std::string& userId);

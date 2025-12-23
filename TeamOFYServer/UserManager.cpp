@@ -1209,6 +1209,21 @@ UserIcons& UserManager::GetUserIconsById(const std::string& userId)
     return userIcons.back();
 }
 
+UserCharacters& UserManager::GetUserCharactersById(const std::string& userId)
+{
+    for (auto& c : userCharacters)
+    {
+        if (c.id == userId)
+            return c;
+    }
+
+    // 없으면 새로 생성
+    UserCharacters newChar;
+    newChar.id = userId;
+    userCharacters.push_back(newChar);
+    return userCharacters.back();
+}
+
 
 int UserManager::GetAttackByIndex(int index)
 {
