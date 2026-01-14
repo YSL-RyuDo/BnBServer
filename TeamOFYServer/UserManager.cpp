@@ -226,56 +226,44 @@ std::vector<UserCharacterEmotes> UserManager::LoadUserEmotes(const std::string& 
     return userEmotes;
 }
 
+// UserManager.cpp
 std::vector<UserBallons> UserManager::LoadUserBallons(const std::string& filename)
 {
     std::ifstream file(filename);
     std::vector<UserBallons> loadedBallons;
 
-    if (!file.is_open()) {
-        std::cerr << "파일 열기 실패: " << filename << std::endl;
-        return loadedBallons;
-    }
+    if (!file.is_open()) return loadedBallons;
 
     std::string line;
-    if (!std::getline(file, line)) {
-        std::cerr << "헤더 읽기 실패: " << filename << std::endl;
-        return loadedBallons;
-    }
+    std::getline(file, line); // header skip
 
-    while (std::getline(file, line)) {
+    while (std::getline(file, line))
+    {
         if (line.empty()) continue;
 
         std::stringstream ss(line);
-        UserBallons ballon;
+        UserBallons b;
+        std::string tmp;
 
-        try {
-            if (std::getline(ss, ballon.id, ',') &&
-                std::getline(ss, line, ',') && (ballon.balloon0 = std::stoi(line), true) &&
-                std::getline(ss, line, ',') && (ballon.balloon1 = std::stoi(line), true) &&
-                std::getline(ss, line, ',') && (ballon.balloon2 = std::stoi(line), true) &&
-                std::getline(ss, line, ',') && (ballon.balloon3 = std::stoi(line), true) &&
-                std::getline(ss, line, ',') && (ballon.balloon4 = std::stoi(line), true) &&
-                std::getline(ss, line, ',') && (ballon.balloon5 = std::stoi(line), true) &&
-                std::getline(ss, line, ',') && (ballon.balloon6 = std::stoi(line), true) &&
-                std::getline(ss, line, ',') && (ballon.balloon7 = std::stoi(line), true) &&
-                std::getline(ss, line, ',') && (ballon.balloon8 = std::stoi(line), true) &&
-                std::getline(ss, line) && (ballon.balloon9 = std::stoi(line), true))
-            {
-                loadedBallons.push_back(ballon);
-            }
-            else {
-                std::cerr << "UserBallons.csv 파싱 오류 라인: " << line << std::endl;
-            }
-        }
-        catch (const std::exception& e) {
-            std::cerr << "숫자 변환 오류 라인: " << line << " | " << e.what() << std::endl;
-        }
+        std::getline(ss, b.id, ',');
+        std::getline(ss, tmp, ','); b.balloon0 = std::stoi(tmp);
+        std::getline(ss, tmp, ','); b.balloon1 = std::stoi(tmp);
+        std::getline(ss, tmp, ','); b.balloon2 = std::stoi(tmp);
+        std::getline(ss, tmp, ','); b.balloon3 = std::stoi(tmp);
+        std::getline(ss, tmp, ','); b.balloon4 = std::stoi(tmp);
+        std::getline(ss, tmp, ','); b.balloon5 = std::stoi(tmp);
+        std::getline(ss, tmp, ','); b.balloon6 = std::stoi(tmp);
+        std::getline(ss, tmp, ','); b.balloon7 = std::stoi(tmp);
+        std::getline(ss, tmp, ','); b.balloon8 = std::stoi(tmp);
+        std::getline(ss, tmp);      b.balloon9 = std::stoi(tmp);
+
+        loadedBallons.push_back(b);
     }
 
-    // 멤버 벡터에 저장
     userBallons = std::move(loadedBallons);
     return userBallons;
 }
+
 
 
 // LoadUserWinLossStats
