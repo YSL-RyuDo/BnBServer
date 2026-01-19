@@ -2234,9 +2234,26 @@ void ClientHandler::SendStoreIconList(std::shared_ptr<ClientInfo> client, const 
     if (!client) return;
 
     std::string userId = Trim(GetIdByNickname(nickname));
-    if (userId.empty()) return;
 
+    std::cout << "================ ICON STORE DEBUG START ================\n";
+    std::cout << "[아이콘 상점] 요청 닉네임: [" << nickname << "]\n";
+    std::cout << "[아이콘 상점] 변환된 userId: [" << userId << "] (길이: " << userId.length() << ")\n";
+
+    if (userId.empty())
+    {
+        std::cout << "[오류] userId가 비어 있습니다.\n";
+        std::cout << "================ ICON STORE DEBUG END ==================\n";
+        return;
+    }
+
+    // GetUserIconsById 호출
     UserIcons& icons = userManager_.GetUserIconsById(userId);
+
+    std::cout << "[아이콘 상점] 반환된 icons.id: [" << icons.id << "]\n";
+    std::cout << "[아이콘 상점] 아이콘 보유 값: "
+        << icons.icon0 << icons.icon1 << icons.icon2 << icons.icon3 << icons.icon4
+        << icons.icon5 << icons.icon6 << icons.icon7 << icons.icon8 << icons.icon9
+        << "\n";
 
     std::stringstream packet;
     packet << "STORE_ICON_LIST|";
@@ -2271,6 +2288,10 @@ void ClientHandler::SendStoreIconList(std::shared_ptr<ClientInfo> client, const 
             }
         }
 
+        std::cout << "  [아이콘 " << i << "] owned=" << owned
+            << ", price=" << price
+            << ", type=" << priceType << "\n";
+
         packet << i << "," << (owned ? 1 : 0)
             << "," << price << "," << priceType << "|";
     }
@@ -2278,9 +2299,9 @@ void ClientHandler::SendStoreIconList(std::shared_ptr<ClientInfo> client, const 
     packet << "\n";
     send(client->socket, packet.str().c_str(), (int)packet.str().size(), 0);
 
-    std::cout << "[STORE_ICON_LIST] 전송: " << nickname << std::endl;
+    std::cout << "[아이콘 상점] STORE_ICON_LIST 패킷 전송 완료\n";
+    std::cout << "================ ICON STORE DEBUG END ==================\n";
 }
-
 
 // ClientHandler::HandleClient 종료 시
 void ClientHandler::OnClientDisconnected(shared_ptr<ClientInfo> client)

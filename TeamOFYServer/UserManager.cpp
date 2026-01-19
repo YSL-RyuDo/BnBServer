@@ -360,6 +360,7 @@ vector<UserIcons> UserManager::LoadUserIcons(const string& filename)
         }
     }
 
+    userIcons = std::move(loadedIcons);
     return loadedIcons;
 }
 
