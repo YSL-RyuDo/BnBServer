@@ -1379,7 +1379,7 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
 
             std::string rotYStr;
             std::string laserLengthStr;
-
+            std::string senderId = client->id;
             if (fourth == std::string::npos)
             {
                 rotYStr = data.substr(third + 1);
@@ -1401,8 +1401,9 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
                 forwardMsg = "WEAPON_ATTACK|" + nickname + "|" + charIndexStr + "|" + positionStr + "|" + rotYStr + "\n";
             }
 
-            roomManager_.BroadcastToRoomExcept(client->socket, forwardMsg);
-
+            
+            //roomManager_.BroadcastToRoomExcept(client->socket, forwardMsg);
+            roomManager_.BroadcastToUserRoom(senderId, forwardMsg);
             std::cout << "[Server] WEAPON_ATTACK 처리 완료 from " << nickname << std::endl;
             }
         else if (message.rfind("MELODY_MOVE|", 0) == 0)
@@ -1422,7 +1423,7 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
             std::string forwardMsg = "MELODY_MOVE|" + nickname + "|" + posStr + "|" + rotYStr + "\n";
             roomManager_.BroadcastToRoomExcept(client->socket, forwardMsg);
 
-            std::cout << "[Server] Melody 이동 정보 브로드캐스트 (" << nickname << "): " << posStr << ", " << rotYStr << std::endl;
+            //std::cout << "[Server] Melody 이동 정보 브로드캐스트 (" << nickname << "): " << posStr << ", " << rotYStr << std::endl;
             }
         else if (message.rfind("MELODY_DESTROY|", 0) == 0)
         {
@@ -1528,6 +1529,22 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
                     << " 에게 " << damage << " 데미지 전달\n";
             }
         }
+        else if (message.rfind("MELODY_SPAWN|", 0) == 0)
+        {
+            std::string data = message.substr(strlen("MELODY_SPAWN|"));
+
+            size_t first = data.find('|');
+            if (first == std::string::npos) return;
+
+            std::string nickname = data.substr(0, first);
+            std::string rest = data.substr(first + 1);
+
+            std::string forwardMsg =
+                "MELODY_SPAWN|" + nickname + "|" + rest + "\n";
+
+            roomManager_.BroadcastToUserRoom(client->id, forwardMsg);
+            }
+
         else if (message.rfind("PLACE_BALLOON|", 0) == 0)
         {
             std::string data = message.substr(strlen("PLACE_BALLOON|"));
