@@ -1,4 +1,4 @@
-# BNB — Multiplayer Server
+# Slap Squad — Multiplayer Server
 
 [English](README.md) · [Korean](README.ko.md) · [Japanese](README.ja.md)
 
@@ -6,8 +6,12 @@
 
 [Explore the case](https://ysl-ryudo.github.io/en/work/bnb/) · [Portfolio](https://ysl-ryudo.github.io/en/)
 
+**Mar 2025 - Feb 2026 · 8 members: 2 programmers, 6 graphics**
 
-A Windows C++/Winsock server for the BNB team project, covering accounts, rooms, gameplay packets and the shop/reward loop.
+Server, network integration & shop/profile systems
+
+
+A Windows C++/Winsock server for the Slap Squad team project, covering accounts, rooms, gameplay packets and the shop/reward loop.
 
 ## The engineering problem
 
@@ -29,10 +33,10 @@ flowchart LR
 
 ### Development videos
 
-[![BNB / BnBServer — BNB demo](https://i.ytimg.com/vi/MI5NtNU9eP8/hqdefault.jpg)](https://www.youtube.com/watch?v=MI5NtNU9eP8)
+[![Slap Squad — Slap Squad · OFY Studio](https://i.ytimg.com/vi/1LMGsY_qY_8/hqdefault.jpg)](https://www.youtube.com/watch?v=1LMGsY_qY_8)
 
-- [BNB demo](https://www.youtube.com/watch?v=MI5NtNU9eP8)
 - [Slap Squad · OFY Studio](https://www.youtube.com/watch?v=1LMGsY_qY_8)
+- [Early development demo](https://www.youtube.com/watch?v=MI5NtNU9eP8)
 
 Recorded project demonstrations; the contribution section below identifies my work within the game.
 
@@ -54,12 +58,18 @@ Commits are evidence of the stated changes, not a percentage-of-authorship score
 
 Open [TeamOFYServer.sln](TeamOFYServer.sln) in Visual Studio with the Windows C++ workload. Inspect the selected configuration, data paths, dependencies and endpoint settings before starting the matching client. Preserve existing account data.
 
-[BNB](https://github.com/YSL-RyuDo/BNB)
+[Slap Squad](https://github.com/YSL-RyuDo/BNB)
 
 ## Development and verification scope
 
-The implementation uses connection threads and CSV-backed data. It is a learning/team-game server, not a benchmarked large-scale service. The research compares pricing policies; deployment of the experimental dynamic policy is not claimed. The paper and the research context are maintained in the BNB client repository.
+The implementation uses connection threads and CSV-backed data. It is a learning/team-game server, not a benchmarked large-scale service. The research compares pricing policies; deployment of the experimental dynamic policy is not claimed. The paper and the research context are maintained in the Slap Squad client repository.
 
 ## How to evaluate the work
 
 Follow the authored client and server commits, then read the paper as a separate experiment. The server uses connection threads and CSV-backed data; some world decisions come from the room leader.
+
+## From development to research
+
+Presented the CNN pricing-policy research in “Designing Game Economies with Data.” Subsequently refined the research for the CISC-W 2025 poster presentation.
+
+[2025 I2P-CON](https://www.youtube.com/watch?v=oq_e0TAwvJg)

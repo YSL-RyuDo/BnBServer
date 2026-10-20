@@ -1,4 +1,4 @@
-# BNB — Multiplayer Server
+# Slap Squad — Multiplayer Server
 
 [English](README.md) · [Korean](README.ko.md) · [Japanese](README.ja.md)
 
@@ -6,8 +6,12 @@
 
 [개발 사례 보기](https://ysl-ryudo.github.io/ko/work/bnb/) · [Portfolio](https://ysl-ryudo.github.io/ko/)
 
+**2025.03 - 2026.02 · 8명 · 프로그래머 2명, 그래픽 6명**
 
-BNB 팀 프로젝트의 Windows C++/Winsock 서버로, 계정·방·게임플레이 패킷과 상점·보상 흐름을 다룹니다.
+서버·네트워크 연동·상점 및 프로필 구현
+
+
+Slap Squad 팀 프로젝트의 Windows C++/Winsock 서버로, 계정·방·게임플레이 패킷과 상점·보상 흐름을 다룹니다.
 
 ## 해결하려던 문제
 
@@ -29,10 +33,10 @@ flowchart LR
 
 ### 개발 시연 영상
 
-[![BNB / BnBServer — BNB demo](https://i.ytimg.com/vi/MI5NtNU9eP8/hqdefault.jpg)](https://www.youtube.com/watch?v=MI5NtNU9eP8)
+[![Slap Squad — Slap Squad · OFY Studio](https://i.ytimg.com/vi/1LMGsY_qY_8/hqdefault.jpg)](https://www.youtube.com/watch?v=1LMGsY_qY_8)
 
-- [BNB demo](https://www.youtube.com/watch?v=MI5NtNU9eP8)
 - [Slap Squad · OFY Studio](https://www.youtube.com/watch?v=1LMGsY_qY_8)
+- [Early development demo](https://www.youtube.com/watch?v=MI5NtNU9eP8)
 
 촬영 당시의 프로젝트 시연입니다. 게임 안에서 제가 맡은 작업은 아래 기여 항목으로 구분합니다.
 
@@ -54,12 +58,18 @@ flowchart LR
 
 Windows C++ 워크로드가 설치된 Visual Studio에서 [TeamOFYServer.sln](TeamOFYServer.sln)을 여세요. 구성·데이터 경로·의존성·접속 설정을 확인한 뒤 대응하는 클라이언트를 실행하세요. 기존 계정 데이터를 보존하세요.
 
-[BNB](https://github.com/YSL-RyuDo/BNB)
+[Slap Squad](https://github.com/YSL-RyuDo/BNB)
 
 ## 개발·검증 범위
 
-연결별 스레드와 CSV 기반 데이터를 사용하는 학습·팀 게임 서버입니다. 대규모 서비스 성능을 검증했다는 주장은 하지 않습니다. 연구는 가격 정책 비교이며 실험한 동적 정책의 실제 배포를 주장하지 않습니다. 논문과 연구 배경은 BNB 클라이언트 저장소에서 관리합니다.
+연결별 스레드와 CSV 기반 데이터를 사용하는 학습·팀 게임 서버입니다. 대규모 서비스 성능을 검증했다는 주장은 하지 않습니다. 연구는 가격 정책 비교이며 실험한 동적 정책의 실제 배포를 주장하지 않습니다. 논문과 연구 배경은 Slap Squad 클라이언트 저장소에서 관리합니다.
 
 ## 구현을 확인하는 방법
 
 클라이언트와 서버의 작성 커밋을 확인한 뒤 논문을 별도 실험으로 읽을 수 있습니다. 서버는 연결별 스레드와 CSV 저장을 사용하며 일부 월드 결정은 룸 리더 입력을 받습니다.
+
+## 개발에서 연구와 발표로
+
+CNN 가격정책 연구를 「데이터로 설계하는 게임 경제」로 직접 발표했습니다. 교내 발표 이후 연구를 보완해 CISC-W 2025 학회 포스터로 발표했습니다.
+
+[2025 I2P-CON](https://www.youtube.com/watch?v=oq_e0TAwvJg)
