@@ -1,44 +1,32 @@
-# Slap Squad — Multiplayer Server
+# 슬랩스쿼드 · Slap Squad — Server
 
 [English](README.md) · [Korean](README.ko.md) · [Japanese](README.ja.md)
 
-**C++ · Winsock · C# · Unity** · 팀 프로젝트
+물풍선 전투와 경기 보상, 아이템 상점이 이어지는 팀 멀티플레이 게임입니다.
 
-[개발 사례 보기](https://ysl-ryudo.github.io/ko/work/bnb/) · [Portfolio](https://ysl-ryudo.github.io/ko/)
+**C++ · Winsock · C# · Unity** · 팀 프로젝트
 
 **2025.03 - 2026.02 · 8명 · 프로그래머 2명, 그래픽 6명**
 
 서버·네트워크 연동·상점 및 프로필 구현
 
+[개발 사례 보기](https://ysl-ryudo.github.io/ko/work/bnb/) · [Portfolio](https://ysl-ryudo.github.io/ko/)
 
-Slap Squad 팀 프로젝트의 Windows C++/Winsock 서버로, 계정·방·게임플레이 패킷과 상점·보상 흐름을 다룹니다.
+[BNB](https://github.com/YSL-RyuDo/BNB) (공개 저장소) · [BnBServer](https://github.com/YSL-RyuDo/BnBServer) (공개 저장소)
 
-## 해결하려던 문제
+## 시스템별 담당 내용
 
-방, 게임 내 행동, 보상과 구매를 클라이언트·서버 흐름으로 연결해야 했습니다. 이를 구현하면서 플레이어가 얻는 보상에 비해 아이템 가격을 어떻게 정해야 할지 고민하게 되었습니다.
+| 영역 | 구현 |
+|---|---|
+| 클라이언트 | 물풍선 갱신 · 구매 UI · 결과·보상 흐름 |
+| 통신 | C++ Winsock · 연결별 스레드 |
+| 상태·저장 | CSV 데이터 기반 계정·방·상점·프로필 |
+| 판정 경계 | 일부 월드 갱신은 룸 리더에서 전달 |
 
-## 내 구현과 설계
-
-패킷·게임 연동, 룸 리더·물풍선 갱신, 상점·프로필 흐름을 작업했습니다. 별도의 CISC-W 연구에서는 가상 플레이어의 행동을 이용해 고정 가격과 수요 기반 조정 정책을 비교했습니다.
-
-### 구현 개요 · 개념 흐름도
-
-```mermaid
-flowchart LR
-    N0["Unity / room"] --> N1
-    N1["Game packets"] --> N2
-    N2["C++ server"] --> N3
-    N3["Profile / shop / CSV"]
-```
-
-### 개발 시연 영상
-
-[![Slap Squad — Slap Squad · OFY Studio](https://i.ytimg.com/vi/1LMGsY_qY_8/hqdefault.jpg)](https://www.youtube.com/watch?v=1LMGsY_qY_8)
+## 개발 시연 영상
 
 - [Slap Squad · OFY Studio](https://www.youtube.com/watch?v=1LMGsY_qY_8)
 - [Early development demo](https://www.youtube.com/watch?v=MI5NtNU9eP8)
-
-촬영 당시의 프로젝트 시연입니다. 게임 안에서 제가 맡은 작업은 아래 기여 항목으로 구분합니다.
 
 ## 내 기여
 
@@ -64,12 +52,8 @@ Windows C++ 워크로드가 설치된 Visual Studio에서 [TeamOFYServer.sln](Te
 
 연결별 스레드와 CSV 기반 데이터를 사용하는 학습·팀 게임 서버입니다. 대규모 서비스 성능을 검증했다는 주장은 하지 않습니다. 연구는 가격 정책 비교이며 실험한 동적 정책의 실제 배포를 주장하지 않습니다. 논문과 연구 배경은 Slap Squad 클라이언트 저장소에서 관리합니다.
 
-## 구현을 확인하는 방법
-
-클라이언트와 서버의 작성 커밋을 확인한 뒤 논문을 별도 실험으로 읽을 수 있습니다. 서버는 연결별 스레드와 CSV 저장을 사용하며 일부 월드 결정은 룸 리더 입력을 받습니다.
-
-## 개발에서 연구와 발표로
+## 게임 개발에서 연구로
 
 CNN 가격정책 연구를 「데이터로 설계하는 게임 경제」로 직접 발표했습니다. 교내 발표 이후 연구를 보완해 CISC-W 2025 학회 포스터로 발표했습니다.
 
-[2025 I2P-CON](https://www.youtube.com/watch?v=oq_e0TAwvJg)
+[CISC-W 2025](https://ysl-ryudo.github.io/ko/research/cisc/) · [I2P-CON](https://www.youtube.com/watch?v=oq_e0TAwvJg)

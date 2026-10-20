@@ -1,44 +1,32 @@
-# Slap Squad — Multiplayer Server
+# Slap Squad — Server
 
 [English](README.md) · [Korean](README.ko.md) · [Japanese](README.ja.md)
 
-**C++ · Winsock · C# · Unity** · Team project
+A team multiplayer game connecting water-balloon combat, match rewards and an item shop.
 
-[Explore the case](https://ysl-ryudo.github.io/en/work/bnb/) · [Portfolio](https://ysl-ryudo.github.io/en/)
+**C++ · Winsock · C# · Unity** · Team project
 
 **Mar 2025 - Feb 2026 · 8 members: 2 programmers, 6 graphics**
 
 Server, network integration & shop/profile systems
 
+[Explore the case](https://ysl-ryudo.github.io/en/work/bnb/) · [Portfolio](https://ysl-ryudo.github.io/en/)
 
-A Windows C++/Winsock server for the Slap Squad team project, covering accounts, rooms, gameplay packets and the shop/reward loop.
+[BNB](https://github.com/YSL-RyuDo/BNB) (Public repository) · [BnBServer](https://github.com/YSL-RyuDo/BnBServer) (Public repository)
 
-## The engineering problem
+## System responsibilities
 
-Rooms, in-game actions, rewards and purchases need a connected client/server flow. Building that loop raised a second question: how should item prices relate to the rewards players earn?
+| Area | Implementation |
+|---|---|
+| Client | Water-balloon updates, purchase UI and result/reward flow |
+| Transport | C++ Winsock; per-connection threads |
+| State & storage | Accounts, rooms, shop and profiles backed by CSV data |
+| Authority boundary | Some world updates originate from the room leader |
 
-## My implementation
-
-I implemented packet and game integration, room-leader/water-balloon updates, and shop/profile flows. The separate CISC-W study compares fixed and demand-adjusted pricing using simulated player behavior.
-
-### Implementation overview · conceptual flow
-
-```mermaid
-flowchart LR
-    N0["Unity / room"] --> N1
-    N1["Game packets"] --> N2
-    N2["C++ server"] --> N3
-    N3["Profile / shop / CSV"]
-```
-
-### Development videos
-
-[![Slap Squad — Slap Squad · OFY Studio](https://i.ytimg.com/vi/1LMGsY_qY_8/hqdefault.jpg)](https://www.youtube.com/watch?v=1LMGsY_qY_8)
+## Development videos
 
 - [Slap Squad · OFY Studio](https://www.youtube.com/watch?v=1LMGsY_qY_8)
 - [Early development demo](https://www.youtube.com/watch?v=MI5NtNU9eP8)
-
-Recorded project demonstrations; the contribution section below identifies my work within the game.
 
 ## My contribution
 
@@ -64,12 +52,8 @@ Open [TeamOFYServer.sln](TeamOFYServer.sln) in Visual Studio with the Windows C+
 
 The implementation uses connection threads and CSV-backed data. It is a learning/team-game server, not a benchmarked large-scale service. The research compares pricing policies; deployment of the experimental dynamic policy is not claimed. The paper and the research context are maintained in the Slap Squad client repository.
 
-## How to evaluate the work
-
-Follow the authored client and server commits, then read the paper as a separate experiment. The server uses connection threads and CSV-backed data; some world decisions come from the room leader.
-
-## From development to research
+## From game development to research
 
 Presented the CNN pricing-policy research in “Designing Game Economies with Data.” Subsequently refined the research for the CISC-W 2025 poster presentation.
 
-[2025 I2P-CON](https://www.youtube.com/watch?v=oq_e0TAwvJg)
+[CISC-W 2025](https://ysl-ryudo.github.io/en/research/cisc/) · [I2P-CON](https://www.youtube.com/watch?v=oq_e0TAwvJg)
