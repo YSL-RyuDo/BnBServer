@@ -1,6 +1,8 @@
 # Slap Squad / Server
 
-[English](README.md), [Korean](README.ko.md), [Japanese](README.ja.md)
+<!-- portfolio-languages -->
+[![English (current)](https://ysl-ryudo.github.io/assets/diagrams/language-en-current.svg)](README.md) [![한국어](https://ysl-ryudo.github.io/assets/diagrams/language-ko.svg)](README.ko.md) [![日本語](https://ysl-ryudo.github.io/assets/diagrams/language-ja.svg)](README.ja.md)
+<!-- /portfolio-languages -->
 
 A team multiplayer game connecting water-balloon combat, match rewards and an item shop.
 
@@ -17,15 +19,21 @@ A team multiplayer game connecting water-balloon combat, match rewards and an it
 
 [Slap Squad, OFY Studio](https://www.youtube.com/watch?v=1LMGsY_qY_8), [Early development demo](https://www.youtube.com/watch?v=MI5NtNU9eP8)
 
+## Inside the game
+
+[![Two clients join the same room and select characters before the host starts the match.](https://ysl-ryudo.github.io/assets/gameplay/slapsquad-room.webp)](https://ysl-ryudo.github.io/assets/gameplay/slapsquad-room.webp)
+
+Two clients join the same room and select characters before the host starts the match.
+
+[![Local two-client play, with character state, water balloons, obstacles and damage updates.](https://ysl-ryudo.github.io/assets/gameplay/slapsquad-combat.webp)](https://ysl-ryudo.github.io/assets/gameplay/slapsquad-combat.webp)
+
+Local two-client play, with character state, water balloons, obstacles and damage updates.
+
 ## What I built across the game
 
-I built the C++ server and substantial Unity gameplay: seven weapon implementations, movement/combat changes, map and balloon handling, match results and network integration. Another programmer also developed the client. I distinguish my changes in shared gameplay and ShopUI from their lobby, shop and profile UI modules.
+I built the C++ server and seven Unity weapon behaviors, and worked on movement, balloon and map interactions, match results and network integration. In the shared shop UI, I changed ownership updates to follow the returned item data.
 
-**Player flow**
-
-Account → room, character and team → map and combat → elimination and winner → rewards and return → shop and profile
-
-Source links pin the inspected revision; contribution links identify my non-merge changes. Shared-file links do not imply sole authorship. Private source requires repository access.
+[![My implementation flow](https://ysl-ryudo.github.io/assets/diagrams/bnb-flow-en.svg)](https://ysl-ryudo.github.io/assets/diagrams/bnb-flow-en.svg)
 
 ### Seven weapon behaviors
 
@@ -41,13 +49,13 @@ Worked on movement synchronization and switching between weapon attacks and ball
 
 ### Balloon and destructible-map interaction
 
-Worked on balloon placement, cooldown, overlapping placement checks and water propagation, together with map/block updates. The server relays room-related world updates under the game's room-leader model; it is distinct from simulating the entire map on the server.
+Worked on balloon placement, cooldowns, overlapping placement checks and water propagation, together with map and block updates. The server relays world updates under the room-leader model.
 
 [BalloonSystem.cs (main)](https://github.com/YSL-RyuDo/BNB/blob/8a3defa6001cf741eceb322f11d7c8c6f7dd9bd7/Assets/Script/Game/BalloonSystem.cs), [My change 95b28f2](https://github.com/YSL-RyuDo/BNB/commit/95b28f22b7e88ed2c801e6d47a61ca573bcbc8a5), [MapSystem.cs (main)](https://github.com/YSL-RyuDo/BNB/blob/8a3defa6001cf741eceb322f11d7c8c6f7dd9bd7/Assets/Script/Game/MapSystem.cs), [My change 95b28f2](https://github.com/YSL-RyuDo/BNB/commit/95b28f22b7e88ed2c801e6d47a61ca573bcbc8a5)
 
 ### Room setup and scene transitions
 
-Connected character choice, team setup and host-controlled starts to gameplay. NetworkConnector preserves the selected character around transitions and handles match-related scene routing and cached state; my RoomUI work is a change within a shared UI.
+Connected character choice, team setup and host-controlled starts to gameplay. NetworkConnector preserves character selection across transitions and handles match-related scene routing and cached state.
 
 [RoomSystem.cs (main)](https://github.com/YSL-RyuDo/BNB/blob/8a3defa6001cf741eceb322f11d7c8c6f7dd9bd7/Assets/Script/Room/RoomSystem.cs), [My change be42bb9](https://github.com/YSL-RyuDo/BNB/commit/be42bb99ced515ad702e9a15e9d95bd5e029839c), [NetworkConnector.cs (main)](https://github.com/YSL-RyuDo/BNB/blob/8a3defa6001cf741eceb322f11d7c8c6f7dd9bd7/Assets/Script/Network/NetworkConnector.cs), [My change c79844d](https://github.com/YSL-RyuDo/BNB/commit/c79844d425e5c81e1c9549885e29deeeb66515cf)
 
@@ -63,14 +71,6 @@ Implemented server account, room, shop and profile processing with CSV persisten
 
 [Server.cpp (main)](https://github.com/YSL-RyuDo/BnBServer/blob/d2a360c07276ec057a92d1361e8ff84de743520c/TeamOFYServer/Server.cpp), [My change e41da66](https://github.com/YSL-RyuDo/BnBServer/commit/e41da66566252a105da68d98087198e632c0e9b7), [ShopUI.cs (main)](https://github.com/YSL-RyuDo/BNB/blob/8a3defa6001cf741eceb322f11d7c8c6f7dd9bd7/Assets/Script/Shop/ShopUI.cs), [My change 57cedd2](https://github.com/YSL-RyuDo/BNB/commit/57cedd2e5c3b0dbbb7ea51b336602cc339630cea)
 
-## My contribution
-
-Worked on server packet handling and integration with the Unity game.
-
-Implemented/updated shop packets, profile data handling and item/icon parsing.
-
-Investigated reward accumulation and item pricing through the related CISC-W 2025 simulation study.
-
 ## Contribution evidence
 
 [Shop packets / 상점 패킷 / ショップパケット](https://github.com/YSL-RyuDo/BnBServer/commit/e41da66566252a105da68d98087198e632c0e9b7)
@@ -79,8 +79,6 @@ Investigated reward accumulation and item pricing through the related CISC-W 202
 
 [Icon parsing / 아이콘 파싱 / アイコン解析](https://github.com/YSL-RyuDo/BnBServer/commit/c834f97f91bd8aaf62fe6bc2c7a2c29ea610ed9e)
 
-Commits are evidence of the stated changes, not a percentage-of-authorship score. Third-party assets and teammates' work remain separately credited.
-
 ## Implementation and design
 
 Rooms, in-game actions, rewards and purchases need a connected client/server flow. Building that loop raised a second question: how should item prices relate to the rewards players earn?
@@ -88,8 +86,6 @@ Rooms, in-game actions, rewards and purchases need a connected client/server flo
 I implemented packet and game integration, room-leader/water-balloon updates, and shop/profile flows. The separate CISC-W study compares fixed and demand-adjusted pricing using simulated player behavior.
 
 ## How the code works and why it is structured this way
-
-These notes connect the inspected implementation to the constraints it addresses and its tradeoffs. Explanations of design consequences are code analysis, not a claim that every alternative was prototyped. Contribution links identify my changes within team projects; source links retain their original access permissions.
 
 ### The purchase click is not proof of ownership
 
@@ -107,7 +103,7 @@ Optimistic ownership feedback is immediate, but needs a reliable rollback if the
 
 **Tradeoffs and verification**
 
-This is a specific contribution inside shared client code, not sole authorship of ShopUI. Delaying ownership feedback makes failure and timeout handling important; the cited patch alone does not establish complete retry handling. The later VAIS purchase contract addresses retries at the transaction layer as well.
+Waiting for returned item data avoids confirming an unaccepted purchase, but requires pending, failure and timeout states. VAIS later extends retry handling into the transaction layer.
 
 [BNB 57cedd2e](https://github.com/YSL-RyuDo/BNB/commit/57cedd2e5c3b0dbbb7ea51b336602cc339630cea)
 
@@ -127,7 +123,7 @@ Full server simulation gives the server more control but requires server-side im
 
 **Tradeoffs and verification**
 
-The game is not described as a fully server-authoritative simulation. The paper's simulated result is not measured live-player behavior, and the research does not establish that a CNN pricing model was deployed in BnBServer. The implementation and experiment have separate evidence.
+Room-leader decisions introduce a client-trust boundary and require handling leader departure. The pricing study compares simulated consumption under fixed and demand-based policies; its CNN metric is consumption-pattern classification accuracy.
 
 [BNB 95b28f22](https://github.com/YSL-RyuDo/BNB/commit/95b28f22b7e88ed2c801e6d47a61ca573bcbc8a5), [BnBServer/ClientHandler.cpp](https://github.com/YSL-RyuDo/BnBServer/blob/5f5f067f7cdc6ef71ab11a4d869ad2e1b6fdc8a2/TeamOFYServer/ClientHandler.cpp), [BnBServer/StoreData.cpp](https://github.com/YSL-RyuDo/BnBServer/blob/5f5f067f7cdc6ef71ab11a4d869ad2e1b6fdc8a2/TeamOFYServer/StoreData.cpp)
 
@@ -136,10 +132,6 @@ The game is not described as a fully server-authoritative simulation. The paper'
 Open [TeamOFYServer.sln](TeamOFYServer.sln) in Visual Studio with the Windows C++ workload. Inspect the selected configuration, data paths, dependencies and endpoint settings before starting the matching client. Preserve existing account data.
 
 [Slap Squad](https://github.com/YSL-RyuDo/BNB)
-
-## Development and verification scope
-
-The implementation uses connection threads and CSV-backed data. It is a learning/team-game server, not a benchmarked large-scale service. The research compares pricing policies; deployment of the experimental dynamic policy is not claimed. The paper and the research context are maintained in the Slap Squad client repository.
 
 Presented the CNN pricing-policy research in “Designing Game Economies with Data.” Subsequently refined the research for the CISC-W 2025 poster presentation.
 
