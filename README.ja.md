@@ -9,13 +9,59 @@
 | 開発状況 | チーム開発 |
 | 使用技術 | C++, Winsock, C#, Unity |
 | 期間とチーム構成 | 2025.03 ~ 2026.02, 8名：プログラマー2名、グラフィック6名 |
-| 担当 | サーバー・ネットワーク連携・ショップとプロフィール実装 |
+| 担当 | ゲームプレイ、C++サーバーとクライアント連携 |
 
 [開発事例を見る](https://ysl-ryudo.github.io/ja/work/bnb/), [Portfolio](https://ysl-ryudo.github.io/ja/)
 
 [![Slap Squad](https://i.ytimg.com/vi/1LMGsY_qY_8/hqdefault.jpg)](https://www.youtube.com/watch?v=1LMGsY_qY_8)
 
 [Slap Squad, OFY Studio](https://www.youtube.com/watch?v=1LMGsY_qY_8), [Early development demo](https://www.youtube.com/watch?v=MI5NtNU9eP8)
+
+## ゲーム全体で担当した実装
+
+C++サーバーに加え、Unityの7種の武器、移動・戦闘変更、マップ・水風船、試合結果、通信連携を担当しました。クライアントは別のプログラマーとの共同制作です。共同ゲームコードとShopUIの自分の変更を、他メンバーのロビー・ショップ・プロフィールUIと区別します。
+
+**プレイの流れ**
+
+アカウント → ルーム・キャラクター・チーム → マップと戦闘 → 脱落と勝者 → 報酬と復帰 → ショップとプロフィール
+
+ソースリンクは確認した版に固定し、担当リンクは自分のマージ以外の変更を示します。共同ファイルは単独著作を意味しません。非公開ソースには閲覧権限が必要です。
+
+### 7種の武器動作
+
+Arrow、Laser、Mace、Melody、Pitchfork、Spell、Swordの動作を実装しました。WeaponSystemで装備選択、生成、クールダウン、音を接続しました。通信処理に加えて、実際の戦闘行動を作るクライアント実装です。
+
+[WeaponSystem.cs (main)](https://github.com/YSL-RyuDo/BNB/blob/8a3defa6001cf741eceb322f11d7c8c6f7dd9bd7/Assets/Script/Game/WeaponSystem.cs), [担当変更 c79844d](https://github.com/YSL-RyuDo/BNB/commit/c79844d425e5c81e1c9549885e29deeeb66515cf), [Arrow.cs (main)](https://github.com/YSL-RyuDo/BNB/blob/8a3defa6001cf741eceb322f11d7c8c6f7dd9bd7/Assets/Script/Game/Weapon/Arrow.cs), [担当変更 c79844d](https://github.com/YSL-RyuDo/BNB/commit/c79844d425e5c81e1c9549885e29deeeb66515cf), [Sword.cs (main)](https://github.com/YSL-RyuDo/BNB/blob/8a3defa6001cf741eceb322f11d7c8c6f7dd9bd7/Assets/Script/Game/Weapon/Sword.cs), [担当変更 c79844d](https://github.com/YSL-RyuDo/BNB/commit/c79844d425e5c81e1c9549885e29deeeb66515cf)
+
+### 操作と攻撃タイミング
+
+移動同期と武器攻撃・水風船設置の入力切替を担当しました。Updateで入力を読み、FixedUpdateでRigidbodyを移動します。攻撃要求に武器・位置・向きを渡し、レーザーにはマップ障害物から求めた距離も含めます。
+
+[LocalPlayerController.cs (main)](https://github.com/YSL-RyuDo/BNB/blob/8a3defa6001cf741eceb322f11d7c8c6f7dd9bd7/Assets/Script/Game/LocalPlayerController.cs), [担当変更 c79844d](https://github.com/YSL-RyuDo/BNB/commit/c79844d425e5c81e1c9549885e29deeeb66515cf)
+
+### 水風船と破壊可能なマップ
+
+水風船設置・クールダウン・重複設置確認・水の伝播、マップとブロック更新を担当しました。サーバーはルームリーダーモデルでワールド更新を扱い、全マップのサーバーシミュレーションとは区別します。
+
+[BalloonSystem.cs (main)](https://github.com/YSL-RyuDo/BNB/blob/8a3defa6001cf741eceb322f11d7c8c6f7dd9bd7/Assets/Script/Game/BalloonSystem.cs), [担当変更 95b28f2](https://github.com/YSL-RyuDo/BNB/commit/95b28f22b7e88ed2c801e6d47a61ca573bcbc8a5), [MapSystem.cs (main)](https://github.com/YSL-RyuDo/BNB/blob/8a3defa6001cf741eceb322f11d7c8c6f7dd9bd7/Assets/Script/Game/MapSystem.cs), [担当変更 95b28f2](https://github.com/YSL-RyuDo/BNB/commit/95b28f22b7e88ed2c801e6d47a61ca573bcbc8a5)
+
+### ルーム準備とシーン遷移
+
+キャラクター選択・チーム編成・ホストの開始要求を試合に接続しました。NetworkConnectorで遷移前後の選択、試合シーン移動、キャッシュ状態を扱いました。RoomUIは共同UI内の担当変更として示します。
+
+[RoomSystem.cs (main)](https://github.com/YSL-RyuDo/BNB/blob/8a3defa6001cf741eceb322f11d7c8c6f7dd9bd7/Assets/Script/Room/RoomSystem.cs), [担当変更 be42bb9](https://github.com/YSL-RyuDo/BNB/commit/be42bb99ced515ad702e9a15e9d95bd5e029839c), [NetworkConnector.cs (main)](https://github.com/YSL-RyuDo/BNB/blob/8a3defa6001cf741eceb322f11d7c8c6f7dd9bd7/Assets/Script/Network/NetworkConnector.cs), [担当変更 c79844d](https://github.com/YSL-RyuDo/BNB/commit/c79844d425e5c81e1c9549885e29deeeb66515cf)
+
+### 試合結果、報酬とエモート
+
+GameSystemのプレイヤー生成・被弾・死亡・勝者・報酬、復帰準備を担当しました。エモートの要求・表示・クールダウンも実装しました。結果データを単独画面で終わらせず、プレイ終了と次の流れにつなぎました。
+
+[GameSystem.cs (main)](https://github.com/YSL-RyuDo/BNB/blob/8a3defa6001cf741eceb322f11d7c8c6f7dd9bd7/Assets/Script/Game/GameSystem.cs), [担当変更 eb6a766](https://github.com/YSL-RyuDo/BNB/commit/eb6a7660b4f690e0d46a7a3e75c50c744d40f745), [EmoticonSystem.cs (main)](https://github.com/YSL-RyuDo/BNB/blob/8a3defa6001cf741eceb322f11d7c8c6f7dd9bd7/Assets/Script/Game/EmoticonSystem.cs), [担当変更 576f512](https://github.com/YSL-RyuDo/BNB/commit/576f51272b078731e71e882afce04ce8ae164ac3)
+
+### アカウント、経済と購入結果
+
+CSV保存を使うサーバーのアカウント、ルーム、ショップ、プロフィール処理を実装しました。共同ShopUIでは購入直後の所有確定を除き、返却データで該当タブを更新しました。価格設計の問いは別のCNNシミュレーション研究へ発展しました。
+
+[Server.cpp (main)](https://github.com/YSL-RyuDo/BnBServer/blob/d2a360c07276ec057a92d1361e8ff84de743520c/TeamOFYServer/Server.cpp), [担当変更 e41da66](https://github.com/YSL-RyuDo/BnBServer/commit/e41da66566252a105da68d98087198e632c0e9b7), [ShopUI.cs (main)](https://github.com/YSL-RyuDo/BNB/blob/8a3defa6001cf741eceb322f11d7c8c6f7dd9bd7/Assets/Script/Shop/ShopUI.cs), [担当変更 57cedd2](https://github.com/YSL-RyuDo/BNB/commit/57cedd2e5c3b0dbbb7ea51b336602cc339630cea)
 
 ## 担当した内容
 
@@ -40,13 +86,6 @@
 ルーム、ゲーム内操作、報酬、購入をクライアント・サーバー間で連携させる必要がありました。その実装から、獲得報酬に対してアイテム価格をどう設定するかという疑問が生まれました。
 
 パケット・ゲーム連携、ルームリーダー・水風船更新、ショップ・プロフィール処理を担当しました。別のCISC-W研究では仮想プレイヤーの行動を用い、固定価格と需要連動政策を比較しました。
-
-| 領域 | 実装 |
-|---|---|
-| クライアント | 水風船の更新・購入UI・結果と報酬の処理 |
-| 通信 | C++ Winsock・接続ごとのスレッド |
-| 状態・保存 | CSVデータによるアカウント・ルーム・ショップ・プロフィール |
-| 判定の境界 | 一部のワールド更新はルームリーダーから送信 |
 
 ## コードの動作と実装構造の理由
 

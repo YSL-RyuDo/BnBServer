@@ -9,13 +9,59 @@ A team multiplayer game connecting water-balloon combat, match rewards and an it
 | Status | Team project |
 | Stack | C++, Winsock, C#, Unity |
 | Period and team | Mar 2025 ~ Feb 2026, 8 members: 2 programmers, 6 graphics |
-| My role | Server, network integration & shop/profile systems |
+| My role | Gameplay, C++ server and client integration |
 
 [Explore the case](https://ysl-ryudo.github.io/en/work/bnb/), [Portfolio](https://ysl-ryudo.github.io/en/)
 
 [![Slap Squad](https://i.ytimg.com/vi/1LMGsY_qY_8/hqdefault.jpg)](https://www.youtube.com/watch?v=1LMGsY_qY_8)
 
 [Slap Squad, OFY Studio](https://www.youtube.com/watch?v=1LMGsY_qY_8), [Early development demo](https://www.youtube.com/watch?v=MI5NtNU9eP8)
+
+## What I built across the game
+
+I built the C++ server and substantial Unity gameplay: seven weapon implementations, movement/combat changes, map and balloon handling, match results and network integration. Another programmer also developed the client. I distinguish my changes in shared gameplay and ShopUI from their lobby, shop and profile UI modules.
+
+**Player flow**
+
+Account → room, character and team → map and combat → elimination and winner → rewards and return → shop and profile
+
+Source links pin the inspected revision; contribution links identify my non-merge changes. Shared-file links do not imply sole authorship. Private source requires repository access.
+
+### Seven weapon behaviors
+
+Implemented Arrow, Laser, Mace, Melody, Pitchfork, Spell and Sword behaviors. WeaponSystem connects equipped weapon selection, spawning, cooldown and sound. This is gameplay implementation beyond the server's packet handling.
+
+[WeaponSystem.cs (main)](https://github.com/YSL-RyuDo/BNB/blob/8a3defa6001cf741eceb322f11d7c8c6f7dd9bd7/Assets/Script/Game/WeaponSystem.cs), [My change c79844d](https://github.com/YSL-RyuDo/BNB/commit/c79844d425e5c81e1c9549885e29deeeb66515cf), [Arrow.cs (main)](https://github.com/YSL-RyuDo/BNB/blob/8a3defa6001cf741eceb322f11d7c8c6f7dd9bd7/Assets/Script/Game/Weapon/Arrow.cs), [My change c79844d](https://github.com/YSL-RyuDo/BNB/commit/c79844d425e5c81e1c9549885e29deeeb66515cf), [Sword.cs (main)](https://github.com/YSL-RyuDo/BNB/blob/8a3defa6001cf741eceb322f11d7c8c6f7dd9bd7/Assets/Script/Game/Weapon/Sword.cs), [My change c79844d](https://github.com/YSL-RyuDo/BNB/commit/c79844d425e5c81e1c9549885e29deeeb66515cf)
+
+### Player control and attack timing
+
+Worked on movement synchronization and switching between weapon attacks and balloon placement. Input is sampled in Update and Rigidbody movement runs in FixedUpdate. Attack requests carry the selected weapon and attack transform; laser requests also include a distance calculated against map obstacles.
+
+[LocalPlayerController.cs (main)](https://github.com/YSL-RyuDo/BNB/blob/8a3defa6001cf741eceb322f11d7c8c6f7dd9bd7/Assets/Script/Game/LocalPlayerController.cs), [My change c79844d](https://github.com/YSL-RyuDo/BNB/commit/c79844d425e5c81e1c9549885e29deeeb66515cf)
+
+### Balloon and destructible-map interaction
+
+Worked on balloon placement, cooldown, overlapping placement checks and water propagation, together with map/block updates. The server relays room-related world updates under the game's room-leader model; it is distinct from simulating the entire map on the server.
+
+[BalloonSystem.cs (main)](https://github.com/YSL-RyuDo/BNB/blob/8a3defa6001cf741eceb322f11d7c8c6f7dd9bd7/Assets/Script/Game/BalloonSystem.cs), [My change 95b28f2](https://github.com/YSL-RyuDo/BNB/commit/95b28f22b7e88ed2c801e6d47a61ca573bcbc8a5), [MapSystem.cs (main)](https://github.com/YSL-RyuDo/BNB/blob/8a3defa6001cf741eceb322f11d7c8c6f7dd9bd7/Assets/Script/Game/MapSystem.cs), [My change 95b28f2](https://github.com/YSL-RyuDo/BNB/commit/95b28f22b7e88ed2c801e6d47a61ca573bcbc8a5)
+
+### Room setup and scene transitions
+
+Connected character choice, team setup and host-controlled starts to gameplay. NetworkConnector preserves the selected character around transitions and handles match-related scene routing and cached state; my RoomUI work is a change within a shared UI.
+
+[RoomSystem.cs (main)](https://github.com/YSL-RyuDo/BNB/blob/8a3defa6001cf741eceb322f11d7c8c6f7dd9bd7/Assets/Script/Room/RoomSystem.cs), [My change be42bb9](https://github.com/YSL-RyuDo/BNB/commit/be42bb99ced515ad702e9a15e9d95bd5e029839c), [NetworkConnector.cs (main)](https://github.com/YSL-RyuDo/BNB/blob/8a3defa6001cf741eceb322f11d7c8c6f7dd9bd7/Assets/Script/Network/NetworkConnector.cs), [My change c79844d](https://github.com/YSL-RyuDo/BNB/commit/c79844d425e5c81e1c9549885e29deeeb66515cf)
+
+### Match results, rewards and expression
+
+Worked on player spawning, damage/death, winner and reward processing, and the ready-to-return flow in GameSystem. Implemented the emote request/display path and its cooldown. Result data is part of the play loop, not just a disconnected result screen.
+
+[GameSystem.cs (main)](https://github.com/YSL-RyuDo/BNB/blob/8a3defa6001cf741eceb322f11d7c8c6f7dd9bd7/Assets/Script/Game/GameSystem.cs), [My change eb6a766](https://github.com/YSL-RyuDo/BNB/commit/eb6a7660b4f690e0d46a7a3e75c50c744d40f745), [EmoticonSystem.cs (main)](https://github.com/YSL-RyuDo/BNB/blob/8a3defa6001cf741eceb322f11d7c8c6f7dd9bd7/Assets/Script/Game/EmoticonSystem.cs), [My change 576f512](https://github.com/YSL-RyuDo/BNB/commit/576f51272b078731e71e882afce04ce8ae164ac3)
+
+### Account, economy and purchase feedback
+
+Implemented server account, room, shop and profile processing with CSV persistence. In the shared ShopUI I removed premature ownership confirmation and refreshed the relevant item tab from returned data. The item-pricing question also led to the separate CNN simulation study.
+
+[Server.cpp (main)](https://github.com/YSL-RyuDo/BnBServer/blob/d2a360c07276ec057a92d1361e8ff84de743520c/TeamOFYServer/Server.cpp), [My change e41da66](https://github.com/YSL-RyuDo/BnBServer/commit/e41da66566252a105da68d98087198e632c0e9b7), [ShopUI.cs (main)](https://github.com/YSL-RyuDo/BNB/blob/8a3defa6001cf741eceb322f11d7c8c6f7dd9bd7/Assets/Script/Shop/ShopUI.cs), [My change 57cedd2](https://github.com/YSL-RyuDo/BNB/commit/57cedd2e5c3b0dbbb7ea51b336602cc339630cea)
 
 ## My contribution
 
@@ -40,13 +86,6 @@ Commits are evidence of the stated changes, not a percentage-of-authorship score
 Rooms, in-game actions, rewards and purchases need a connected client/server flow. Building that loop raised a second question: how should item prices relate to the rewards players earn?
 
 I implemented packet and game integration, room-leader/water-balloon updates, and shop/profile flows. The separate CISC-W study compares fixed and demand-adjusted pricing using simulated player behavior.
-
-| Area | Implementation |
-|---|---|
-| Client | Water-balloon updates, purchase UI and result/reward flow |
-| Transport | C++ Winsock; per-connection threads |
-| State & storage | Accounts, rooms, shop and profiles backed by CSV data |
-| Authority boundary | Some world updates originate from the room leader |
 
 ## How the code works and why it is structured this way
 
