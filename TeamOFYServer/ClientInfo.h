@@ -20,7 +20,7 @@ public:
 
     void Disconnect() { if (output_) output_->Stop(); }
     bool IsClosing() const { return output_ && output_->IsStopping(); }
-    ~ClientInfo() = default; // SocketOutput joins its writer and closes the socket once.
+    ~ClientInfo() = default; // Pending completions retain SocketOutput until its final close.
 private:
     std::shared_ptr<SocketOutput> output_;
 };

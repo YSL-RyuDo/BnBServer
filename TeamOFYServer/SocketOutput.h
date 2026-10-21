@@ -10,7 +10,9 @@
 #include <thread>
 
 // One writer owns each TCP byte stream. QueueSend reports acceptance, not delivery.
-class SocketOutput {
+struct OutputOperation;
+class OutputDispatcher;
+class SocketOutput : public std::enable_shared_from_this<SocketOutput> {
 public:
     using SendFunction = std::function<int(SOCKET, const char*, int, int)>;
     static constexpr size_t MaxPendingBytes = 256 * 1024;
@@ -31,16 +33,19 @@ public:
     Stats Snapshot();
 private:
     SocketOutput(SOCKET socket, SendFunction sender);
-    void Run();
+    friend class OutputDispatcher;
+    void Begin(OutputOperation* operation);
+    void Submit(OutputOperation* operation);
+    void Complete(OutputOperation* operation, DWORD bytes, bool success);
     SOCKET socket_;
     SendFunction sender_;
-    std::thread writer_;
     std::atomic<bool> stopping_{false};
     std::atomic<int> stopReason_{0};
     std::mutex mutex_;
-    std::condition_variable ready_, idle_;
+    std::condition_variable idle_;
     std::deque<std::string> queue_;
     size_t pendingBytes_ = 0, pendingFrames_ = 0;
+    bool active_ = false;
     Stats stats_;
 };
 

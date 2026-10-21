@@ -6,6 +6,8 @@ from run import start,setup,stop,percentile
 
 async def experiment(build,folder,pressure):
  build=Path(build).resolve();folder=Path(folder).resolve();meta=json.loads((build/'build.json').read_text())
+ folder.mkdir(parents=True,exist_ok=True)
+ (folder/'transport.jsonl').write_text('',encoding='utf-8')
  prior=os.environ.get('BNB_TRANSPORT_STATS');os.environ['BNB_TRANSPORT_STATS']=str(folder/'transport.jsonl')
  try:proc,log,peers=await start(build/'bin/TeamOFYServer.exe',meta['port'],folder,8)
  finally:

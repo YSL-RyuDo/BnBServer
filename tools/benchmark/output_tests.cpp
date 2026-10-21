@@ -8,6 +8,7 @@
 #pragma comment(lib, "Ws2_32.lib")
 void check(bool value, const char* message) { if (!value) throw std::runtime_error(message); }
 int main() {
+    std::cout << std::unitbuf;
     try {
         { // Force every send to accept at most 7 bytes, regardless of socket buffering.
             std::string actual, expected;
@@ -42,6 +43,7 @@ int main() {
             const auto stats=q->Snapshot();check(stats.stopReason==3,"overflow policy");
             check(stats.peakBytes<=SocketOutput::MaxPendingBytes && stats.peakFrames<=SocketOutput::MaxPendingFrames,"unbounded backlog");
             {std::lock_guard<std::mutex> l(m);release=true;}cv.notify_all();
+            check(q->WaitIdle(2000), "cancelled operation did not retire");
             std::cout<<"PASS "<<(bytes?"byte_limit":"frame_limit")<<", peak_bytes="<<stats.peakBytes<<", peak_frames="<<stats.peakFrames<<"\n";
         }
         { // Fill the queue behind a blocked first write, then observe batch call count.
@@ -60,6 +62,20 @@ int main() {
             q->WaitIdle(2000);check(q->IsStopping()&&q->Snapshot().stopReason==2,"send failure");check(q->Enqueue("x",1)==SOCKET_ERROR,"closed acceptance");
             std::cout<<"PASS send_failure\n";
         }
-        std::cout<<"6/6 output tests passed\n";return 0;
+        {
+            std::mutex m; std::condition_variable cv; bool entered=false, release=false;
+            auto q=SocketOutput::Create(INVALID_SOCKET,[&](SOCKET,const char*,int n,int) {
+                std::unique_lock<std::mutex> lock(m); entered=true; cv.notify_all();
+                cv.wait(lock,[&]{return release;}); return n;
+            });
+            std::weak_ptr<SocketOutput> weak=q; q->Enqueue("retain",6);
+            {std::unique_lock<std::mutex> lock(m);cv.wait(lock,[&]{return entered;});}
+            q->Stop();q.reset();check(!weak.expired(),"operation lost ownership before completion");
+            {std::lock_guard<std::mutex> lock(m);release=true;}cv.notify_all();
+            for(int i=0;i<200&&!weak.expired();++i)std::this_thread::sleep_for(std::chrono::milliseconds(5));
+            check(weak.expired(),"completion retained closed owner");
+            std::cout<<"PASS cancellation_lifetime\n";
+        }
+        std::cout<<"7/7 output tests passed\n";return 0;
     } catch(const std::exception& e) {std::cerr<<e.what()<<"\n";return 1;}
 }
