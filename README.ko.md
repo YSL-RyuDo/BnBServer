@@ -12,9 +12,24 @@ C++ 서버와 Unity 무기 동작을 구현하고 이동, 물풍선 상호작용
 
 [![Slap Squad, four-player gameplay](https://ysl-ryudo.github.io/assets/evidence/slap-four-balloons.webp)](https://ysl-ryudo.github.io/ko/work/bnb/#gameplay)
 
+## 송신 큐 설계와 재현 방법
+
+다른 방의 수신자 한 명이 읽기를 멈춘 조건에서 응답은 수정 전 0/300건, 수정 후 300/300건으로 3회 모두 확인했습니다. 크기를 제한한 큐, 부분 송신의 순차 처리, 연결 정리 검사를 추가했습니다.
+
+| 조건 / 지표 | 이전, 방별 blocking send | 이후, 제한된 송신 큐 |
+| --- | --- | --- |
+| 읽기 중단, 회차별 다른 방 응답 | 0 / 300 | 300 / 300 |
+| 읽기 중단, 회차별 p95의 중앙값 | 계산 불가, 수신 응답 없음 | 13.82 ms |
+| 정상 조건, 회차별 다른 방 응답 | 300 / 300 | 300 / 300 |
+| 정상 조건, 회차별 p95의 중앙값 | 14.00 ms | 13.62 ms |
+| 관찰한 최대 스레드, 연결 8개 | 12 | 20 |
+
+[송신 큐 설계와 재현 방법](https://github.com/YSL-RyuDo/BnBServer/blob/main/docs/engineering/OUTPUT_QUEUE.ko.md), [12회 원자료와 빌드 근거](https://github.com/YSL-RyuDo/BnBServer/tree/main/docs/engineering/measurements/2026-10-21-output-queue), [Git diff](https://github.com/YSL-RyuDo/BnBServer/compare/737a92c397adb4320cf439d99d148362ce1ca090...9e9110727ff5fa8c4cd016f9a55efe4aa93ecc4e)
+
+
 ## 구현과 검증
 
-2026년 10월 후속 작업: 코드 검토, TCP 메시지 경계와 방별 전달 수정, UML 작성 및 반복 측정.
+2026년 10월 후속 작업: 방별 전달, TCP 수신 경계, 제한된 송신 큐와 연결 정리 수정, UML과 36회 반복 측정.
 
 기존 MOVE 처리는 BroadcastMessageExcept를 호출해 송신자를 제외한 모든 연결에 전달했습니다. 4명씩 16개 방에 접속한 64명 조건에서는 실제 수신 대상 3명 대신 최대 63명에게 이동이 전달됩니다. 불필요한 부하이면서 방의 경계를 어기는 동작이었습니다.
 

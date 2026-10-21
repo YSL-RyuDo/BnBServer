@@ -1,0 +1,35 @@
+@startuml
+!pragma layout smetana
+skinparam monochrome true
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam defaultFontName "Malgun Gothic"
+skinparam defaultFontSize 15
+skinparam ArrowColor #444444
+skinparam Padding 10
+skinparam sequenceMessageAlign center
+hide footbox
+title 연결 하나가 큐 하나와 writer 하나를 소유
+participant "핸들러" as H
+participant "연결별 큐" as Q
+participant "송신 스레드" as W
+participant "TCP 상대" as P
+H -> Q : Enqueue(message)
+note left of H : 공유 잠금 안에서는 큐 삽입만
+alt pending <= 256 KiB and frames <= 4096
+ Q --> H : 큐 삽입 성공, 수신 완료 아님
+ Q ->> W : notify_one()
+ W -> Q : 대기 메시지 묶음, 기준 16 KiB
+ Q --> W : batch
+ note over W : 큐 잠금 해제
+ loop 전체 전송 또는 오류까지
+  W -> P : send(batch + offset, remaining)
+  P --> W : sent bytes / error
+  W -> W : 반환된 바이트 수만큼 진행
+ end
+else
+ Q -> P : shutdown(SD_BOTH)
+ Q --> H : SOCKET_ERROR
+ note over Q,P : 한도 초과: 해당 연결 종료
+end
+@enduml

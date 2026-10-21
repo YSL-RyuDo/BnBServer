@@ -1,0 +1,35 @@
+@startuml
+!pragma layout smetana
+skinparam monochrome true
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam defaultFontName "Malgun Gothic"
+skinparam defaultFontSize 15
+skinparam ArrowColor #444444
+skinparam Padding 10
+skinparam sequenceMessageAlign center
+hide footbox
+title One connection owns one queue and one writer
+participant "handler" as H
+participant "connection queue" as Q
+participant "writer thread" as W
+participant "TCP peer" as P
+H -> Q : Enqueue(message)
+note left of H : shared lock held only for enqueue
+alt pending <= 256 KiB and frames <= 4096
+ Q --> H : accepted, not delivered
+ Q ->> W : notify_one()
+ W -> Q : available frames, target 16 KiB
+ Q --> W : batch
+ note over W : queue mutex released
+ loop until all bytes sent or error
+  W -> P : send(batch + offset, remaining)
+  P --> W : sent bytes / error
+  W -> W : advance by returned byte count
+ end
+else
+ Q -> P : shutdown(SD_BOTH)
+ Q --> H : SOCKET_ERROR
+ note over Q,P : over limit: stop connection
+end
+@enduml

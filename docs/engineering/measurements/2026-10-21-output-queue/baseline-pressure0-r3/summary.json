@@ -1,0 +1,19 @@
+{
+  "pressure": false,
+  "clients": 8,
+  "rooms": 2,
+  "probe_requests": 100,
+  "expected_deliveries": 300,
+  "received_deliveries": 300,
+  "missing_deliveries": 0,
+  "duplicates": 0,
+  "p50_ms": 0.5758999905083328,
+  "p95_ms": 14.196000003721565,
+  "p99_ms": 16.64409998920746,
+  "pressure_requests_written": 0,
+  "server_cpu_core_percent": 0.22432548843053643,
+  "peak_rss_mib": 11.35546875,
+  "peak_threads": 12,
+  "duration_s": 6.965325299999677,
+  "transport": []
+}

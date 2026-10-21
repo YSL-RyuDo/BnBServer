@@ -6,13 +6,28 @@ March 2025 to February 2026, 2 programmers and 6 graphics team members
 
 I implemented the C++ server and Unity weapon behaviors, and connected movement, balloon interactions, match results and purchase feedback.
 
-October 2026 follow-up: source audit, TCP framing and room isolation fixes, UML and reproducible measurements.
+October 2026 follow-up: room isolation, TCP framing, bounded output queues, lifecycle fixes, UML and 36 measured runs.
+
+## Output queue design and reproduction
+
+With a stopped reader in another room: 0/300 responses before, 300/300 after in each of three runs. Bounded queues, serialized partial writes and tested connection cleanup.
+
+| Condition / metric | Before, room-scoped blocking send | After, bounded output |
+| --- | --- | --- |
+| Stopped reader, healthy-room deliveries per run | 0 / 300 | 300 / 300 |
+| Stopped reader, median run p95 | Undefined, no responses | 13.82 ms |
+| Quiet, healthy-room deliveries per run | 300 / 300 | 300 / 300 |
+| Quiet, median run p95 | 14.00 ms | 13.62 ms |
+| Observed peak threads, 8 connections | 12 | 20 |
+
+[Output queue design and reproduction](https://github.com/YSL-RyuDo/BnBServer/blob/main/docs/engineering/OUTPUT_QUEUE.md), [12-run raw data and build provenance](https://github.com/YSL-RyuDo/BnBServer/tree/main/docs/engineering/measurements/2026-10-21-output-queue), [Git diff](https://github.com/YSL-RyuDo/BnBServer/compare/737a92c397adb4320cf439d99d148362ce1ca090...9e9110727ff5fa8c4cd016f9a55efe4aa93ecc4e)
+
 
 ## The server and its shared state
 
 Server owns a shared ClientHandler and the room, user, map and position managers. AcceptClients creates a detached receive thread for each connection. The protocol is newline-delimited text over blocking Winsock TCP.
 
-This made it possible to connect login, rooms, matches and the shop in one process. It also means a slow send can hold a shared lock and delay other rooms. The diagram shows the implemented classes, rather than a proposed IOCP or database architecture.
+The follow-up adds a SocketOutput owner per ClientInfo. Shared handlers enqueue while their locks are held; each connection writer performs blocking socket I/O outside those shared locks. The UML shows the current implementation.
 
 ![The server and its shared state](diagrams/server-classes-en.svg)
 
@@ -38,7 +53,7 @@ The original MOVE handler called BroadcastMessageExcept, which sent to every con
 
 The October patch calls BroadcastToRoomExcept, checks the session nickname and finite coordinates, and buffers incoming TCP bytes until a complete newline-delimited message is available. A trailing partial message waits for the next recv. Lines over 4,096 bytes are rejected.
 
-Keeping the text protocol avoided changing the Unity message format. A length-prefixed binary protocol is another option, but would require coordinated client changes. The current patch addresses framing and MOVE delivery; it does not replace the connection-thread model or implement per-client send queues.
+The first patch preserved the text protocol and Unity message format. A length-prefixed binary protocol would require coordinated client changes. It addressed framing and room delivery; the later bounded output patch is described above.
 
 ![The room boundary was not the delivery boundary](diagrams/movement-sequence-en.svg)
 
@@ -89,7 +104,7 @@ A database migration would need to commit debit and ownership together, define r
 
 ## What I would test next
 
-The measured fix keeps blocking send inside shared locks. The next networking experiment is a per-client bounded output queue, tested with a slow reader and concurrent room transitions. The current harness stops the isolated process before closing clients, so it does not validate graceful shutdown or reconnect behavior.
+The bounded output experiment and client teardown tests are complete. The next concurrency work is a consistent ownership and locking policy for legacy session lookups and room references, plus coordinated server shutdown. IOCP scalability requires another experiment.
 
 For persistence, the next checks are concurrent purchases and a forced interruption between the two writes. For gameplay authority, client-reported hits and water damage need independent server validation. These are separate failure modes from MOVE fan-out and need separate experiments.
 

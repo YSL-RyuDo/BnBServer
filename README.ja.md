@@ -12,9 +12,24 @@ C++サーバーとUnityの武器動作を実装し、移動、水風船の相互
 
 [![Slap Squad, four-player gameplay](https://ysl-ryudo.github.io/assets/evidence/slap-four-balloons.webp)](https://ysl-ryudo.github.io/ja/work/bnb/#gameplay)
 
+## 送信キューの設計と再現方法
+
+別室の1人が読み取りを停止した条件で、応答は変更前0/300件、変更後300/300件を3回とも確認しました。上限付きキュー、部分送信の直列化、接続の後処理を検証しました。
+
+| 条件 / 指標 | 変更前、ルーム別blocking send | 変更後、上限付き送信キュー |
+| --- | --- | --- |
+| 読み取り停止、各回の別室への配信 | 0 / 300 | 300 / 300 |
+| 読み取り停止、各回p95の中央値 | 定義不可、応答なし | 13.82 ms |
+| 通常条件、各回の別室への配信 | 300 / 300 | 300 / 300 |
+| 通常条件、各回p95の中央値 | 14.00 ms | 13.62 ms |
+| 観測した最大スレッド数、8接続 | 12 | 20 |
+
+[送信キューの設計と再現方法](https://github.com/YSL-RyuDo/BnBServer/blob/main/docs/engineering/OUTPUT_QUEUE.ja.md), [12回の生データとビルド根拠](https://github.com/YSL-RyuDo/BnBServer/tree/main/docs/engineering/measurements/2026-10-21-output-queue), [Git diff](https://github.com/YSL-RyuDo/BnBServer/compare/737a92c397adb4320cf439d99d148362ce1ca090...9e9110727ff5fa8c4cd016f9a55efe4aa93ecc4e)
+
+
 ## 実装と検証
 
-2026年10月の追加作業: コード検証、TCPフレーミングとルーム別配信の修正、UML作成、反復測定。
+2026年10月の追加作業: ルーム別配信、TCP受信境界、上限付き送信キュー、接続の後処理、UMLと36回の測定。
 
 従来のMOVE処理はBroadcastMessageExceptを呼び、送信者以外の全接続へ通知していました。4人ずつ16ルームに接続する64人条件では、本来3人に届くべき更新が最大63人に届きます。余分な負荷だけでなく、ルーム境界を破る動作でした。
 

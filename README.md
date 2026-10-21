@@ -12,9 +12,24 @@ I implemented the C++ server and Unity weapon behaviors, and connected movement,
 
 [![Slap Squad, four-player gameplay](https://ysl-ryudo.github.io/assets/evidence/slap-four-balloons.webp)](https://ysl-ryudo.github.io/en/work/bnb/#gameplay)
 
+## Output queue design and reproduction
+
+With a stopped reader in another room: 0/300 responses before, 300/300 after in each of three runs. Bounded queues, serialized partial writes and tested connection cleanup.
+
+| Condition / metric | Before, room-scoped blocking send | After, bounded output |
+| --- | --- | --- |
+| Stopped reader, healthy-room deliveries per run | 0 / 300 | 300 / 300 |
+| Stopped reader, median run p95 | Undefined, no responses | 13.82 ms |
+| Quiet, healthy-room deliveries per run | 300 / 300 | 300 / 300 |
+| Quiet, median run p95 | 14.00 ms | 13.62 ms |
+| Observed peak threads, 8 connections | 12 | 20 |
+
+[Output queue design and reproduction](https://github.com/YSL-RyuDo/BnBServer/blob/main/docs/engineering/OUTPUT_QUEUE.md), [12-run raw data and build provenance](https://github.com/YSL-RyuDo/BnBServer/tree/main/docs/engineering/measurements/2026-10-21-output-queue), [Git diff](https://github.com/YSL-RyuDo/BnBServer/compare/737a92c397adb4320cf439d99d148362ce1ca090...9e9110727ff5fa8c4cd016f9a55efe4aa93ecc4e)
+
+
 ## Engineering evidence
 
-October 2026 follow-up: source audit, TCP framing and room isolation fixes, UML and reproducible measurements.
+October 2026 follow-up: room isolation, TCP framing, bounded output queues, lifecycle fixes, UML and 36 measured runs.
 
 The original MOVE handler called BroadcastMessageExcept, which sent to every connected client except the sender. With 64 clients in 16 four-player rooms, each move could reach 63 clients although only three were intended recipients. This was a correctness bug as well as unnecessary work.
 

@@ -1,0 +1,7 @@
+PASS partial_writes, frames=100, calls=128
+PASS concurrent_producers, frames=400
+PASS byte_limit, peak_bytes=262144, peak_frames=2
+PASS frame_limit, peak_bytes=4096, peak_frames=4096
+PASS burst_batching, frames=1000, bytes=2000, calls=2 (injected sender, not a network benchmark)
+PASS send_failure
+6/6 output tests passed

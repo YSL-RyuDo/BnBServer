@@ -59,4 +59,19 @@ note top of ClientHandler
 One detached receive thread per connection
 One shared handler and manager set per server
 end note
+class SocketOutput {
+  - queue : deque<string>
+  - writer : thread
+  - pendingBytes : size_t
+  + Enqueue(bytes, length)
+  + Stop()
+  - Run()
+}
+ClientInfo *-- "1" SocketOutput
+ClientHandler ..> SocketOutput : QueueSend
+RoomManager ..> SocketOutput : QueueSend
+note bottom of SocketOutput
+256 KiB / 4096 frames, including in-flight batch
+1 writer per connection, partial-send loop
+end note
 @enduml

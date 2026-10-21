@@ -91,5 +91,6 @@ async def main(a):
  if a.check:
   assert all(r['received_deliveries']==300 and not r['duplicates'] for r in results)
   assert all(any(t['stop_reason']==3 for t in r['transport']) for r in results if r['pressure'])
+  assert all(len(r['transport'])==8 for r in results), 'all connection writers must finish teardown'
 if __name__=='__main__':
  p=argparse.ArgumentParser();p.add_argument('--baseline');p.add_argument('--candidate',required=True);p.add_argument('--out',required=True);p.add_argument('--repeats',type=int,default=3);p.add_argument('--pressure-only',action='store_true');p.add_argument('--check',action='store_true');asyncio.run(main(p.parse_args()))

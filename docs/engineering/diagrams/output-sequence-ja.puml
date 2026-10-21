@@ -1,0 +1,35 @@
+@startuml
+!pragma layout smetana
+skinparam monochrome true
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam defaultFontName "MS Gothic"
+skinparam defaultFontSize 15
+skinparam ArrowColor #444444
+skinparam Padding 10
+skinparam sequenceMessageAlign center
+hide footbox
+title 1接続が1キューと1writerを所有
+participant "ハンドラー" as H
+participant "接続別キュー" as Q
+participant "送信スレッド" as W
+participant "TCP相手" as P
+H -> Q : Enqueue(message)
+note left of H : 共有ロック内では追加のみ
+alt pending <= 256 KiB and frames <= 4096
+ Q --> H : 追加成功、受信完了ではない
+ Q ->> W : notify_one()
+ W -> Q : 待機メッセージ、目安16 KiB
+ Q --> W : batch
+ note over W : キューロック解放
+ loop 全バイト送信またはエラーまで
+  W -> P : send(batch + offset, remaining)
+  P --> W : sent bytes / error
+  W -> W : 戻り値のバイト数だけ進む
+ end
+else
+ Q -> P : shutdown(SD_BOTH)
+ Q --> H : SOCKET_ERROR
+ note over Q,P : 上限超過: この接続を切断
+end
+@enduml
