@@ -1189,43 +1189,27 @@ UserCharacters& UserManager::GetUserCharactersById(const std::string& userId)
 }
 
 
-int UserManager::GetAttackByIndex(int index)
+bool UserManager::LoadAttackStats(const std::string& path)
 {
-    std::ifstream file("CharStat.csv");
-    if (!file.is_open()) {
-        std::cerr << "[GetAttackByIndex] CharStat.csv 열기 실패" << std::endl;
-        return 0;
-    }
-
+    std::ifstream file(path);
     std::string line;
-    if (!std::getline(file, line)) {
-        std::cerr << "[GetAttackByIndex] 헤더 읽기 실패" << std::endl;
-        return 0;
-    }
-
+    if (!file || !std::getline(file, line)) return false;
+    std::unordered_map<int, int> parsed;
     while (std::getline(file, line)) {
         if (line.empty()) continue;
-
-        std::stringstream ss(line);
-        std::string indexStr, healthStr, attackStr;
-
-        if (std::getline(ss, indexStr, ',') &&
-            std::getline(ss, healthStr, ',') &&
-            std::getline(ss, attackStr, ',')) {
-
-            try {
-                int currentIndex = std::stoi(indexStr);
-                if (currentIndex == index) {
-                    return std::stoi(attackStr);
-                }
-            }
-            catch (const std::exception& e) {
-                std::cerr << "[GetAttackByIndex] 변환 오류: " << e.what() << " | 라인: " << line << std::endl;
-                return 0;
-            }
-        }
+        std::stringstream row(line);
+        std::string index, health, attack;
+        if (!std::getline(row, index, ',') || !std::getline(row, health, ',') || !std::getline(row, attack, ',')) return false;
+        try { parsed.emplace(std::stoi(index), std::stoi(attack)); }
+        catch (const std::exception&) { return false; }
     }
+    if (parsed.empty()) return false;
+    attackByIndex_.swap(parsed);
+    return true;
+}
 
-    std::cerr << "[GetAttackByIndex] 인덱스 " << index << "에 해당하는 공격력 없음" << std::endl;
-    return 0;
+int UserManager::GetAttackByIndex(int index)
+{
+    const auto found = attackByIndex_.find(index);
+    return found == attackByIndex_.end() ? 0 : found->second;
 }

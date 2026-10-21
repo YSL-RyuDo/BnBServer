@@ -56,6 +56,10 @@ bool Server::Initialize(unsigned short port) {
 }
 
 void Server::Run() {
+    if (!userManager_.LoadAttackStats("CharStat.csv")) {
+        cerr << "Invalid attack configuration, server startup stopped\n";
+        return;
+    }
     auto loadedUsers = userManager_.LoadAccountUsers("UsersAccount.csv");
     auto loadedProfiles = userManager_.LoadUserProfiles("UserProfile.csv");
     auto loadedCharacters = userManager_.LoadUserCharacters("UserCharacters.csv");

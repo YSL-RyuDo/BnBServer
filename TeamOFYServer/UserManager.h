@@ -4,6 +4,7 @@
 #include <fstream>
 #include <sstream>
 #include <mutex>
+#include <unordered_map>
 #include "UserAccount.h"
 #include "Utils.h"
 #include "ClientInfo.h"
@@ -61,6 +62,7 @@ public:
 
 
 	void UpdateWinLoss(const std::string& userId, bool isWin, int charIndex);
+	bool LoadAttackStats(const std::string& path); // Startup only, before accepting clients.
 	int GetAttackByIndex(int index);
 
 
@@ -69,6 +71,7 @@ private:
 	ClientHandler* clientHandler_ = nullptr;
 	//ClientHandler& clientHandler_;
 	mutex usersMutex;
+	std::unordered_map<int, int> attackByIndex_; // Immutable after startup.
 	vector<UserAccount> users;
 	vector<UserProfile> userProfiles;
 	vector<UserCharacters> userCharacters;
