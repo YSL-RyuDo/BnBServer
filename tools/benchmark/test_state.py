@@ -1,13 +1,12 @@
 from pathlib import Path
 import subprocess,json,argparse
-from build import build
+from build import build,build_command
 from run import fixture
 
 def main(out):
  repo=Path(__file__).resolve().parents[2];out=Path(out).resolve();build(repo,out,39099)
  (out/'source/main.cpp').write_bytes((repo/'tools/benchmark/state_tests.cpp').read_bytes())
- meta=json.loads((out/'build.json').read_text())
- with (out/'test-build.log').open('wb') as log:subprocess.run(meta['build_command'],stdout=log,stderr=subprocess.STDOUT,check=True)
+ with (out/'test-build.log').open('wb') as log:subprocess.run(build_command(out),stdout=log,stderr=subprocess.STDOUT,check=True)
  data=out/'data';fixture(data,4)
  # Only the first character is owned, so duplicate purchase exercises a real transition.
  p=data/'UserCharacters.csv';p.write_text('id,char0,char1,char2,char3,char4,char5,char6\n'+''.join(f'u{i},1,0,0,0,0,0,0\n' for i in range(4)))

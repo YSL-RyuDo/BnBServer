@@ -1,12 +1,13 @@
 """Compile actual UserManager sources, replace only executable main with lookup harness."""
 import argparse,subprocess,json,hashlib,shutil
 from pathlib import Path
+from build import build_command
 def prepare(build):
  build=Path(build).resolve();src=build/'source';meta=json.loads((build/'build.json').read_text())
  harness=Path(__file__).with_suffix('.cpp').read_bytes()
  if b'LoadAttackStats' in (src/'UserManager.h').read_bytes():harness=b'#define CACHED_ATTACK_STATS\n'+harness
  (src/'main.cpp').write_bytes(harness)
- cmd=meta['build_command']
+ cmd=build_command(build)
  with (build/'lookup-build.log').open('wb') as out:subprocess.run(cmd,stdout=out,stderr=subprocess.STDOUT,check=True)
  (build/'lookup-build.json').write_text(json.dumps({'original_build':meta,'replacement':'main.cpp only, stats_lookup.cpp harness; CACHED_ATTACK_STATS for candidate','compiled_source_hashes':{p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in src.iterdir() if p.suffix in ['.cpp','.h','.vcxproj']},'binary_sha256':hashlib.sha256((build/'bin/TeamOFYServer.exe').read_bytes()).hexdigest()},indent=2),encoding='utf-8')
  return build/'bin/TeamOFYServer.exe'
