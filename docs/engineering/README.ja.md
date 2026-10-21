@@ -1,0 +1,138 @@
+# Slap Squad, 実装と検証
+
+[English](README.md), [한국어](README.ko.md), [日本語](README.ja.md)
+
+2025年3月から2026年2月、プログラマー2名とグラフィック担当6名
+
+C++サーバーとUnityの武器動作を実装し、移動、水風船の相互作用、試合結果、購入応答を連携させました。
+
+2026年10月の追加作業: コード検証、TCPフレーミングとルーム別配信の修正、UML作成、反復測定。
+
+## サーバーの所有関係と共有状態
+
+ServerはClientHandlerとルーム、ユーザー、マップ、位置のマネージャーを所有します。AcceptClientsは接続ごとに受信スレッドを生成してdetachします。通信は改行区切りのテキストを使うblocking Winsock TCPです。
+
+ログイン、ルーム、試合、ショップを1プロセスで連携する構成です。一方、共有ロックを保持した送信は、受信の遅いクライアントによって他のルームも遅延させる可能性があります。UMLは実際のクラスと参照関係を示します。
+
+![サーバーの所有関係と共有状態](diagrams/server-classes-ja.svg)
+
+## 命中報告からルーム内のダメージ通知まで
+
+Arrow、Laser、Mace、Melody、Pitchfork、Spell、Swordの動作と、WeaponSystemの装備選択、生成、クールダウンを実装しました。LocalPlayerControllerはUpdateの入力処理とFixedUpdateのRigidbody移動を分けます。攻撃情報には武器と座標を含め、レーザーではマップの障害物から計算した距離も送信します。
+
+Unityの武器はHITで武器、攻撃者、対象を報告します。ClientHandlerは協力モードのチーム関係を検査し、GetAttackByIndexでダメージ値を取得してルームにDAMAGEを通知します。受信したGameSystemがダメージとHUDを更新します。サーバーが命中の衝突を再計算する構成ではありません。
+
+ルーム構造を学び、実際のゲームで試すためにリーダー方式を採用しました。BalloonSystemでは時間が経過するとルームリーダーがREMOVE_BALLOONを送り、サーバーが水流の広がりを計算します。クライアントの衝突報告を信頼する部分は残っています。判定とタイミングをサーバーに移すには、サーバー側のワールド実装と予測、補正の検証が必要です。
+
+![命中報告からルーム内のダメージ通知まで](diagrams/combat-sequence-ja.svg)
+
+## ルームのライフサイクル
+
+待機、試合、結果からの復帰がルームUIとゲームをつなぎます。通常対戦は2人以上、協力モードは4人で2対2に分かれる必要があります。図の結果フェーズは概念上の区分です。コードではResults列挙型ではなく、isInGame、deadUsersByRoom、readyUsersByRoomを保持します。
+
+![ルームのライフサイクル](diagrams/room-state-ja.svg)
+
+## ルーム境界と配信範囲が一致していませんでした
+
+従来のMOVE処理はBroadcastMessageExceptを呼び、送信者以外の全接続へ通知していました。4人ずつ16ルームに接続する64人条件では、本来3人に届くべき更新が最大63人に届きます。余分な負荷だけでなく、ルーム境界を破る動作でした。
+
+10月の修正ではBroadcastToRoomExceptに切り替え、セッションの名前と有限な座標を検査しました。TCPの受信バイトを改行まで蓄積し、完成したメッセージだけを処理します。未完の末尾は次のrecvまで保持し、4,096バイトを超える行は拒否します。
+
+テキスト形式を維持することでUnityのメッセージ形式を変更せずに修正しました。長さを先頭に付けるバイナリ形式も選択肢ですが、クライアントとサーバーの同時変更が必要です。この修正はフレーミングとMOVE配信を対象とし、接続ごとのスレッドや送信キューまで置き換えてはいません。
+
+![ルーム境界と配信範囲が一致していませんでした](diagrams/movement-sequence-ja.svg)
+
+## 実際のTCPソケットによる確認
+
+修正後はルーム分離、分割メッセージ、結合メッセージ、完成メッセージに続く未完の末尾、名前の偽装、不正な数値、非有限数、過大なフレームの8項目に合格しました。不正な数値の後にも正常な要求を送り、処理が継続することを確認しました。
+
+従来版も結合メッセージは解析しましたが、別のルームに配信しました。検査は解析と受信先の両方を確認します。対象は受信境界とMOVE経路であり、アカウント、ショップ、戦闘の全コマンドを検証したものではありません。
+
+## 実際のC++中継処理の性能評価
+
+合成クライアント4、16、32、64接続を1ルーム4人に分け、各接続から毎秒20件のMOVEを送信しました。従来版と修正版を条件ごとに3回ずつ、順序を交互にして実行しました。各回は準備2秒、測定10秒、応答待ち2秒です。全24回をIntel Core i7-14700、RAM 31.69 GiB、Windowsビルド26200、Python 3.10.6でRelease x64として測定しました。
+
+従来ソースは304b11b、修正ソースは737a92cです。同じビルド設定と合成データを使い、実験用ポートとloopbackへのバインドのみを変更しました。隔離したフォルダーに合成アカウントを作成します。
+
+遅延は送信側の書き込み直前から別クライアントが応答の1行を受信するまでです。負荷生成器、TCP、OSのスケジューリングを含みます。参加者のいる待機ルームで実際のMOVE処理を測定しており、試合全体のシミュレーションやインターネット環境の同時接続上限ではありません。
+
+| 接続 / ルーム | 従来 p95 | 修正 p95 | 従来 CPU | 修正 CPU | 修正後 未着 / 他ルーム |
+| --- | --- | --- | --- | --- | --- |
+| 4 / 1 | 12.22 ms | 13.42 ms | 1.09% | 1.09% | 0 / 0 |
+| 16 / 4 | 12.22 ms | 11.78 ms | 7.82% | 2.81% | 0 / 0 |
+| 32 / 8 | 28.77 ms | 15.90 ms | 42.95% | 5.77% | 0 / 0 |
+| 64 / 16 | 4,381.75 ms | 19.91 ms | 99.10% | 17.94% | 0 / 0 |
+
+各回で算出した値の3回の中央値。CPUの100%は論理コア1つです。未着と他ルームへの配信は修正版3回の合計です。
+
+![p95](charts/latency-ja.svg)
+
+![Payload](charts/payload-ja.svg)
+
+64接続でp95の中央値は4,381.75 msから19.91 msに変わりました。各回に受信したアプリケーションデータの中央値は27.30 MiBから1.30 MiBへ約95.2%減少しました。新しいネットワーク方式ではなく、更新1件の受信者を最大63人から3人に限定した結果です。
+
+従来の64接続では、応答待ち終了時点で本来の配信がそれぞれ12、867、57件未着でした。従来版の遅延分位点は受信できた標本のみから算出しています。修正版は各回38,400件を全て受信し、他ルームへの配信は0件でした。修正版の全12回で未着、重複、形式エラー、他ルームへの配信はいずれも0件でした。
+
+1ルームの4接続ではp95が12.22 msから13.42 msとなり、遅延改善は確認できませんでした。生成器とサーバーは同一PCを使用し、従来版64接続では生成器もほぼ1コアを使用しました。修正版の1回では生成スケジュールの遅れのp99が約21 msでした。この結果は過剰な配信先のコストを示しますが、サーバー内部の処理時間や本番環境の収容能力を証明するものではありません。
+
+## CSV保存と購入結果の表示
+
+当初はデータベースをまだ学んでいなかったため、実装を始めやすいCSVを選びました。後からDBへ変更する予定でしたが、移行を完了できませんでした。アカウント、プロフィール、所有アイテム、ショップ情報は現在もファイル保存です。
+
+私のShopUI変更では、BuyItemが要求を送りボタンを無効にしても、selectedOwnedを即座にtrueにはしません。返されたアイテム情報は、そのタブが選択されている場合だけ表示に反映します。クリックだけで所有を確定させることや、別カテゴリの応答で現在のタブを更新することを避けています。
+
+BUY_ICONは所有状態、価格、残高を確認してメモリを更新し、プロフィールとアイコンのファイルを別々に保存します。その後に残高とアイテム一覧を返します。2つの保存は原子的なトランザクションではなく、ハンドラーは保存関数のbool結果で処理を分岐していません。応答を待つUIと、クラッシュに耐える永続性は別の問題です。
+
+DB移行では残高の減算と所有権を一緒にコミットし、再試行の識別と保存失敗時の扱いを定義する必要があります。楽観的UIにはロールバックも必要です。これらは完成済みの機能ではなく、次の設計課題です。
+
+![CSV保存と購入結果の表示](diagrams/shop-sequence-ja.svg)
+
+## 次に検証すること
+
+今回の修正でも共有ロック内のblocking sendは残っています。次の実験は接続ごとに上限付き送信キューを設け、遅い受信者と同時ルーム移動を検証することです。現在のツールはソケットを閉じる前に隔離サーバーを終了するため、正常終了や再接続の検証は含みません。
+
+永続化では同時購入と2つの保存の間での強制終了を確認する必要があります。ゲーム判定ではクライアントが報告する命中と水流ダメージに独立したサーバー検証が必要です。MOVEの配信範囲とは異なる故障モードなので、個別の実験が必要です。
+
+## 実装から価格政策の研究へ
+
+このゲームのアイテム価格を考えたことから、別のCNN消費パターンシミュレーション研究を始めました。I2P-CONで発表した後に改良し、CISC-W 2025のポスターとして発表しました。CNN推論をこのゲームサーバーに組み込んだわけではありません。
+
+## コード、測定データ、再現方法
+
+[Original 304b11b](https://github.com/YSL-RyuDo/BnBServer/tree/304b11b3c2bbd81ea702910b299ff6535806e34a), [October fix 737a92c](https://github.com/YSL-RyuDo/BnBServer/commit/737a92c397adb4320cf439d99d148362ce1ca090)
+
+[生データと測定環境](measurements/2026-10-21/manifest.json), [24 runs](measurements/2026-10-21/results.json), [SHA-256](measurements/2026-10-21/sha256.json)
+
+[Regression, original](measurements/2026-10-21/regression-baseline.json), [Regression, patched](measurements/2026-10-21/regression-candidate.json)
+
+[Unity contribution and gameplay](https://ysl-ryudo.github.io/ja/work/bnb/#full-scope), [ShopUI change](https://github.com/YSL-RyuDo/BNB/commit/57cedd2e5c3b0dbbb7ea51b336602cc339630cea)
+
+<a id="reproduction"></a>
+## 実験の再現
+
+```powershell
+# Windows, Visual Studio 2022 Desktop development with C++, Python 3.10+
+git clone https://github.com/YSL-RyuDo/BnBServer.git
+cd BnBServer
+python -m pip install -r tools/benchmark/requirements.txt
+python tools/benchmark/build.py --ref 304b11b3c2bbd81ea702910b299ff6535806e34a --out .bench-work/baseline --port 39091
+python tools/benchmark/build.py --ref 737a92c397adb4320cf439d99d148362ce1ca090 --out .bench-work/candidate --port 39092
+python tools/benchmark/regression.py --build .bench-work/candidate --out .bench-work/regression
+python tools/benchmark/compare.py --baseline .bench-work/baseline --candidate .bench-work/candidate --out .bench-work/comparison
+```
+
+遅延の生データは各実行の `samples.csv.gz` にあります。`summary.json` の分位点は実行ごとの最近接順位法です。`telemetry.json` はRSSとスレッド数を記録し、CPUは10秒の送信区間のプロセス時間差から計算します。RSSとスレッド数は応答待ち区間も含みます。集計対象は測定した要求への応答のみです。グラフは全標本を混ぜず、各回の分位点を要約します。エラーバーは信頼区間ではなく3回の最小値と最大値です。
+
+```powershell
+# Optional charts, matplotlib 3.10.5, numpy 2.2.6 used for this publication
+python -m pip install matplotlib==3.10.5 numpy==2.2.6
+python tools/benchmark/plot.py --results .bench-work/comparison/results.json --out .bench-work/charts
+```
+
+UMLはPlantUML 1.2026.9、Java 21、Smetanaレイアウトで生成しました。SVGと同じ場所に編集可能な `.puml` 原本があります。英語と韓国語はMalgun Gothic、日本語はMS Gothicを使用しています。
+
+```powershell
+java -Djava.awt.headless=true -jar plantuml.jar -charset UTF-8 -tsvg "docs/engineering/diagrams/*.puml"
+```
+
+PlantUML JAR SHA-256: `aa4a1d06f8911c4b842beff4828dd955be431692b631a312d04c0e9fab9581de`.

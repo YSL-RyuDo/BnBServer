@@ -1,0 +1,31 @@
+name: Socket regression
+on:
+  push:
+    paths: ['TeamOFYServer/**', 'tools/benchmark/**', '.github/workflows/socket-regression.yml']
+  pull_request:
+    paths: ['TeamOFYServer/**', 'tools/benchmark/**', '.github/workflows/socket-regression.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  windows-sockets:
+    runs-on: windows-2022
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+      - run: python -m pip install -r tools/benchmark/requirements.txt
+      - name: Build isolated loopback server
+        run: python tools/benchmark/build.py --out .bench-work/candidate --port 39092
+      - name: Verify framing and room delivery
+        run: python tools/benchmark/regression.py --build .bench-work/candidate --out .bench-work/regression
+      - name: Save regression results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: socket-regression-results
+          path: |
+            .bench-work/candidate/build.log
+            .bench-work/regression/results.json

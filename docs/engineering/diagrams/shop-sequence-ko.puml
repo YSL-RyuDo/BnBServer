@@ -1,0 +1,34 @@
+@startuml
+!pragma layout smetana
+skinparam monochrome true
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam defaultFontName "Malgun Gothic"
+skinparam defaultFontSize 15
+skinparam ArrowColor #444444
+skinparam Padding 10
+skinparam sequenceMessageAlign center
+hide footbox
+title 상점에서 확정된 소유 상태 표시
+participant "ShopUI / ShopSender" as UI
+participant ClientHandler as H
+participant UserManager as U
+database "CSV 파일" as D
+UI -> H : BUY_ICON|nickname,index
+H -> U : 소유 여부, 가격과 잔액 조회
+alt 이미 소유했거나 잔액 부족이면 반환
+ H -> H : return
+else
+ H -> U : 재화 차감, 소유 상태 변경
+ H -> U : SaveUserProfile(id)
+ U -> D : UserProfile.csv
+ H -> U : SaveUserIcons(id)
+ U -> D : UserIcon.csv
+ H -> UI : COIN_INFO + STORE_ICON_LIST
+ UI -> UI : 잔액과 현재 탭의 소유 상태 갱신
+end
+note over U,D
+두 CSV 파일을 순서대로 저장합니다.
+원자적 트랜잭션이나 영속적인 요청 원장은 아닙니다.
+end note
+@enduml

@@ -1,0 +1,28 @@
+@startuml
+!pragma layout smetana
+skinparam monochrome true
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam defaultFontName "MS Gothic"
+skinparam defaultFontSize 15
+skinparam ArrowColor #444444
+skinparam Padding 10
+skinparam sequenceMessageAlign center
+hide footbox
+title 武器の命中報告とダメージ通知
+participant "Unity 武器 / 衝突" as W
+participant "ClientHandler" as H
+participant "UserManager" as U
+participant "Unity GameSystem" as G
+W -> H : HIT|weaponIndex|attackerNick|targetNick
+note over W,H : クライアントが武器と対象を報告
+H -> H : 協力モードでは同じチームかを検査
+H -> U : GetAttackByIndex(weaponIndex)
+U --> H : damage
+H -> G : DAMAGE|targetNick|damage
+G -> G : 受信ダメージの適用と HUD 更新
+note over W,G
+衝突と対象はクライアントが報告します。
+サーバーは武器のダメージ値を選び、命中を再計算しません。
+end note
+@enduml

@@ -1,0 +1,24 @@
+@startuml
+!pragma layout smetana
+skinparam monochrome true
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam defaultFontName "Malgun Gothic"
+skinparam defaultFontSize 15
+skinparam ArrowColor #444444
+skinparam Padding 10
+skinparam sequenceMessageAlign center
+hide footbox
+title Room lifecycle reconstructed from code
+state "Waiting room" as Waiting
+state "Match in progress" as Playing
+state "Results / waiting for acknowledgements" as Results
+[*] --> Waiting : CreateRoom
+Waiting --> Playing : TryStartGame: at least 2 players\nTryStartCoopGame: 4 players (2 vs 2)
+Playing --> Results : DEAD handling finds a winner
+Results --> Waiting : All current members READY_TO_EXIT\nisInGame = false; GAME_END
+note bottom of Results
+Results is a conceptual phase.
+Stored fields are isInGame, deadUsersByRoom and readyUsersByRoom.
+end note
+@enduml

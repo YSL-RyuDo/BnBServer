@@ -1,0 +1,28 @@
+@startuml
+!pragma layout smetana
+skinparam monochrome true
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam defaultFontName "Malgun Gothic"
+skinparam defaultFontSize 15
+skinparam ArrowColor #444444
+skinparam Padding 10
+skinparam sequenceMessageAlign center
+hide footbox
+title Weapon hit reporting and damage delivery
+participant "Unity weapon / collision" as W
+participant "ClientHandler" as H
+participant "UserManager" as U
+participant "Unity GameSystem" as G
+W -> H : HIT|weaponIndex|attackerNick|targetNick
+note over W,H : Client reports weapon and target
+H -> H : Check team membership in cooperative mode
+H -> U : GetAttackByIndex(weaponIndex)
+U --> H : damage
+H -> G : DAMAGE|targetNick|damage
+G -> G : Apply received damage / update HUD
+note over W,G
+Collision and target originate on the client.
+Server selects weapon damage; it does not re-simulate the hit.
+end note
+@enduml

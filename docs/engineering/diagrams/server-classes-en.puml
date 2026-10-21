@@ -1,0 +1,62 @@
+@startuml
+!pragma layout smetana
+skinparam monochrome true
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam defaultFontName "Malgun Gothic"
+skinparam defaultFontSize 15
+skinparam ArrowColor #444444
+skinparam Padding 10
+skinparam sequenceMessageAlign center
+hide footbox
+title Server ownership and shared state
+hide empty members
+class Server {
+  - clients : vector<shared_ptr<ClientInfo>>
+  + clientsMutex : mutex
+  + AcceptClients()
+}
+class ClientHandler {
+  - clientsMap : unordered_map<string, shared_ptr<ClientInfo>>
+  + HandleClient(client)
+  - ProcessMessages(client, line)
+}
+class ClientInfo {
+  + socket : SOCKET
+  + id : string
+  + nickname : string
+}
+class RoomManager {
+  - rooms : vector<Room>
+  - roomsMutex : mutex
+  + BroadcastToRoomExcept(socket, message)
+}
+class Room {
+  + users : vector<string>
+  + isInGame : bool
+  + isCoopMode : bool
+}
+class UserManager {
+  + CheckLogin(id, password)
+  + SaveUserProfile(id)
+  + SaveUserIcons(id)
+}
+class Player {
+  + playerPositions : unordered_map<string, pair<float, float>>
+  + playerPositionsMutex : mutex
+}
+Server *-- ClientHandler
+Server *-- RoomManager
+Server *-- UserManager
+Server *-- Player
+Server *-- MapManager
+Server o-- "0..*" ClientInfo
+ClientHandler --> RoomManager
+ClientHandler --> UserManager
+ClientHandler --> Player
+RoomManager *-- "0..*" Room
+note top of ClientHandler
+One detached receive thread per connection
+One shared handler and manager set per server
+end note
+@enduml

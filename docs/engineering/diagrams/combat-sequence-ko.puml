@@ -1,0 +1,28 @@
+@startuml
+!pragma layout smetana
+skinparam monochrome true
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam defaultFontName "Malgun Gothic"
+skinparam defaultFontSize 15
+skinparam ArrowColor #444444
+skinparam Padding 10
+skinparam sequenceMessageAlign center
+hide footbox
+title 무기의 명중 보고와 피해 전달
+participant "Unity 무기 / 충돌" as W
+participant "ClientHandler" as H
+participant "UserManager" as U
+participant "Unity GameSystem" as G
+W -> H : HIT|weaponIndex|attackerNick|targetNick
+note over W,H : 클라이언트가 무기와 피격 대상 보고
+H -> H : 협동전에서는 같은 팀인지 검사
+H -> U : GetAttackByIndex(weaponIndex)
+U --> H : damage
+H -> G : DAMAGE|targetNick|damage
+G -> G : 수신한 피해 적용, HUD 갱신
+note over W,G
+충돌과 대상은 클라이언트가 보고합니다.
+서버는 무기 피해량을 선택하며 명중을 재시뮬레이션하지 않습니다.
+end note
+@enduml

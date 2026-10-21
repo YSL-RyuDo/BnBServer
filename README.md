@@ -1,39 +1,44 @@
-# Slap Squad / Server
+# Slap Squad / C++ Server
 
-<!-- portfolio-languages -->
-[![English (current)](https://ysl-ryudo.github.io/assets/diagrams/language-en-current.svg)](README.md) [![한국어](https://ysl-ryudo.github.io/assets/diagrams/language-ko.svg)](README.ko.md) [![日本語](https://ysl-ryudo.github.io/assets/diagrams/language-ja.svg)](README.ja.md)
-<!-- /portfolio-languages -->
+[![English](https://ysl-ryudo.github.io/assets/diagrams/language-en-current.svg)](README.md) [![한국어](https://ysl-ryudo.github.io/assets/diagrams/language-ko.svg)](README.ko.md) [![日本語](https://ysl-ryudo.github.io/assets/diagrams/language-ja.svg)](README.ja.md)
 
-A team multiplayer game connecting water-balloon combat, match rewards and an item shop.
+Seven weapon behaviors, multiplayer rooms and a C++ game server.
 
-| Project | Details |
-|---|---|
-| Status | Team project |
-| Stack | C++, Winsock, C#, Unity |
-| Period and team | Mar 2025 ~ Feb 2026, 8 members: 2 programmers, 6 graphics |
-| My role | Gameplay, C++ server and client integration |
+March 2025 to February 2026, 2 programmers and 6 graphics team members
 
-[Explore the case](https://ysl-ryudo.github.io/en/work/bnb/), [Portfolio](https://ysl-ryudo.github.io/en/)
+I implemented the C++ server and Unity weapon behaviors, and connected movement, balloon interactions, match results and purchase feedback.
 
-[![Slap Squad](https://i.ytimg.com/vi/1LMGsY_qY_8/hqdefault.jpg)](https://www.youtube.com/watch?v=1LMGsY_qY_8)
+[Portfolio](https://ysl-ryudo.github.io/en/work/bnb/), [Full engineering notes](https://github.com/YSL-RyuDo/BnBServer/blob/main/docs/engineering/README.md), [Unity](https://github.com/YSL-RyuDo/BNB), [C++ server](https://github.com/YSL-RyuDo/BnBServer)
 
-[Slap Squad, OFY Studio](https://www.youtube.com/watch?v=1LMGsY_qY_8), [Early development demo](https://www.youtube.com/watch?v=MI5NtNU9eP8)
+[![Slap Squad, four-player gameplay](https://ysl-ryudo.github.io/assets/evidence/slap-four-balloons.webp)](https://ysl-ryudo.github.io/en/work/bnb/#gameplay)
 
-## Inside the game
+## Engineering evidence
 
-[![Two clients join the same room and select characters before the host starts the match.](https://ysl-ryudo.github.io/assets/gameplay/slapsquad-room.webp)](https://ysl-ryudo.github.io/assets/gameplay/slapsquad-room.webp)
+October 2026 follow-up: source audit, TCP framing and room isolation fixes, UML and reproducible measurements.
 
-Two clients join the same room and select characters before the host starts the match.
+The original MOVE handler called BroadcastMessageExcept, which sent to every connected client except the sender. With 64 clients in 16 four-player rooms, each move could reach 63 clients although only three were intended recipients. This was a correctness bug as well as unnecessary work.
 
-[![Local two-client play, with character state, water balloons, obstacles and damage updates.](https://ysl-ryudo.github.io/assets/gameplay/slapsquad-combat.webp)](https://ysl-ryudo.github.io/assets/gameplay/slapsquad-combat.webp)
+At 64 connections, median p95 changed from 4,381.75 ms to 19.91 ms. Received application payload changed from 27.30 MiB to 1.30 MiB per run, approximately 95.2% less. This is explained by restricting each update from up to 63 recipients to three, not by a new network stack.
 
-Local two-client play, with character state, water balloons, obstacles and damage updates.
+Latency is measured from immediately before the sender writes a request until another client receives the complete response line. It includes the load generator, TCP and OS scheduling. These are populated waiting rooms exercising the actual MOVE handler, not full game simulations or an Internet concurrency limit.
+
+| Clients / rooms | Original p95 | Patched p95 | Original CPU | Patched CPU | Patched missing / cross-room |
+| --- | --- | --- | --- | --- | --- |
+| 4 / 1 | 12.22 ms | 13.42 ms | 1.09% | 1.09% | 0 / 0 |
+| 16 / 4 | 12.22 ms | 11.78 ms | 7.82% | 2.81% | 0 / 0 |
+| 32 / 8 | 28.77 ms | 15.90 ms | 42.95% | 5.77% | 0 / 0 |
+| 64 / 16 | 4,381.75 ms | 19.91 ms | 99.10% | 17.94% | 0 / 0 |
+
+Median of three per-run values. CPU: 100% equals one logical core. Missing and cross-room counts are totals across all three patched runs.
+
+[Raw measurements and environment](https://github.com/YSL-RyuDo/BnBServer/tree/main/docs/engineering/measurements/2026-10-21), [Source change](https://github.com/YSL-RyuDo/BnBServer/commit/737a92c397adb4320cf439d99d148362ce1ca090), [Reproduce the experiment](https://github.com/YSL-RyuDo/BnBServer/blob/main/docs/engineering/README.md#reproduction)
+
+![UML](https://ysl-ryudo.github.io/assets/slap-squad/server-classes-en.svg)
 
 ## What I built across the game
 
 I built the C++ server and seven Unity weapon behaviors, and worked on movement, balloon and map interactions, match results and network integration. In the shared shop UI, I changed ownership updates to follow the returned item data.
 
-[![My implementation flow](https://ysl-ryudo.github.io/assets/diagrams/bnb-flow-en.svg)](https://ysl-ryudo.github.io/assets/diagrams/bnb-flow-en.svg)
 
 ### Seven weapon behaviors
 
@@ -71,80 +76,6 @@ Implemented server account, room, shop and profile processing with CSV persisten
 
 [Server.cpp (main)](https://github.com/YSL-RyuDo/BnBServer/blob/d2a360c07276ec057a92d1361e8ff84de743520c/TeamOFYServer/Server.cpp), [My change e41da66](https://github.com/YSL-RyuDo/BnBServer/commit/e41da66566252a105da68d98087198e632c0e9b7), [ShopUI.cs (main)](https://github.com/YSL-RyuDo/BNB/blob/8a3defa6001cf741eceb322f11d7c8c6f7dd9bd7/Assets/Script/Shop/ShopUI.cs), [My change 57cedd2](https://github.com/YSL-RyuDo/BNB/commit/57cedd2e5c3b0dbbb7ea51b336602cc339630cea)
 
-## Contribution evidence
 
-[Shop packets / 상점 패킷 / ショップパケット](https://github.com/YSL-RyuDo/BnBServer/commit/e41da66566252a105da68d98087198e632c0e9b7)
 
-[Profile / 프로필 / プロフィール](https://github.com/YSL-RyuDo/BnBServer/commit/37d6db7917815de40823af132aac8c31ed302a87)
-
-[Icon parsing / 아이콘 파싱 / アイコン解析](https://github.com/YSL-RyuDo/BnBServer/commit/c834f97f91bd8aaf62fe6bc2c7a2c29ea610ed9e)
-
-## Implementation and design
-
-Rooms, in-game actions, rewards and purchases need a connected client/server flow. Building that loop raised a second question: how should item prices relate to the rewards players earn?
-
-I implemented packet and game integration, room-leader/water-balloon updates, and shop/profile flows. The separate CISC-W study compares fixed and demand-adjusted pricing using simulated player behavior.
-
-## How the code works and why it is structured this way
-
-### The purchase click is not proof of ownership
-
-**Implementation**
-
-In my ShopUI change, BuyItem still sends the selected purchase request and disables the button, but no longer immediately sets selectedOwned to true. When balloon, emote or icon data arrives, the corresponding setter refreshes that tab only if it is currently selected.
-
-**Design rationale**
-
-The client knows that the player clicked, but that alone does not establish that the server accepted the purchase. Waiting for returned item data avoids showing speculative ownership as confirmed. Checking the current tab also prevents a delayed response for one category from replacing another category's visible contents.
-
-**Alternatives and the current tradeoff**
-
-Optimistic ownership feedback is immediate, but needs a reliable rollback if the purchase fails. Waiting for server item data adds response delay while avoiding a premature ownership claim. This patch follows the latter approach. A pending indicator can preserve responsiveness without pretending that the transaction has finished.
-
-**Tradeoffs and verification**
-
-Waiting for returned item data avoids confirming an unaccepted purchase, but requires pending, failure and timeout states. VAIS later extends retry handling into the transaction layer.
-
-[BNB 57cedd2e](https://github.com/YSL-RyuDo/BNB/commit/57cedd2e5c3b0dbbb7ea51b336602cc339630cea)
-
-### Gameplay integration and the pricing question
-
-**Implementation**
-
-My multiplayer changes connect weapon actions, water-balloon updates and room-leader information to client network messages. The C++ server handles rooms and account/shop data with connection threads and CSV storage. Separately, deciding item prices for this game motivated my CNN-based consumption-pattern research, followed by I2P-CON presentation and a revised CISC-W poster.
-
-**Design rationale**
-
-Room-leader-driven world decisions reduce the amount of world simulation the server must own, but make that client's role part of the trust and disconnect model. Pricing is a different question: implementing a purchase does not tell us whether a price is appropriate. A simulation makes assumptions about rewards and consumption explicit so policies can be compared under stated conditions.
-
-**Alternatives and the current tradeoff**
-
-Full server simulation gives the server more control but requires server-side implementations of more world rules. Room-leader input keeps that server scope smaller while accepting client trust. For prices, a fixed policy is easier to explain; a demand-adjusted policy needs assumptions and stability checks. The study compares policies rather than proving that dynamic prices are always preferable.
-
-**Tradeoffs and verification**
-
-Room-leader decisions introduce a client-trust boundary and require handling leader departure. The pricing study compares simulated consumption under fixed and demand-based policies; its CNN metric is consumption-pattern classification accuracy.
-
-[BNB 95b28f22](https://github.com/YSL-RyuDo/BNB/commit/95b28f22b7e88ed2c801e6d47a61ca573bcbc8a5), [BnBServer/ClientHandler.cpp](https://github.com/YSL-RyuDo/BnBServer/blob/5f5f067f7cdc6ef71ab11a4d869ad2e1b6fdc8a2/TeamOFYServer/ClientHandler.cpp), [BnBServer/StoreData.cpp](https://github.com/YSL-RyuDo/BnBServer/blob/5f5f067f7cdc6ef71ab11a4d869ad2e1b6fdc8a2/TeamOFYServer/StoreData.cpp)
-
-## Open and inspect
-
-Open [TeamOFYServer.sln](TeamOFYServer.sln) in Visual Studio with the Windows C++ workload. Inspect the selected configuration, data paths, dependencies and endpoint settings before starting the matching client. Preserve existing account data.
-
-[Slap Squad](https://github.com/YSL-RyuDo/BNB)
-
-Presented the CNN pricing-policy research in “Designing Game Economies with Data.” Subsequently refined the research for the CISC-W 2025 poster presentation.
-
-[CISC-W 2025](https://ysl-ryudo.github.io/en/research/cisc/), [I2P-CON](https://www.youtube.com/watch?v=oq_e0TAwvJg)
-
-## Related repositories
-
-[BNB](https://github.com/YSL-RyuDo/BNB), Public repository
-
-[BnBServer](https://github.com/YSL-RyuDo/BnBServer), Public repository
-
-**CISC-W 2025: First author, poster presenter**
-
-[2025 Winter Conference of the Korea Institute of Information Security and Cryptology](https://kiisc.or.kr/payment/pay/292)
-
-27 ~ 28 Nov 2025, Konjiam Resort, Gwangju, Korea
+[CSV persistence and confirmed purchase feedback](https://github.com/YSL-RyuDo/BnBServer/blob/main/docs/engineering/README.md), [Gameplay recordings and screenshots](https://ysl-ryudo.github.io/en/work/bnb/#more-demos)

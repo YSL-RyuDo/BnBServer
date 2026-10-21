@@ -1,0 +1,24 @@
+@startuml
+!pragma layout smetana
+skinparam monochrome true
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam defaultFontName "Malgun Gothic"
+skinparam defaultFontSize 15
+skinparam ArrowColor #444444
+skinparam Padding 10
+skinparam sequenceMessageAlign center
+hide footbox
+title 코드에서 확인한 방의 수명주기
+state "대기실" as Waiting
+state "경기 진행" as Playing
+state "결과와 복귀 준비" as Results
+[*] --> Waiting : CreateRoom
+Waiting --> Playing : TryStartGame: 2명 이상\nTryStartCoopGame: 4명 (2 대 2)
+Playing --> Results : DEAD 처리에서 승자 결정
+Results --> Waiting : 현재 참가자 모두 READY_TO_EXIT\nisInGame = false, GAME_END
+note bottom of Results
+결과는 개념적으로 구분한 단계입니다.
+실제 저장 필드는 isInGame, deadUsersByRoom, readyUsersByRoom입니다.
+end note
+@enduml

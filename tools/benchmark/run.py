@@ -1,5 +1,5 @@
 """Socket-level MOVE fan-out experiment. Not a Unity frame-rate or Internet CCU test.
-Requires Python 3.11+ and psutil. All accounts and CSV state are synthetic.
+Requires Python 3.10+ and psutil. All accounts and CSV state are synthetic.
 """
 import argparse, asyncio, csv, hashlib, json, math, platform, shutil, statistics, subprocess, sys, time
 from pathlib import Path

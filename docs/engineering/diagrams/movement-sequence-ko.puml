@@ -1,0 +1,30 @@
+@startuml
+!pragma layout smetana
+skinparam monochrome true
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam defaultFontName "Malgun Gothic"
+skinparam defaultFontSize 15
+skinparam ArrowColor #444444
+skinparam Padding 10
+skinparam sequenceMessageAlign center
+hide footbox
+title 2026년 10월 수정 이후의 이동 전달
+participant "송신 클라이언트" as A
+participant ClientHandler as H
+participant RoomManager as R
+participant "같은 방의 다른 클라이언트" as B
+A -> H : MOVE|nickname|x,z\n
+activate H
+H -> H : 개행까지 누적, 미완성 꼬리 보관
+H -> H : 세션 닉네임과 유한한 좌표 검사
+H -> H : Player.UpdatePlayerPosition()
+H -> R : BroadcastToRoomExcept(socket, result)
+activate R
+R -> R : 소속 방 조회, 송신자 제외
+note right of R : roomsMutex 다음 clientsMutex
+R -> B : MOVE_RESULT|nickname,x,z\n
+note over R,B : 잠금을 유지한 채 blocking send
+deactivate R
+deactivate H
+@enduml

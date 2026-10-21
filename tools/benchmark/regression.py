@@ -55,5 +55,7 @@ async def main(a):
     for name in ['room_isolation','split_frame','coalesced_frames','complete_and_partial','spoofed_nickname','invalid_coordinate','nonfinite_coordinate','oversized_frame']:
         r=await case(Path(a.build).resolve(),out,name);results.append(r);print(json.dumps(r),flush=True)
     (out/'results.json').write_text(json.dumps(results,indent=2),encoding='utf-8')
+    if not all(r['pass'] for r in results):
+        raise SystemExit(1)
 if __name__=='__main__':
     p=argparse.ArgumentParser();p.add_argument('--build',required=True);p.add_argument('--out',required=True);asyncio.run(main(p.parse_args()))

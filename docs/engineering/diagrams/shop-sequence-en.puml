@@ -1,0 +1,34 @@
+@startuml
+!pragma layout smetana
+skinparam monochrome true
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam defaultFontName "Malgun Gothic"
+skinparam defaultFontSize 15
+skinparam ArrowColor #444444
+skinparam Padding 10
+skinparam sequenceMessageAlign center
+hide footbox
+title Confirmed ownership in the shop
+participant "ShopUI / ShopSender" as UI
+participant ClientHandler as H
+participant UserManager as U
+database "CSV files" as D
+UI -> H : BUY_ICON|nickname,index
+H -> U : Read ownership, price and wallet
+alt Owned item or insufficient funds: return
+ H -> H : return
+else
+ H -> U : Deduct wallet; set owned item
+ H -> U : SaveUserProfile(id)
+ U -> D : UserProfile.csv
+ H -> U : SaveUserIcons(id)
+ U -> D : UserIcon.csv
+ H -> UI : COIN_INFO + STORE_ICON_LIST
+ UI -> UI : Update wallet and current-tab ownership
+end
+note over U,D
+The two CSV writes are sequential.
+They are not an atomic transaction or a durable request ledger.
+end note
+@enduml

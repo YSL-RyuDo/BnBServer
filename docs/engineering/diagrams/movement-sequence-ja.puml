@@ -1,0 +1,30 @@
+@startuml
+!pragma layout smetana
+skinparam monochrome true
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam defaultFontName "MS Gothic"
+skinparam defaultFontSize 15
+skinparam ArrowColor #444444
+skinparam Padding 10
+skinparam sequenceMessageAlign center
+hide footbox
+title 2026年10月の修正後の移動通知
+participant "送信クライアント" as A
+participant ClientHandler as H
+participant RoomManager as R
+participant "同じルームの他クライアント" as B
+A -> H : MOVE|nickname|x,z\n
+activate H
+H -> H : 改行まで蓄積し、未完の末尾を保持
+H -> H : セッションの名前と有限な座標を検査
+H -> H : Player.UpdatePlayerPosition()
+H -> R : BroadcastToRoomExcept(socket, result)
+activate R
+R -> R : 所属ルームを検索し、送信者を除外
+note right of R : roomsMutex、次に clientsMutex
+R -> B : MOVE_RESULT|nickname,x,z\n
+note over R,B : ロック保持中に blocking send
+deactivate R
+deactivate H
+@enduml

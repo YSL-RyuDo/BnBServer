@@ -1,0 +1,2 @@
+# Preserve published measurement bytes so the SHA-256 manifest works on every checkout.
+docs/engineering/measurements/** -text

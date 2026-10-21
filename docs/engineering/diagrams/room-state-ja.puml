@@ -1,0 +1,24 @@
+@startuml
+!pragma layout smetana
+skinparam monochrome true
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam defaultFontName "MS Gothic"
+skinparam defaultFontSize 15
+skinparam ArrowColor #444444
+skinparam Padding 10
+skinparam sequenceMessageAlign center
+hide footbox
+title コードに基づくルームのライフサイクル
+state "待機ルーム" as Waiting
+state "試合進行中" as Playing
+state "結果と復帰準備" as Results
+[*] --> Waiting : CreateRoom
+Waiting --> Playing : TryStartGame: 2人以上\nTryStartCoopGame: 4人 (2対2)
+Playing --> Results : DEAD の処理で勝者を決定
+Results --> Waiting : 全参加者が READY_TO_EXIT\nisInGame = false、GAME_END
+note bottom of Results
+結果は概念上のフェーズです。
+保存するのは isInGame、deadUsersByRoom、readyUsersByRoom です。
+end note
+@enduml

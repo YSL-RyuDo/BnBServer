@@ -11,6 +11,8 @@ def build(repo, destination, port, ref=None):
     for f in (repo/'TeamOFYServer').iterdir():
         if f.suffix not in ('.h','.cpp','.vcxproj'): continue
         data=subprocess.check_output(['git','-C',str(repo),'show',f'{ref}:TeamOFYServer/{f.name}']) if ref else f.read_bytes()
+        # Match the Windows checkout used for the published experiment, including --ref builds.
+        data=data.replace(b'\r\n',b'\n').replace(b'\n',b'\r\n')
         hashes[f.name]=hashlib.sha256(data).hexdigest()
         if f.name=='main.cpp':
             assert data.count(b'Initialize(9000)')==1
@@ -27,7 +29,7 @@ def build(repo, destination, port, ref=None):
     manifest={'source_commit':subprocess.check_output(['git','-C',str(repo),'rev-parse',ref or 'HEAD'],text=True).strip(),
       'source_hashes':hashes,'binary_sha256':hashlib.sha256(exe.read_bytes()).hexdigest(),'port':port,
       'adapter':['main.cpp: test port instead of 9000','Server.cpp: bind loopback instead of all interfaces'],
-      'configuration':'Release x64, MSVC v143, C++14','build_command':cmd}
+      'configuration':'Release x64, MSVC v143, C++14','source_line_endings':'CRLF, matching the measured Windows checkout','build_command':cmd}
     (destination/'build.json').write_text(json.dumps(manifest,indent=2),encoding='utf-8')
     print(exe,flush=True)
     return exe
