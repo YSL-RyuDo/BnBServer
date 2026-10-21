@@ -1,6 +1,7 @@
 ﻿#include "ClientHandler.h"
 #include "Server.h"
 #include "StoreData.h"
+#include <cmath>
 
 ClientHandler::ClientHandler(Server& server, UserManager& userManager, RoomManager& roomManager, MapManager& mapManager, Player& player)
     : server_(server), userManager_(userManager), roomManager_(roomManager), mapManager_(mapManager), player_(player){}
@@ -10,6 +11,9 @@ ClientHandler::~ClientHandler() {}
 void ClientHandler::HandleClient(shared_ptr<ClientInfo> client)
 {
     char buffer[1025];
+    std::string pending;
+    constexpr size_t maxLineBytes = 4096;
+    bool invalidFrame = false;
 
     while (true)
     {
@@ -20,9 +24,17 @@ void ClientHandler::HandleClient(shared_ptr<ClientInfo> client)
             break;
         }
 
-        buffer[recvLen] = '\0';
-        string recvStr(buffer);
-        ProcessMessages(client, recvStr);
+        // TCP receive boundaries are unrelated to newline-delimited messages.
+        pending.append(buffer, static_cast<size_t>(recvLen));
+        size_t consumed = 0;
+        size_t end;
+        while ((end = pending.find('\n', consumed)) != std::string::npos) {
+            if (end - consumed > maxLineBytes) { invalidFrame = true; break; }
+            ProcessMessages(client, pending.substr(consumed, end - consumed + 1));
+            consumed = end + 1;
+        }
+        pending.erase(0, consumed);
+        if (invalidFrame || pending.size() > maxLineBytes) break;
     }
 
     std::cout << "[DISCONNECT] client socket closed\n";
@@ -1341,19 +1353,21 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
             size_t commaPos = coords.find(',');
             if (commaPos == std::string::npos) return;
 
-            float x = std::stof(coords.substr(0, commaPos));
-            float z = std::stof(coords.substr(commaPos + 1));
-            
-            bool updated = player_.UpdatePlayerPosition(username, x, z);
-            if (updated)
-            {
-                auto pos = player_.GetPlayerPosition(username);
-                std::string resultMsg = "MOVE_RESULT|" + username + "," +
-                    std::to_string(pos.first) + "," + std::to_string(pos.second);
-                
-                // 보내는 클라이언트 소켓을 제외하고 같은 방 유저들에게 전송
-                roomManager_.BroadcastMessageExcept(client->socket, resultMsg);
-            }
+            // Identity comes from the authenticated connection, not packet text.
+            if (client->id.empty() || username != Trim(client->nickname)) return;
+            if (roomManager_.GetUserRoomId(client->id).empty()) return;
+            float x, z;
+            try {
+                const auto xs = coords.substr(0, commaPos);
+                const auto zs = coords.substr(commaPos + 1);
+                size_t nx = 0, nz = 0;
+                x = std::stof(xs, &nx); z = std::stof(zs, &nz);
+                if (nx != xs.size() || nz != zs.size() || !std::isfinite(x) || !std::isfinite(z)) return;
+            } catch (const std::exception&) { return; }
+            player_.UpdatePlayerPosition(username, x, z);
+            const std::string resultMsg = "MOVE_RESULT|" + username + "," +
+                std::to_string(x) + "," + std::to_string(z);
+            roomManager_.BroadcastToRoomExcept(client->socket, resultMsg);
         }
         else if (message.rfind("WEAPON_ATTACK|", 0) == 0)
         {

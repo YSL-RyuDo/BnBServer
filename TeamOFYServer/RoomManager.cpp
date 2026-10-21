@@ -622,6 +622,7 @@ void RoomManager::BroadcastToUserRoom(const std::string& senderId, const std::st
 void RoomManager::BroadcastToRoomExcept(SOCKET exceptSocket, const std::string& message)
 {
     std::lock_guard<std::mutex> lockRooms(roomsMutex);
+    std::lock_guard<std::mutex> lockClients(server_.clientsMutex);
 
     // excludedSocket이 속한 방 찾기
     auto it = std::find_if(rooms.begin(), rooms.end(), [&](const Room& room) {
@@ -641,7 +642,6 @@ void RoomManager::BroadcastToRoomExcept(SOCKET exceptSocket, const std::string& 
 
     Room& room = *it;
 
-    std::lock_guard<std::mutex> lockClients(server_.clientsMutex);
     auto& clientsMap = clientHandler_.GetClientsMap();
 
     std::string msgWithNewline = message;
