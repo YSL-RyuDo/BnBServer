@@ -25,6 +25,8 @@ def render(data,out):
    ax.set_xticks(x,['4','16','32','64']);ax.set_xlabel(t[2]);ax.set_ylabel(ylabel);ax.set_title(title,loc='left',pad=20,fontweight='bold');ax.legend(frameon=False,loc='upper left')
    ax.grid(axis='y',alpha=.18);ax.set_axisbelow(True)
    fig.text(.02,.025,t[5] if name=='latency' else t[8],fontsize=10,color='#514d45')
-   fig.tight_layout(rect=(0,.07,1,1));fig.savefig(out/f'{name}-{lang}.svg',metadata={'Date':None});plt.close(fig)
+   target=out/f'{name}-{lang}.svg'
+   fig.tight_layout(rect=(0,.07,1,1));fig.savefig(target,metadata={'Date':None});plt.close(fig)
+   target.write_bytes(('\n'.join(line.rstrip() for line in target.read_text(encoding='utf-8').splitlines())+'\n').encode('utf-8'))
 if __name__=='__main__':
  p=argparse.ArgumentParser();p.add_argument('--results',required=True);p.add_argument('--out',required=True);a=p.parse_args();render(a.results,a.out)
