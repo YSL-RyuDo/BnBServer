@@ -8,7 +8,8 @@ def build(repo, destination, port, ref=None):
     source = destination / 'source'
     source.mkdir(exist_ok=True)
     hashes = {}
-    for f in (repo/'TeamOFYServer').iterdir():
+    files = [repo/'TeamOFYServer'/n for n in subprocess.check_output(['git','-C',str(repo),'ls-tree','--name-only',ref+':TeamOFYServer'],text=True).splitlines()] if ref else list((repo/'TeamOFYServer').iterdir())
+    for f in files:
         if f.suffix not in ('.h','.cpp','.vcxproj'): continue
         data=subprocess.check_output(['git','-C',str(repo),'show',f'{ref}:TeamOFYServer/{f.name}']) if ref else f.read_bytes()
         # Match the Windows checkout used for the published experiment, including --ref builds.

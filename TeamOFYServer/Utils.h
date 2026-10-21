@@ -1,4 +1,5 @@
 #pragma once
+#include "SocketOutput.h"
 using namespace std;
 
 

@@ -21,6 +21,12 @@ jobs:
         run: python tools/benchmark/build.py --out .bench-work/candidate --port 39092
       - name: Verify framing and room delivery
         run: python tools/benchmark/regression.py --build .bench-work/candidate --out .bench-work/regression
+      - name: Verify partial writes, ordering and queue bounds
+        run: python tools/benchmark/test_output.py --out .bench-work/output-unit
+      - name: Verify logout, invalid input and connection churn
+        run: python tools/benchmark/lifecycle.py --build .bench-work/candidate --out .bench-work/lifecycle
+      - name: Verify slow-reader isolation
+        run: python tools/benchmark/backpressure.py --candidate .bench-work/candidate --out .bench-work/pressure --repeats 1 --pressure-only --check
       - name: Save regression results
         if: always()
         uses: actions/upload-artifact@v4
@@ -29,3 +35,6 @@ jobs:
           path: |
             .bench-work/candidate/build.log
             .bench-work/regression/results.json
+            .bench-work/output-unit/results.txt
+            .bench-work/lifecycle/results.json
+            .bench-work/pressure/results.json

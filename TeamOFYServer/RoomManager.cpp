@@ -41,7 +41,7 @@ void RoomManager::BroadcastRoomlist(shared_ptr<ClientInfo> client)
 
     message += "\n";
     cout << "[룸리스트]" << message << endl;
-    int sendLen = send(client->socket, message.c_str(), (int)message.size(), 0);
+    int sendLen = QueueSend(client->socket, message.c_str(), (int)message.size(), 0);
     if (sendLen == SOCKET_ERROR) {
         std::cout << "[BroadcastRoomlist] 전송 실패: " << WSAGetLastError() << std::endl;
     }
@@ -61,7 +61,7 @@ bool RoomManager::CreateRoom(
     if (client->id.empty()) {
         cout << "[RoomManager] 로그인 안 된 클라이언트" << endl;
         string errorMsg = "ERROR|LOGIN_REQUIRED\n";
-        send(client->socket, errorMsg.c_str(), (int)errorMsg.size(), 0);
+        QueueSend(client->socket, errorMsg.c_str(), (int)errorMsg.size(), 0);
         return false;
     }
 
@@ -118,7 +118,7 @@ bool RoomManager::CreateRoom(
     string successMsg = "CREATE_ROOM_SUCCESS|" + roomName + "|" + mapName + "|CREATOR|"
         + userListStr + "|" + hasPasswordStr + "|" + coopStr + "\n";
     cout << successMsg << endl;
-    send(client->socket, successMsg.c_str(), (int)successMsg.size(), 0);
+    QueueSend(client->socket, successMsg.c_str(), (int)successMsg.size(), 0);
 
     // 다른 클라이언트들에게 방 생성 브로드캐스트
     string broadcastMsg = "ROOM_CREATED|" + roomName + "|" + mapName + "|"
@@ -138,7 +138,7 @@ void RoomManager::BroadcastMessageExcept(SOCKET exceptSocket, const string& mess
 
     for (const auto& otherClient : server_.GetClients()) {
         if (otherClient->socket == exceptSocket) continue;
-        send(otherClient->socket, msgWithNewline.c_str(), (int)msgWithNewline.size(), 0);
+        QueueSend(otherClient->socket, msgWithNewline.c_str(), (int)msgWithNewline.size(), 0);
         //cout << "[브로드캐스트 (제외)] → " << otherClient->ip << ":" << otherClient->port << " : " << msgWithNewline;
     }
 }
@@ -252,7 +252,7 @@ void RoomManager::HandleRoomChatMessage(shared_ptr<ClientInfo> sender, const str
                 if (it != clientsMap.end())
                 {
                     SOCKET otherSocket = it->second->socket;
-                    send(otherSocket, fullMsg.c_str(), (int)fullMsg.size(), 0);
+                    QueueSend(otherSocket, fullMsg.c_str(), (int)fullMsg.size(), 0);
                 }
             }
             break;
@@ -275,7 +275,7 @@ void RoomManager::SendServerMessageToRoom(const std::string& roomName, const std
         auto it = clientsMap.find(userId);
         if (it != clientsMap.end())
         {
-            send(it->second->socket, fullMsg.c_str(), (int)fullMsg.size(), 0);
+            QueueSend(it->second->socket, fullMsg.c_str(), (int)fullMsg.size(), 0);
         }
     }
 }
@@ -341,7 +341,7 @@ void RoomManager::ExitRoom(const std::string& message) {
                         auto clientIt = clientHandler_.GetClientsMap().find(user);
                         if (clientIt != clientHandler_.GetClientsMap().end()) {
                             SOCKET s = clientIt->second->socket;
-                            int sendLen = send(s, refreshMsg.c_str(), (int)refreshMsg.size(), 0);
+                            int sendLen = QueueSend(s, refreshMsg.c_str(), (int)refreshMsg.size(), 0);
                             if (sendLen == SOCKET_ERROR) {
                                 std::cout << "[방 브로드캐스트 실패] " << WSAGetLastError() << " - user: " << user << std::endl;
                             }
@@ -366,8 +366,8 @@ void RoomManager::ExitRoom(const std::string& message) {
 
     if (roomDeleted) {
         // 방이 삭제되었으면 모든 클라이언트에게 최신 방 리스트 브로드캐스트
-        auto& clients = server_.GetClients();
-        std::lock_guard<std::mutex> lock(server_.clientsMutex);
+        std::vector<std::shared_ptr<ClientInfo>> clients;
+        { std::lock_guard<std::mutex> lock(server_.clientsMutex); clients = server_.GetClients(); }
         for (const auto& c : clients) {
             SendRoomList(*c);
         }
@@ -393,7 +393,7 @@ void RoomManager::SendRoomList(ClientInfo& client) {
     message += "\n";  // 줄바꿈으로 메시지 종료
     std::cout << "[SendRoomList] 보낸 메시지 -> IP: " << client.ip
         << ", Port: " << client.port << " -> " << message << endl;
-    send(client.socket, message.c_str(), (int)message.size(), 0);
+    QueueSend(client.socket, message.c_str(), (int)message.size(), 0);
 
     
 }
@@ -451,7 +451,7 @@ void RoomManager::HandleCharacterChoice(ClientInfo& client, const std::string& d
                 auto clientIt = clientHandler_.GetClientsMap().find(user);
                 if (clientIt != clientHandler_.GetClientsMap().end()) {
                     SOCKET s = clientIt->second->socket;
-                    int sendLen = send(s, msg.c_str(), (int)msg.size(), 0);
+                    int sendLen = QueueSend(s, msg.c_str(), (int)msg.size(), 0);
                     if (sendLen == SOCKET_ERROR) {
                         std::cout << "[캐릭터 브로드캐스트 실패] " << WSAGetLastError() << " - user: " << user << std::endl;
                     }
@@ -608,7 +608,7 @@ void RoomManager::BroadcastToUserRoom(const std::string& senderId, const std::st
     for (const auto& userId : room.users) {
         auto clientIt = clientsMap.find(userId);
         if (clientIt != clientsMap.end()) {
-            int sendLen = send(clientIt->second->socket, message.c_str(), (int)message.size(), 0);
+            int sendLen = QueueSend(clientIt->second->socket, message.c_str(), (int)message.size(), 0);
             if (sendLen == SOCKET_ERROR) {
                 std::cerr << "[BroadcastToUserRoom] send 실패: " << WSAGetLastError() << " - userId: " << userId << std::endl;
             }
@@ -655,7 +655,7 @@ void RoomManager::BroadcastToRoomExcept(SOCKET exceptSocket, const std::string& 
         if (clientIt != clientsMap.end())
         {
             if (clientIt->second->socket == exceptSocket) continue;
-            send(clientIt->second->socket, msgWithNewline.c_str(), (int)msgWithNewline.size(), 0);
+            QueueSend(clientIt->second->socket, msgWithNewline.c_str(), (int)msgWithNewline.size(), 0);
         }
     }
 }
@@ -756,7 +756,7 @@ bool RoomManager::HandleReadyToExit(const std::string& userId, const std::string
             {
                 SOCKET s = it->second->socket;
                 std::string msg = "READY_TO_EXIT|" + nickname + "\n";
-                send(s, msg.c_str(), (int)msg.size(), 0);
+                QueueSend(s, msg.c_str(), (int)msg.size(), 0);
             }
         }
     }
@@ -774,7 +774,7 @@ bool RoomManager::HandleReadyToExit(const std::string& userId, const std::string
             auto clientIt = clientsMap.find(userId);
             if (clientIt != clientsMap.end())
             {
-                send(clientIt->second->socket, gameEndMsg.c_str(), (int)gameEndMsg.size(), 0);
+                QueueSend(clientIt->second->socket, gameEndMsg.c_str(), (int)gameEndMsg.size(), 0);
             }
         }
 
@@ -867,8 +867,9 @@ void RoomManager::ForceExitRoomByUserId(const std::string& userId)
     // 방 삭제됨 → 전체 룸 리스트 브로드캐스트
     if (roomDeleted)
     {
-        std::lock_guard<std::mutex> lock(server_.clientsMutex);
-        for (auto& c : server_.GetClients())
+        std::vector<std::shared_ptr<ClientInfo>> clients;
+        { std::lock_guard<std::mutex> lock(server_.clientsMutex); clients = server_.GetClients(); }
+        for (auto& c : clients)
         {
             SendRoomList(*c);
         }
@@ -879,15 +880,16 @@ void RoomManager::ForceExitRoomByUserId(const std::string& userId)
     std::string refreshMsg =
         "REFRESH_ROOM_SUCCESS|" + roomName + "|" + userListStr + "\n";
 
+    const auto members = GetUserIdsInRoom(roomName);
     std::lock_guard<std::mutex> lock(server_.clientsMutex);
     auto& clientsMap = clientHandler_.GetClientsMap();
 
-    for (const auto& uid : GetUserIdsInRoom(roomName))
+    for (const auto& uid : members)
     {
         auto it = clientsMap.find(uid);
         if (it != clientsMap.end())
         {
-            send(it->second->socket,
+            QueueSend(it->second->socket,
                 refreshMsg.c_str(),
                 (int)refreshMsg.size(),
                 0);

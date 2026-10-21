@@ -17,6 +17,7 @@ void ClientHandler::HandleClient(shared_ptr<ClientInfo> client)
 
     while (true)
     {
+        if (client->IsClosing()) break;
         int recvLen = recv(client->socket, buffer, sizeof(buffer) - 1, 0);
         if (recvLen <= 0)
         {
@@ -30,7 +31,14 @@ void ClientHandler::HandleClient(shared_ptr<ClientInfo> client)
         size_t end;
         while ((end = pending.find('\n', consumed)) != std::string::npos) {
             if (end - consumed > maxLineBytes) { invalidFrame = true; break; }
-            ProcessMessages(client, pending.substr(consumed, end - consumed + 1));
+            try {
+                ProcessMessages(client, pending.substr(consumed, end - consumed + 1));
+            } catch (const std::invalid_argument&) {
+                client->Disconnect();
+            } catch (const std::out_of_range&) {
+                client->Disconnect();
+            }
+            if (client->IsClosing()) { invalidFrame = true; break; }
             consumed = end + 1;
         }
         pending.erase(0, consumed);
@@ -147,19 +155,9 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
             }
             SendToClient(client, response);
         }
-        else if (message == "QUIT|")
-        {
-            cout << "[ProcessMessages] 클라이언트 종료 요청 수신" << endl;
-
-            {
-                lock_guard<mutex> lock(server_.clientsMutex);
-                if (!client->id.empty()) {
-                    clientsMap.erase(client->id); // 계정 연결 해제
-                }
-            }
-
-            closesocket(client->socket);
-            server_.RemoveClient(client);
+        else if (message == "QUIT|") {
+            // Receive-loop cleanup owns room/session removal; do not close a reused handle twice.
+            client->Disconnect();
             return;
         }
         else if (message.rfind("GET_USER_INFO|", 0) == 0)
@@ -197,15 +195,10 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
             }
         }
         else if (message.rfind("LOGOUT|", 0) == 0) {
-            {
-                lock_guard<mutex> lock(server_.clientsMutex);
-                if (!client->id.empty()) {
-                    clientsMap.erase(client->id); // 접속중 목록에서 제거
-                }
-            }
-            userManager_.LogoutUser(client);  // 필요하다면 유저 상태 갱신
-            response = "LOGOUT_SUCCESS|\n";
-}
+            if (!client->id.empty()) roomManager_.ForceExitRoomByUserId(client->id);
+            userManager_.LogoutUser(client);
+            SendToClient(client, "LOGOUT_SUCCESS|\n");
+        }
 
         else if (message.rfind("GETINFO|", 0) == 0)
         {
@@ -384,9 +377,9 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
 
             if (!hasEmo(emoB))
             {
-                send(client->socket,
+                QueueSend(client->socket,
                     "EMO_CHANGE_FAIL|NOT_OWNED\n",
-                    26, 0);
+                    static_cast<int>(strlen("EMO_CHANGE_FAIL|NOT_OWNED\n")), 0);
                 return;
             }
 
@@ -410,9 +403,9 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
             // A는 반드시 슬롯에 있어야 함
             if (idxA == -1)
             {
-                send(client->socket,
+                QueueSend(client->socket,
                     "EMO_CHANGE_FAIL|NOT_EQUIPPED\n",
-                    30, 0);
+                    static_cast<int>(strlen("EMO_CHANGE_FAIL|NOT_EQUIPPED\n")), 0);
                 return;
             }
 
@@ -465,9 +458,9 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
             // 1️ 장착 중인지 확인
             if (profile.balloon != fromBalloon)
             {
-                send(client->socket,
+                QueueSend(client->socket,
                     "BALLOON_CHANGE_FAIL|NOT_EQUIPPED\n",
-                    35, 0);
+                    static_cast<int>(strlen("BALLOON_CHANGE_FAIL|NOT_EQUIPPED\n")), 0);
                 return;
             }
 
@@ -481,9 +474,9 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
 
             if (toBalloon < 0 || toBalloon >= 10 || values[toBalloon] == 0)
             {
-                send(client->socket,
+                QueueSend(client->socket,
                     "BALLOON_CHANGE_FAIL|NOT_OWNED\n",
-                    33, 0);
+                    static_cast<int>(strlen("BALLOON_CHANGE_FAIL|NOT_OWNED\n")), 0);
                 return;
             }
 
@@ -527,9 +520,9 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
             // 1️ 장착 중인지 확인
             if (profile.icon != fromIcon)
             {
-                send(client->socket,
+                QueueSend(client->socket,
                     "ICON_CHANGE_FAIL|NOT_EQUIPPED\n",
-                    32, 0);
+                    static_cast<int>(strlen("ICON_CHANGE_FAIL|NOT_EQUIPPED\n")), 0);
                 return;
             }
 
@@ -542,9 +535,9 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
 
             if (toIcon < 0 || toIcon >= 10 || values[toIcon] == 0)
             {
-                send(client->socket,
+                QueueSend(client->socket,
                     "ICON_CHANGE_FAIL|NOT_OWNED\n",
-                    30, 0);
+                    static_cast<int>(strlen("ICON_CHANGE_FAIL|NOT_OWNED\n")), 0);
                 return;
             }
 
@@ -588,7 +581,7 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
                     << stats.char6_win << "," << stats.char6_lose
                     << "\n";
 
-                send(client->socket,
+                QueueSend(client->socket,
                     packet.str().c_str(),
                     (int)packet.str().size(),
                     0);
@@ -655,7 +648,7 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
 
             if (owned)
             {
-                send(client->socket, "BUY_FAIL|ALREADY_OWNED\n", 24, 0);
+                QueueSend(client->socket, "BUY_FAIL|ALREADY_OWNED\n", static_cast<int>(strlen("BUY_FAIL|ALREADY_OWNED\n")), 0);
                 return;
             }
 
@@ -666,12 +659,12 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
             // 재화 체크
             if (info.type == PriceType::COIN && profile.money0 < info.price)
             {
-                send(client->socket, "BUY_FAIL|NO_COIN\n", 17, 0);
+                QueueSend(client->socket, "BUY_FAIL|NO_COIN\n", static_cast<int>(strlen("BUY_FAIL|NO_COIN\n")), 0);
                 return;
             }
             if (info.type == PriceType::CASH && profile.money1 < info.price)
             {
-                send(client->socket, "BUY_FAIL|NO_CASH\n", 17, 0);
+                QueueSend(client->socket, "BUY_FAIL|NO_CASH\n", static_cast<int>(strlen("BUY_FAIL|NO_CASH\n")), 0);
                 return;
             }
 
@@ -997,7 +990,7 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
             if (!roomManager_.EnterRoom(client, roomName, password, isCoopMode, response)) {
                 
             }
-            send(client->socket, response.c_str(), (int)response.size(), 0);
+            QueueSend(client->socket, response.c_str(), (int)response.size(), 0);
             }
         else if (message.rfind("ROOM_MESSAGE|", 0) == 0)
         {
@@ -1031,7 +1024,7 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
             }
             response += "\n";
 
-            send(client->socket, response.c_str(), (int)response.size(), 0);
+            QueueSend(client->socket, response.c_str(), (int)response.size(), 0);
         }
         else if (message.rfind("CHOOSE_CHARACTER|", 0) == 0)
         {
@@ -1111,7 +1104,7 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
                 Room* room = roomManager_.FindRoomByName(roomName);
                 if (room == nullptr) {
                     string failMsg = "START_GAME_FAIL|ROOM_NOT_FOUND\n";
-                    send(client->socket, failMsg.c_str(), (int)failMsg.size(), 0);
+                    QueueSend(client->socket, failMsg.c_str(), (int)failMsg.size(), 0);
                     return;
                 }
                 isCoop = room->isCoopMode;
@@ -1128,7 +1121,7 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
                     else
                         failMsg += "NOT_ENOUGH_PLAYERS\n";
 
-                    send(client->socket, failMsg.c_str(), (int)failMsg.size(), 0);
+                    QueueSend(client->socket, failMsg.c_str(), (int)failMsg.size(), 0);
                     return;
                 }
             }
@@ -1148,13 +1141,13 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
                     else
                         failMsg += "INVALID_TEAM_COMPOSITION\n";
 
-                    send(client->socket, failMsg.c_str(), (int)failMsg.size(), 0);
+                    QueueSend(client->socket, failMsg.c_str(), (int)failMsg.size(), 0);
                     return;
                 }
             }
 
             string response = "START_GAME_SUCCESS|" + roomName + "\n";
-            send(client->socket, response.c_str(), (int)response.size(), 0);
+            QueueSend(client->socket, response.c_str(), (int)response.size(), 0);
 
             string startMsg = "GAME_START|" + roomName + "\n";
             for (const auto& user : userList)
@@ -1163,7 +1156,7 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
                 auto it = clientsMap.find(userId);
                 if (it != clientsMap.end())
                 {
-                    send(it->second->socket, startMsg.c_str(), (int)startMsg.size(), 0);
+                    QueueSend(it->second->socket, startMsg.c_str(), (int)startMsg.size(), 0);
                 }
             }
         }
@@ -1279,8 +1272,8 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
                 auto it = clientsMap.find(userId);
                 if (it != clientsMap.end())
                 {
-                    send(it->second->socket, response.c_str(), (int)response.size(), 0);
-                    send(it->second->socket, charInfoStr.c_str(), (int)charInfoStr.size(), 0);
+                    QueueSend(it->second->socket, response.c_str(), (int)response.size(), 0);
+                    QueueSend(it->second->socket, charInfoStr.c_str(), (int)charInfoStr.size(), 0);
                 }
             }
 
@@ -1298,7 +1291,7 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
 
             auto balloonType = userManager_.GetBalloonByUserId(userId);
             std::string response = "BALLOON_LIST|" + std::to_string(balloonType) + "\n";
-            send(client->socket, response.c_str(), (int)response.size(), 0);
+            QueueSend(client->socket, response.c_str(), (int)response.size(), 0);
         }
         else if (message.rfind("GET_EMO|", 0) == 0) {
             std::string nickname = message.substr(strlen("GET_EMO|"));
@@ -1318,7 +1311,7 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
                 if (i != emoList.size() - 1) response += ",";
             }
             response += "\n";
-            send(client->socket, response.c_str(), (int)response.size(), 0);
+            QueueSend(client->socket, response.c_str(), (int)response.size(), 0);
         }
         else if (message.rfind("EMO_CLICK|", 0) == 0) {
             std::string data = message.substr(strlen("EMO_CLICK|"));
@@ -1865,7 +1858,7 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
 
 bool ClientHandler::SendToClient(std::shared_ptr<ClientInfo> client, const std::string& response)
 {
-    int sendLen = send(client->socket, response.c_str(), static_cast<int>(response.size()), 0);
+    int sendLen = QueueSend(client->socket, response.c_str(), static_cast<int>(response.size()), 0);
     if (sendLen == SOCKET_ERROR)
     {
         std::cout << "[SendToClient] send 오류 - IP: " << client->ip << ", 포트: " << client->port
@@ -2064,7 +2057,7 @@ void ClientHandler::SendUserIcons(std::shared_ptr<ClientInfo> client,const std::
     packet << "\n";
 
     // ===== 전송 =====
-    send(client->socket,
+    QueueSend(client->socket,
         packet.str().c_str(),
         (int)packet.str().size(),
         0);
@@ -2088,7 +2081,7 @@ void ClientHandler::SendCoinInfo(std::shared_ptr<ClientInfo> client, const std::
         << profile.money0 << ","
         << profile.money1 << "\n";
 
-    send(client->socket,
+    QueueSend(client->socket,
         packet.str().c_str(),
         (int)packet.str().size(),
         0);
@@ -2147,7 +2140,7 @@ void ClientHandler::SendStoreCharList(std::shared_ptr<ClientInfo> client, const 
 
     packet << "\n";
 
-    send(client->socket,
+    QueueSend(client->socket,
         packet.str().c_str(),
         (int)packet.str().size(),
         0);
@@ -2202,7 +2195,7 @@ void ClientHandler::SendStoreBalloonList(std::shared_ptr<ClientInfo> client, con
     }
 
     packet << "\n";
-    send(client->socket, packet.str().c_str(), (int)packet.str().size(), 0);
+    QueueSend(client->socket, packet.str().c_str(), (int)packet.str().size(), 0);
 
     std::cout << "[STORE_BALLOON_LIST] 전송: " << nickname << std::endl;
 }
@@ -2255,7 +2248,7 @@ void ClientHandler::SendStoreEmoList(std::shared_ptr<ClientInfo> client, const s
     }
 
     packet << "\n";
-    send(client->socket, packet.str().c_str(), (int)packet.str().size(), 0);
+    QueueSend(client->socket, packet.str().c_str(), (int)packet.str().size(), 0);
 
     std::cout << "[STORE_EMO_LIST] 전송: " << nickname << std::endl;
 }
@@ -2328,7 +2321,7 @@ void ClientHandler::SendStoreIconList(std::shared_ptr<ClientInfo> client, const 
     }
 
     packet << "\n";
-    send(client->socket, packet.str().c_str(), (int)packet.str().size(), 0);
+    QueueSend(client->socket, packet.str().c_str(), (int)packet.str().size(), 0);
 
     std::cout << "[아이콘 상점] STORE_ICON_LIST 패킷 전송 완료\n";
     std::cout << "================ ICON STORE DEBUG END ==================\n";

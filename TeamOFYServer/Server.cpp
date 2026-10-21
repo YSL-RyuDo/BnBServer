@@ -37,7 +37,7 @@ bool Server::Initialize(unsigned short port) {
     serverAddr.sin_addr.s_addr = INADDR_ANY;
     serverAddr.sin_port = htons(port);
 
-    if (bind(listenSocket, (sockaddr*)&serverAddr, sizeof(serverAddr)) == SOCKET_ERROR) {
+    if (::bind(listenSocket, (sockaddr*)&serverAddr, sizeof(serverAddr)) == SOCKET_ERROR) {
         cout << "바인드 실패" << endl;
         closesocket(listenSocket);
         WSACleanup();
@@ -111,13 +111,12 @@ void Server::RemoveClient(shared_ptr<ClientInfo> client) {
 
         auto it = remove_if(clients.begin(), clients.end(),
             [&](const shared_ptr<ClientInfo>& c) {
-                return c->socket == client->socket;
+                return c == client;
             });
 
         if (it != clients.end()) {
             cout << "[접속 종료] 클라이언트 - IP: " << client->ip << ", Port: " << client->port << endl;
-            shutdown(client->socket, SD_BOTH);
-            closesocket(client->socket);
+            client->Disconnect();
             clients.erase(it, clients.end());
         }
     }

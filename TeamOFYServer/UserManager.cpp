@@ -837,7 +837,7 @@ void UserManager::BroadcastLobbyUserList() {
 
         for (const auto& c : clients) {
             if (c->id.empty()) continue;
-            int sendLen = send(c->socket, message.c_str(), (int)message.size(), 0);
+            int sendLen = QueueSend(c->socket, message.c_str(), (int)message.size(), 0);
             if (sendLen == SOCKET_ERROR) {
                 std::cout << "[BroadcastLobbyUserList] send 오류 - user: "
                     << c->id << ", 오류 코드: " << WSAGetLastError() << std::endl;
@@ -859,7 +859,7 @@ void UserManager::SendUserInfoByNickname(shared_ptr<ClientInfo> client, const st
     if (itUser == users.end())
     {
         string response = "USER_NOT_FOUND|\n";
-        send(client->socket, response.c_str(), (int)response.size(), 0);
+        QueueSend(client->socket, response.c_str(), (int)response.size(), 0);
         return;
     }
     const UserAccount& user = *itUser;
@@ -871,7 +871,7 @@ void UserManager::SendUserInfoByNickname(shared_ptr<ClientInfo> client, const st
     if (itProfile == userProfiles.end())
     {
         string response = "PROFILE_NOT_FOUND|\n";
-        send(client->socket, response.c_str(), (int)response.size(), 0);
+        QueueSend(client->socket, response.c_str(), (int)response.size(), 0);
         return;
     }
 
@@ -881,14 +881,14 @@ void UserManager::SendUserInfoByNickname(shared_ptr<ClientInfo> client, const st
         to_string(profile.level) + "," +
         to_string(profile.exp) + "\n";
 
-    send(client->socket, response.c_str(), (int)response.size(), 0);
+    QueueSend(client->socket, response.c_str(), (int)response.size(), 0);
 }
 
 void UserManager::BroadcastLobbyChatMessage(const string& nickname, const string& message) {
     string fullMsg = "LOBBY_CHAT|" + nickname + ":" + message + "\n";
     lock_guard<mutex> lock(server_.clientsMutex);
     for (const auto& client : server_.GetClients()) {
-        send(client->socket, fullMsg.c_str(), (int)fullMsg.size(), 0);
+        QueueSend(client->socket, fullMsg.c_str(), (int)fullMsg.size(), 0);
     }
     cout << "[LobbyChat] " << nickname << ": " << message << endl;
 }

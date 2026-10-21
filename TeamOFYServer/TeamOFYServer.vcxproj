@@ -140,6 +140,7 @@
     <ClCompile Include="Room.cpp" />
     <ClCompile Include="RoomManager.cpp" />
     <ClCompile Include="Server.cpp" />
+    <ClCompile Include="SocketOutput.cpp" />
     <ClCompile Include="StoreData.cpp" />
     <ClCompile Include="UserAccount.cpp" />
     <ClCompile Include="UserManager.cpp" />
@@ -153,6 +154,7 @@
     <ClInclude Include="Room.h" />
     <ClInclude Include="RoomManager.h" />
     <ClInclude Include="Server.h" />
+    <ClInclude Include="SocketOutput.h" />
     <ClInclude Include="StoreData.h" />
     <ClInclude Include="UserAccount.h" />
     <ClInclude Include="UserManager.h" />
