@@ -37,6 +37,9 @@ void ClientHandler::HandleClient(shared_ptr<ClientInfo> client)
                 client->Disconnect();
             } catch (const std::out_of_range&) {
                 client->Disconnect();
+            } catch (const std::runtime_error& error) {
+                std::cerr << "Request failed: " << error.what() << std::endl;
+                SendToClient(client, "FILE_WRITE_ERROR|\n");
             }
             if (client->IsClosing()) { invalidFrame = true; break; }
             consumed = end + 1;
@@ -87,6 +90,7 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
         string response;
 
         if (message.rfind("LOGIN|", 0) == 0) {
+            auto userState = userManager_.LockState();
             cout << "로그인 요청 감지" << endl;
             string loginData = message.substr(strlen("LOGIN|"));
             size_t commaPos = loginData.find(',');
@@ -108,33 +112,12 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
             response = userManager_.CheckLogin(id, pw);
 
             if (response.rfind("LOGIN_SUCCESS|", 0) == 0) {
-                size_t colonPos = response.find('|');
-                if (colonPos != string::npos) {
-                    string userData = response.substr(colonPos + 1);
-                    stringstream ss(userData);
-                    string id, pw, nickname;
-                    getline(ss, id, ',');
-                    getline(ss, pw, ',');
-                    getline(ss, nickname, ',');
-
-                    client->id = id;
-                    client->nickname = nickname;
-                }
-
-                {
-                    lock_guard<mutex> lock(server_.clientsMutex);
-
-                    for (auto& c : server_.GetClients()) {
-                        if (c->socket == client->socket) {
-                            c->id = client->id;
-                            c->nickname = client->nickname;
-                            break;
-                        }
-                    }
-
-                    // 로그인 성공 시 맵에 등록
-                    clientsMap[id] = client;
-                }
+                std::stringstream fields(response.substr(response.find('|') + 1));
+                std::string parsedId, parsedPassword, nickname;
+                std::getline(fields, parsedId, ','); std::getline(fields, parsedPassword, ','); std::getline(fields, nickname);
+                std::lock_guard<std::mutex> clientsLock(server_.clientsMutex);
+                if (!client->id.empty() || clientsMap.count(parsedId)) response = "ALREADY_LOGGED_IN|\n";
+                else { client->id = parsedId; client->nickname = Trim(nickname); clientsMap[parsedId] = client; }
             }
 
             SendToClient(client, response);
@@ -202,6 +185,7 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
 
         else if (message.rfind("GETINFO|", 0) == 0)
         {
+            auto userState = userManager_.LockState();
             std::string nickname = Trim(message.substr(strlen("GETINFO|")));
             std::string userId = Trim(GetIdByNickname(nickname));
             if (userId.empty())
@@ -235,6 +219,7 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
         }
         else if (message.rfind("GET_BALLOON_INFO|", 0) == 0)
         {
+            auto userState = userManager_.LockState();
             std::string nickname = Trim(message.substr(strlen("GET_BALLOON_INFO|")));
             std::string userId = Trim(GetIdByNickname(nickname));
             if (userId.empty())
@@ -260,6 +245,7 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
         }
         else if (message.rfind("GET_EMO_INFO|", 0) == 0)
         {
+            auto userState = userManager_.LockState();
             std::string nickname = Trim(message.substr(strlen("GET_EMO_INFO|")));
             std::string userId = Trim(GetIdByNickname(nickname));
             if (userId.empty())
@@ -285,6 +271,7 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
         }
         else if (message.rfind("GET_ICON_INFO|", 0) == 0)
         {
+            auto userState = userManager_.LockState();
             std::string nickname = Trim(message.substr(strlen("GET_ICON_INFO|")));
             std::string userId = Trim(GetIdByNickname(nickname));
             if (userId.empty())
@@ -307,6 +294,7 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
             }
         else if (message.rfind("EMO_CHANGE|", 0) == 0)
         {
+            UserManager::Transaction transaction(userManager_);
             std::string data = message.substr(strlen("EMO_CHANGE|"));
             std::stringstream ss(data);
 
@@ -422,6 +410,7 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
             }
 
             userManager_.SaveUserProfile(userId);
+            if (!transaction.Commit()) { SendToClient(client, "FILE_WRITE_ERROR|\n"); return; }
 
             SendSetInfo(client, nickname, profile);
 
@@ -431,6 +420,7 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
         }
         else if (message.rfind("BALLOON_CHANGE|", 0) == 0)
         {
+            UserManager::Transaction transaction(userManager_);
             std::string data = message.substr(strlen("BALLOON_CHANGE|"));
             std::stringstream ss(data);
 
@@ -483,6 +473,7 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
             // 3️ 교체
             profile.balloon = toBalloon;
             userManager_.SaveUserProfile(userId);
+            if (!transaction.Commit()) { SendToClient(client, "FILE_WRITE_ERROR|\n"); return; }
 
             // 4️ 결과 전송
             SendSetInfo(client, nickname, profile);
@@ -493,6 +484,7 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
         }
         else if (message.rfind("ICON_CHANGE|", 0) == 0)
         {
+            UserManager::Transaction transaction(userManager_);
             std::string data = message.substr(strlen("ICON_CHANGE|"));
             std::stringstream ss(data);
 
@@ -544,6 +536,7 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
             // 3️ 교체
             profile.icon = toIcon;
             userManager_.SaveUserProfile(userId);
+            if (!transaction.Commit()) { SendToClient(client, "FILE_WRITE_ERROR|\n"); return; }
 
             // 4️ 결과 전송
             SendSetInfo(client, nickname, profile);
@@ -554,6 +547,7 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
                 }
         else if (message.rfind("GET_CHAR_WINLOSS|", 0) == 0)
         {
+            auto userState = userManager_.LockState();
             std::string nickname = Trim(message.substr(strlen("GET_CHAR_WINLOSS|")));
             std::string userId = Trim(GetIdByNickname(nickname));
 
@@ -597,28 +591,34 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
 
         else if (message.rfind("GET_COIN|", 0) == 0)
         {
+            auto userState = userManager_.LockState();
             std::string nickname = Trim(message.substr(strlen("GET_COIN|")));
             SendCoinInfo(client, nickname);
         }
         else if (message.rfind("GET_STORE_CHAR_LIST|", 0) == 0)
         {
+            auto userState = userManager_.LockState();
             std::string nickname = Trim(message.substr(strlen("GET_STORE_CHAR_LIST|")));
             SendStoreCharList(client, nickname);
         }
         else if (message.rfind("GET_STORE_BALLOON_LIST|", 0) == 0)
         {
+            auto userState = userManager_.LockState();
             SendStoreBalloonList(client, Trim(message.substr(strlen("GET_STORE_BALLOON_LIST|"))));
         }
         else if (message.rfind("GET_STORE_EMO_LIST|", 0) == 0)
         {
+            auto userState = userManager_.LockState();
             SendStoreEmoList(client, Trim(message.substr(strlen("GET_STORE_EMO_LIST|"))));
         }
         else if (message.rfind("GET_STORE_ICON_LIST|", 0) == 0)
         {
+            auto userState = userManager_.LockState();
             SendStoreIconList(client, Trim(message.substr(strlen("GET_STORE_ICON_LIST|"))));
         }
         else if (message.rfind("BUY_CHAR|", 0) == 0)
         {
+            UserManager::Transaction transaction(userManager_);
             std::string data = message.substr(strlen("BUY_CHAR|"));
             std::stringstream ss(data);
 
@@ -688,6 +688,7 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
 
             userManager_.SaveUserProfile(userId);
             userManager_.SaveUserCharacters(userId);
+            if (!transaction.Commit()) { SendToClient(client, "FILE_WRITE_ERROR|\n"); return; }
 
             // 결과 전송
             SendCoinInfo(client, nickname);
@@ -698,6 +699,7 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
                 }
         else if (message.rfind("BUY_BALLOON|", 0) == 0)
         {
+            UserManager::Transaction transaction(userManager_);
             std::string data = message.substr(strlen("BUY_BALLOON|"));
             std::stringstream ss(data);
 
@@ -757,6 +759,7 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
 
             userManager_.SaveUserProfile(userId);
             userManager_.SaveUserBallons(userId);
+            if (!transaction.Commit()) { SendToClient(client, "FILE_WRITE_ERROR|\n"); return; }
 
             SendCoinInfo(client, nickname);
             SendStoreBalloonList(client, nickname);
@@ -766,6 +769,7 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
         }
         else if (message.rfind("BUY_EMO|", 0) == 0)
         {
+            UserManager::Transaction transaction(userManager_);
             std::string data = message.substr(strlen("BUY_EMO|"));
             std::stringstream ss(data);
 
@@ -878,12 +882,14 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
 
             userManager_.SaveUserProfile(userId);
             userManager_.SaveUserEmotes(userId);
+            if (!transaction.Commit()) { SendToClient(client, "FILE_WRITE_ERROR|\n"); return; }
 
             SendCoinInfo(client, nickname);
             SendStoreEmoList(client, nickname);
             }
         else if (message.rfind("BUY_ICON|", 0) == 0)
         {
+            UserManager::Transaction transaction(userManager_);
             std::string data = message.substr(strlen("BUY_ICON|"));
             std::stringstream ss(data);
 
@@ -943,6 +949,7 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
 
             userManager_.SaveUserProfile(userId);
             userManager_.SaveUserIcons(userId);
+            if (!transaction.Commit()) { SendToClient(client, "FILE_WRITE_ERROR|\n"); return; }
 
             SendCoinInfo(client, nickname);
             SendStoreIconList(client, nickname);
@@ -1002,6 +1009,7 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
         }
         else if (message.rfind("GET_CHARACTER|", 0) == 0)
         {
+            auto userState = userManager_.LockState();
             std::string nickname = message.substr(strlen("GET_CHARACTER|"));
             nickname = Trim(nickname); // 공백 제거
 
@@ -1043,27 +1051,9 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
             if (roomId.empty())
                 return;
 
-            Room* room = roomManager_.FindRoomByName(roomId);
-            if (!room)
-                return;
-
-            if (!room->isCoopMode)
-                return;
-
-            auto itTeam = room->teamAssignments.find(userId);
-            if (itTeam == room->teamAssignments.end())
-                return;
-
-            string& currentTeam = itTeam->second;
-            if (currentTeam == "None")
-                return;
-
-            string newTeam;
-            if (currentTeam == "Blue")
-                newTeam = "Red";
-            else if (currentTeam == "Red")
-                newTeam = "Blue";
-            currentTeam = newTeam;
+            auto room = roomManager_.ChangeTeam(userId);
+            if (!room) return;
+            const auto newTeam = room->teamAssignments.at(userId);
 
             string userListStr;
             auto usersInRoom = roomManager_.GetUserIdsInRoom(roomId);
@@ -1101,7 +1091,7 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
 
             bool isCoop = false;
             {
-                Room* room = roomManager_.FindRoomByName(roomName);
+                auto room = roomManager_.FindRoomByName(roomName);
                 if (room == nullptr) {
                     string failMsg = "START_GAME_FAIL|ROOM_NOT_FOUND\n";
                     QueueSend(client->socket, failMsg.c_str(), (int)failMsg.size(), 0);
@@ -1153,6 +1143,7 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
             for (const auto& user : userList)
             {
                 string userId = GetIdByNickname(user);
+                std::lock_guard<std::mutex> clientsLock(server_.clientsMutex);
                 auto it = clientsMap.find(userId);
                 if (it != clientsMap.end())
                 {
@@ -1173,7 +1164,8 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
                 return;
             }
 
-            if (!characterStatsManager_.LoadFromName("CharStat")) {
+            CharacterStatsManager characterStats;
+            if (!characterStats.LoadFromName("CharStat")) {
                 std::cerr << "[GET_MAP] CharStat.csv 로딩 실패" << std::endl;
                 return;
             }
@@ -1182,7 +1174,7 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
             auto& mapData = result.first;
             auto& allSpawnPoints = result.second;
 
-            Room* room = roomManager_.FindRoomByName(roomName);
+            auto room = roomManager_.FindRoomByName(roomName);
             for (const auto& userId : room->users) {
                 string nickname = Trim(GetNicknameById(userId));
             }
@@ -1241,7 +1233,7 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
                 if (itCharSel != room->characterSelections.end())
                     charIndex = itCharSel->second;
 
-                const CharStats* stats = characterStatsManager_.GetStats(charIndex);
+                const CharStats* stats = characterStats.GetStats(charIndex);
                 int health = stats ? stats->health : 0;
                 int attack = stats ? stats->attack : 0;
 
@@ -1258,28 +1250,18 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
             std::string response = "MAP_DATA|" + mapName + "|" + mapDataStr + "|" + spawnStr + "\n";
             std::cout << "[서버 MAP_DATA 전송] " << response;
             std::lock_guard<std::mutex> lock(server_.GetClientsMutex());
-            auto& clientsMap = GetClientsMap();
-
-            std::vector<std::string> userList;
-            for (const auto& userId : room->users) {
-                std::string nickname = Trim(GetNicknameById(userId));
-                userList.push_back(nickname);
-            }
-
-            for (const auto& nickname : userList)
-            {
-                std::string userId = Trim(GetIdByNickname(nickname));
-                auto it = clientsMap.find(userId);
-                if (it != clientsMap.end())
-                {
-                    QueueSend(it->second->socket, response.c_str(), (int)response.size(), 0);
-                    QueueSend(it->second->socket, charInfoStr.c_str(), (int)charInfoStr.size(), 0);
+            for (const auto& id : room->users) {
+                auto it = clientsMap.find(id);
+                if (it != clientsMap.end()) {
+                    QueueSend(it->second->socket, response.data(), static_cast<int>(response.size()), 0);
+                    QueueSend(it->second->socket, charInfoStr.data(), static_cast<int>(charInfoStr.size()), 0);
                 }
             }
 
         }
         else if (message.rfind("GET_BALLOON|", 0) == 0)
         {
+            auto userState = userManager_.LockState();
             string nickname = message.substr(strlen("GET_BALLOON|"));
             nickname = Trim(nickname);
 
@@ -1294,6 +1276,7 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
             QueueSend(client->socket, response.c_str(), (int)response.size(), 0);
         }
         else if (message.rfind("GET_EMO|", 0) == 0) {
+            auto userState = userManager_.LockState();
             std::string nickname = message.substr(strlen("GET_EMO|"));
             nickname = Trim(nickname);
 
@@ -1360,7 +1343,7 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
             player_.UpdatePlayerPosition(username, x, z);
             const std::string resultMsg = "MOVE_RESULT|" + username + "," +
                 std::to_string(x) + "," + std::to_string(z);
-            roomManager_.BroadcastToRoomExcept(client->socket, resultMsg);
+            roomManager_.BroadcastToRoomExcept(client->id, client->socket, resultMsg);
         }
         else if (message.rfind("WEAPON_ATTACK|", 0) == 0)
         {
@@ -1409,7 +1392,7 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
             }
 
             
-            //roomManager_.BroadcastToRoomExcept(client->socket, forwardMsg);
+            //roomManager_.BroadcastToRoomExcept(client->id, client->socket, forwardMsg);
             roomManager_.BroadcastToUserRoom(senderId, forwardMsg);
             std::cout << "[Server] WEAPON_ATTACK 처리 완료 from " << nickname << std::endl;
             }
@@ -1428,7 +1411,7 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
             std::string rotYStr = data.substr(second + 1);
 
             std::string forwardMsg = "MELODY_MOVE|" + nickname + "|" + posStr + "|" + rotYStr + "\n";
-            roomManager_.BroadcastToRoomExcept(client->socket, forwardMsg);
+            roomManager_.BroadcastToRoomExcept(client->id, client->socket, forwardMsg);
 
             //std::cout << "[Server] Melody 이동 정보 브로드캐스트 (" << nickname << "): " << posStr << ", " << rotYStr << std::endl;
             }
@@ -1467,7 +1450,7 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
 
             std::string broadcastMsg = "DESTROY_BLOCK|" + blockName + "\n";
 
-            Room* room = roomManager_.GetRoomByUserId(client->id);
+            auto room = roomManager_.GetRoomByUserId(client->id);
             if (room != nullptr)
             {
                 roomManager_.BroadcastToUserRoom(client->id, broadcastMsg);
@@ -1499,7 +1482,7 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
             std::string targetId = GetIdByNickname(targetNick);
 
             // 이제 attackerId와 targetId로 룸 정보 및 팀 체크 가능
-            Room* room = roomManager_.GetRoomByUserId(attackerId);
+            auto room = roomManager_.GetRoomByUserId(attackerId);
             if (room != nullptr)
             {
                 std::string attackerTeam = "None";
@@ -1675,10 +1658,9 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
             std::string roomId = roomManager_.GetUserRoomId(deadUserId);
             if (roomId.empty()) return;
 
-            // 2. 중복 처리 방지
-            auto& deadSet = roomManager_.deadUsersByRoom[roomId];
-            if (deadSet.find(deadUserId) != deadSet.end()) return;
-            deadSet.insert(deadUserId);
+            auto death = roomManager_.RecordDeath(deadUserId);
+            if (!death.room) return;
+            const auto& deadSet = death.dead;
 
             // 3. PLAYER_DEAD 패킷 브로드캐스트
             std::ostringstream deadMsg;
@@ -1686,13 +1668,11 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
             roomManager_.BroadcastToUserRoom(deadUserId, deadMsg.str());
             std::cout << "[Server] PLAYER_DEAD broadcast: " << deadMsg.str();
 
-            // 4. 방 객체 가져오기
-            Room* room = roomManager_.FindRoomByName(roomId);
-            if (!room) return;
+            if (!death.resolvesMatch) return;
+            const auto& room = death.room;
+            const auto& roomUserIds = room->users;
 
-            // 5. 방 전체 유저 ID
-            std::vector<std::string> roomUserIds = roomManager_.GetUserIdsInRoom(roomId);
-
+            try {
             // 6. 살아있는 유저와 팀별 목록
             std::unordered_map<std::string, std::vector<std::string>> aliveTeams;
             for (const auto& userId : roomUserIds)
@@ -1717,10 +1697,10 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
 
                     std::ostringstream winMsg;
                     winMsg << "WIN|" << winnerNickname << "\n";
-                    roomManager_.BroadcastToUserRoom(deadUserId, winMsg.str());
                     std::cout << "[Server] WIN packet sent to: " << winnerNickname << "\n";
 
                     // 보상 처리
+                    UserManager::Transaction transaction(userManager_);
                     std::ostringstream rewardMsg;
                     rewardMsg << "REWARD_RESULT";
 
@@ -1761,6 +1741,8 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
                             << ",money1:" << gainedCoin1;
                     }
 
+                    if (!transaction.Commit()) throw std::runtime_error("Reward CSV commit failed");
+                    roomManager_.BroadcastToUserRoom(deadUserId, winMsg.str());
                     rewardMsg << "\n";
                     roomManager_.BroadcastToUserRoom(deadUserId, rewardMsg.str());
                     std::cout << "[Server] REWARD_RESULT broadcast: " << rewardMsg.str();
@@ -1782,10 +1764,10 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
                         teamWinMsg << "," << nick;
                     teamWinMsg << "\n";
 
-                    roomManager_.BroadcastToUserRoom(deadUserId, teamWinMsg.str());
                     std::cout << "[Server] TEAM_WIN broadcast: " << teamWinMsg.str();
 
                     // 보상 처리
+                    UserManager::Transaction transaction(userManager_);
                     std::ostringstream rewardMsg;
                     rewardMsg << "REWARD_RESULT";
 
@@ -1831,10 +1813,16 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
                             << ",money1:" << gainedCoin1;
                     }
 
+                    if (!transaction.Commit()) throw std::runtime_error("Reward CSV commit failed");
+                    roomManager_.BroadcastToUserRoom(deadUserId, teamWinMsg.str());
                     rewardMsg << "\n";
                     roomManager_.BroadcastToUserRoom(deadUserId, rewardMsg.str());
                     std::cout << "[Server] REWARD_RESULT broadcast: " << rewardMsg.str();
                 }
+            }
+            } catch (...) {
+                roomManager_.RetryDeath(*room, deadUserId);
+                throw;
             }
         }
         else if (message.rfind("READY_TO_EXIT|", 0) == 0)
@@ -1944,6 +1932,7 @@ void ClientHandler::SendWinRate(std::shared_ptr<ClientInfo> client, const std::s
 // 클라이언트에게 GETMYEMO 패킷 전송
 void ClientHandler::SendUserEmotes(std::shared_ptr<ClientInfo> client, const std::string& nickname)
 {
+    auto userState = userManager_.LockState();
     std::string userId = Trim(GetIdByNickname(nickname));
     if (userId.empty())
     {
@@ -1982,6 +1971,7 @@ void ClientHandler::SendUserEmotes(std::shared_ptr<ClientInfo> client, const std
 // 클라이언트에게 GETMYBALLOON 패킷 전송
 void ClientHandler::SendUserBallons(std::shared_ptr<ClientInfo> client, const std::string& nickname)
 {
+    auto userState = userManager_.LockState();
     // 닉네임 → ID
     std::string userId = Trim(GetIdByNickname(nickname));
     if (userId.empty())
@@ -2016,6 +2006,7 @@ void ClientHandler::SendUserBallons(std::shared_ptr<ClientInfo> client, const st
 
 void ClientHandler::SendUserIcons(std::shared_ptr<ClientInfo> client,const std::string& nickname)
 {
+    auto userState = userManager_.LockState();
     std::string userId = Trim(GetIdByNickname(nickname));
     if (userId.empty() || !client)
         return;
@@ -2068,6 +2059,7 @@ void ClientHandler::SendUserIcons(std::shared_ptr<ClientInfo> client,const std::
 
 void ClientHandler::SendCoinInfo(std::shared_ptr<ClientInfo> client, const std::string& nickname)
 {
+    auto userState = userManager_.LockState();
     if (!client) return;
 
     std::string userId = Trim(GetIdByNickname(nickname));
@@ -2095,6 +2087,7 @@ void ClientHandler::SendCoinInfo(std::shared_ptr<ClientInfo> client, const std::
 
 void ClientHandler::SendStoreCharList(std::shared_ptr<ClientInfo> client, const std::string& nickname)
 {
+    auto userState = userManager_.LockState();
     if (!client) return;
 
     std::string userId = Trim(GetIdByNickname(nickname));
@@ -2150,6 +2143,7 @@ void ClientHandler::SendStoreCharList(std::shared_ptr<ClientInfo> client, const 
 
 void ClientHandler::SendStoreBalloonList(std::shared_ptr<ClientInfo> client, const std::string& nickname)
 {
+    auto userState = userManager_.LockState();
     if (!client) return;
 
     std::string userId = Trim(GetIdByNickname(nickname));
@@ -2202,6 +2196,7 @@ void ClientHandler::SendStoreBalloonList(std::shared_ptr<ClientInfo> client, con
 
 void ClientHandler::SendStoreEmoList(std::shared_ptr<ClientInfo> client, const std::string& nickname)
 {
+    auto userState = userManager_.LockState();
     if (!client) return;
 
     std::string userId = Trim(GetIdByNickname(nickname));
@@ -2255,6 +2250,7 @@ void ClientHandler::SendStoreEmoList(std::shared_ptr<ClientInfo> client, const s
 
 void ClientHandler::SendStoreIconList(std::shared_ptr<ClientInfo> client, const std::string& nickname)
 {
+    auto userState = userManager_.LockState();
     if (!client) return;
 
     std::string userId = Trim(GetIdByNickname(nickname));
@@ -2334,7 +2330,7 @@ void ClientHandler::OnClientDisconnected(shared_ptr<ClientInfo> client)
     if (!client->id.empty())
     {
         // 방 검사
-        Room* room = roomManager_.GetRoomByUserId(client->id);
+        auto room = roomManager_.GetRoomByUserId(client->id);
 
         if (room)
         {
@@ -2364,4 +2360,27 @@ void ClientHandler::RemoveLoginSession(const std::string& userId)
 }
 
 
+
+
+    string ClientHandler::GetNicknameById(const std::string& id) const {
+        std::lock_guard<std::mutex> lock(server_.clientsMutex);
+        string trimmedID = Trim(id);
+        for (const auto& pair : clientsMap) {
+            if (pair.second && pair.second->id == trimmedID) {
+                return pair.second->nickname;
+            }
+        }
+        return id;
+    }
+
+    string ClientHandler::GetIdByNickname(const string& nickname) const {
+        std::lock_guard<std::mutex> lock(server_.clientsMutex);
+        string trimmedNick = Trim(nickname);
+        for (const auto& pair : clientsMap) {
+            if (pair.second && Trim(pair.second->nickname) == trimmedNick) {
+                return pair.second->id;
+            }
+        }
+        return "";
+    }
 

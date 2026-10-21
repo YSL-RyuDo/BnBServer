@@ -29,6 +29,12 @@ jobs:
         run: python tools/benchmark/backpressure.py --candidate .bench-work/candidate --out .bench-work/pressure --repeats 1 --pressure-only --check
       - name: Verify cached damage through real sockets
         run: python tools/benchmark/hit_regression.py --build .bench-work/candidate --out .bench-work/hit
+      - name: Verify CSV transactions and crash recovery
+        run: python tools/benchmark/test_state.py --out .bench-work/state
+      - name: Verify concurrent match completion and room churn
+        run: python tools/benchmark/room_state.py --build .bench-work/candidate --out .bench-work/room-state
+      - name: Verify simultaneous purchases through sockets
+        run: python tools/benchmark/purchase_regression.py --build .bench-work/candidate --out .bench-work/purchase
       - name: Verify startup attack table and concurrent reads
         run: python tools/benchmark/stats_lookup.py --candidate .bench-work/candidate --out .bench-work/lookup --check-only
       - name: Save regression results
@@ -44,3 +50,8 @@ jobs:
             .bench-work/pressure/results.json
             .bench-work/hit/results.json
             .bench-work/lookup/checks.txt
+            .bench-work/state/results.json
+            .bench-work/state/results-state.txt
+            .bench-work/state/results-recover.txt
+            .bench-work/room-state/results.json
+            .bench-work/purchase/results.json

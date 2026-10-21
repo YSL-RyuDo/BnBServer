@@ -42,7 +42,7 @@ vector<UserAccount> UserManager::LoadAccountUsers(const string& filename) {
     std::cerr << "로드된 사용자 수: " << count << std::endl;
 
     {
-        lock_guard<mutex> lock(usersMutex);
+        std::lock_guard<std::recursive_mutex> lock(usersMutex);
         users = std::move(loadedUsers);
     }
 
@@ -365,35 +365,43 @@ vector<UserIcons> UserManager::LoadUserIcons(const string& filename)
 }
 
 bool UserManager::RegisterUserAccount(const UserAccount& user) {
-    std::ofstream outFile("UsersAccount.csv", std::ios::app);
-    if (!outFile.is_open()) return false;
+    auto state = LockState();
+    std::ostringstream outFile;
+    const std::string path = "UsersAccount.csv";
+    outFile << ReadCsv(path);
 
     outFile << user.id << "," << user.password << "," << user.nickname << "\n";
-    return true;
+    return WriteCsv(path, outFile.str());
 }
 bool UserManager::RegisterUserProfile(const UserProfile& profile) {
-    std::ofstream profileFile("UserProfile.csv", std::ios::app);
-    if (!profileFile.is_open()) return false;
+    auto state = LockState();
+    std::ostringstream profileFile;
+    const std::string path = "UserProfile.csv";
+    profileFile << ReadCsv(path);
 
     profileFile << profile.id << "," << profile.level << "," << profile.exp << "," << profile.icon << ","
         << profile.money0 << "," << profile.money1 << ","
         << profile.emo0 << "," << profile.emo1 << "," << profile.emo2 << "," << profile.emo3 << ","
         << profile.balloon << "\n";
-    return true;
+    return WriteCsv(path, profileFile.str());
 }
 bool UserManager::RegisterUserCharacters(const UserCharacters& characters) {
-    std::ofstream charFile("UserCharacters.csv", std::ios::app);
-    if (!charFile.is_open()) return false;
+    auto state = LockState();
+    std::ostringstream charFile;
+    const std::string path = "UserCharacters.csv";
+    charFile << ReadCsv(path);
 
     charFile << characters.id << ","
         << characters.char0 << "," << characters.char1 << "," << characters.char2 << ","
         << characters.char3 << "," << characters.char4 << "," << characters.char5 << ","
         << characters.char6 << "\n";
-    return true;
+    return WriteCsv(path, charFile.str());
 }
 bool UserManager::RegisterUserEmotes(const UserCharacterEmotes& emotes) {
-    std::ofstream emoteFile("UserEmotes.csv", std::ios::app);
-    if (!emoteFile.is_open()) return false;
+    auto state = LockState();
+    std::ostringstream emoteFile;
+    const std::string path = "UserEmotes.csv";
+    emoteFile << ReadCsv(path);
 
     emoteFile << emotes.id << ","
         << emotes.emo0 << "," << emotes.emo1 << "," << emotes.emo2 << "," << emotes.emo3 << ","
@@ -407,11 +415,13 @@ bool UserManager::RegisterUserEmotes(const UserCharacterEmotes& emotes) {
         << emotes.emo32 << "," << emotes.emo33 << "," << emotes.emo34 << "," << emotes.emo35
         << "\n";
 
-    return true;
+    return WriteCsv(path, emoteFile.str());
 }
 bool UserManager::RegisterUserWinLossStats(const UserWinLossStats& stats) {
-    std::ofstream statsFile("UserWinLossStats.csv", std::ios::app);
-    if (!statsFile.is_open()) return false;
+    auto state = LockState();
+    std::ostringstream statsFile;
+    const std::string path = "UserWinLossStats.csv";
+    statsFile << ReadCsv(path);
 
     statsFile << stats.id << ","
         << stats.winCount << "," << stats.loseCount << ","
@@ -424,11 +434,13 @@ bool UserManager::RegisterUserWinLossStats(const UserWinLossStats& stats) {
         << stats.char6_win << "," << stats.char6_lose
         << "\n";
 
-    return true;
+    return WriteCsv(path, statsFile.str());
 }
 bool UserManager::RegisterUserBallons(const UserBallons& ballon) {
-    std::ofstream ballonFile("UserBalloon.csv", std::ios::app);
-    if (!ballonFile.is_open()) return false;
+    auto state = LockState();
+    std::ostringstream ballonFile;
+    const std::string path = "UserBalloon.csv";
+    ballonFile << ReadCsv(path);
 
     ballonFile << ballon.id << ","
         << ballon.balloon0 << "," << ballon.balloon1 << "," << ballon.balloon2 << "," << ballon.balloon3 << ","
@@ -436,11 +448,13 @@ bool UserManager::RegisterUserBallons(const UserBallons& ballon) {
         << ballon.balloon8 << "," << ballon.balloon9
         << "\n";
 
-    return true;
+    return WriteCsv(path, ballonFile.str());
 }
 bool UserManager::RegisterUserIcons(const UserIcons& icon) {
-    std::ofstream iconFile("UserIcon.csv", std::ios::app);
-    if (!iconFile.is_open()) return false;
+    auto state = LockState();
+    std::ostringstream iconFile;
+    const std::string path = "UserIcon.csv";
+    iconFile << ReadCsv(path);
 
     iconFile << icon.id << ","
         << icon.icon0 << "," << icon.icon1 << "," << icon.icon2 << "," << icon.icon3 << ","
@@ -448,16 +462,16 @@ bool UserManager::RegisterUserIcons(const UserIcons& icon) {
         << icon.icon8 << "," << icon.icon9
         << "\n";
 
-    return true;
+    return WriteCsv(path, iconFile.str());
 }
 
 // Users.csv
 bool UserManager::SaveUserAccount(const std::string& userId)
 {
-    std::ifstream inFile("UsersAccount.csv");
-    if (!inFile.is_open()) return false;
-    std::ofstream tempFile("temp.csv");
-    if (!tempFile.is_open()) return false;
+    auto state = LockState();
+    const std::string path = "UsersAccount.csv";
+    std::istringstream inFile(ReadCsv(path));
+    std::ostringstream tempFile;
 
     std::string line;
     bool header = true;
@@ -480,20 +494,16 @@ bool UserManager::SaveUserAccount(const std::string& userId)
         else tempFile << line << "\n";
     }
 
-    inFile.close();
-    tempFile.close();
-    std::remove("UsersAccount.csv");
-    std::rename("temp.csv", "UsersAccount.csv");
-    return true;
+    return WriteCsv(path, tempFile.str());
 }
 
 // UserProfiles.csv
 bool UserManager::SaveUserProfile(const std::string& userId)
 {
-    std::ifstream inFile("UserProfile.csv");
-    if (!inFile.is_open()) return false;
-    std::ofstream tempFile("temp.csv");
-    if (!tempFile.is_open()) return false;
+    auto state = LockState();
+    const std::string path = "UserProfile.csv";
+    std::istringstream inFile(ReadCsv(path));
+    std::ostringstream tempFile;
 
     std::string line;
     bool header = true;
@@ -519,20 +529,16 @@ bool UserManager::SaveUserProfile(const std::string& userId)
         else tempFile << line << "\n";
     }
 
-    inFile.close();
-    tempFile.close();
-    std::remove("UserProfile.csv");
-    std::rename("temp.csv", "UserProfile.csv");
-    return true;
+    return WriteCsv(path, tempFile.str());
 }
 
 // UserCharacters.csv
 bool UserManager::SaveUserCharacters(const std::string& userId)
 {
-    std::ifstream inFile("UserCharacters.csv");
-    if (!inFile.is_open()) return false;
-    std::ofstream tempFile("temp.csv");
-    if (!tempFile.is_open()) return false;
+    auto state = LockState();
+    const std::string path = "UserCharacters.csv";
+    std::istringstream inFile(ReadCsv(path));
+    std::ostringstream tempFile;
 
     std::string line;
     bool header = true;
@@ -556,20 +562,16 @@ bool UserManager::SaveUserCharacters(const std::string& userId)
         else tempFile << line << "\n";
     }
 
-    inFile.close();
-    tempFile.close();
-    std::remove("UserCharacters.csv");
-    std::rename("temp.csv", "UserCharacters.csv");
-    return true;
+    return WriteCsv(path, tempFile.str());
 }
 
 // UserEmotes.csv
 bool UserManager::SaveUserEmotes(const std::string& userId)
 {
-    std::ifstream inFile("UserEmotes.csv");
-    if (!inFile.is_open()) return false;
-    std::ofstream tempFile("temp.csv");
-    if (!tempFile.is_open()) return false;
+    auto state = LockState();
+    const std::string path = "UserEmotes.csv";
+    std::istringstream inFile(ReadCsv(path));
+    std::ostringstream tempFile;
 
     std::string line;
     bool header = true;
@@ -605,20 +607,16 @@ bool UserManager::SaveUserEmotes(const std::string& userId)
         else tempFile << line << "\n";
     }
 
-    inFile.close();
-    tempFile.close();
-    std::remove("UserEmotes.csv");
-    std::rename("temp.csv", "UserEmotes.csv");
-    return true;
+    return WriteCsv(path, tempFile.str());
 }
 
 // UserWinLossStats.csv
 bool UserManager::SaveUserWinLossStats(const std::string& userId)
 {
-    std::ifstream inFile("UserWinLossStats.csv");
-    if (!inFile.is_open()) return false;
-    std::ofstream tempFile("temp.csv");
-    if (!tempFile.is_open()) return false;
+    auto state = LockState();
+    const std::string path = "UserWinLossStats.csv";
+    std::istringstream inFile(ReadCsv(path));
+    std::ostringstream tempFile;
 
     std::string line;
     bool header = true;
@@ -645,20 +643,16 @@ bool UserManager::SaveUserWinLossStats(const std::string& userId)
         else tempFile << line << "\n";
     }
 
-    inFile.close();
-    tempFile.close();
-    std::remove("UserWinLossStats.csv");
-    std::rename("temp.csv", "UserWinLossStats.csv");
-    return true;
+    return WriteCsv(path, tempFile.str());
 }
 
 // UserBallons.csv
 bool UserManager::SaveUserBallons(const std::string& userId)
 {
-    std::ifstream inFile("UserBalloon.csv");
-    if (!inFile.is_open()) return false;
-    std::ofstream tempFile("temp.csv");
-    if (!tempFile.is_open()) return false;
+    auto state = LockState();
+    const std::string path = "UserBalloon.csv";
+    std::istringstream inFile(ReadCsv(path));
+    std::ostringstream tempFile;
 
     std::string line;
     bool header = true;
@@ -683,20 +677,16 @@ bool UserManager::SaveUserBallons(const std::string& userId)
         else tempFile << line << "\n";
     }
 
-    inFile.close();
-    tempFile.close();
-    std::remove("UserBalloon.csv");
-    std::rename("temp.csv", "UserBalloon.csv");
-    return true;
+    return WriteCsv(path, tempFile.str());
 }
 
 // UserIcons.csv
 bool UserManager::SaveUserIcons(const std::string& userId)
 {
-    std::ifstream inFile("UserIcon.csv");
-    if (!inFile.is_open()) return false;
-    std::ofstream tempFile("temp.csv");
-    if (!tempFile.is_open()) return false;
+    auto state = LockState();
+    const std::string path = "UserIcon.csv";
+    std::istringstream inFile(ReadCsv(path));
+    std::ostringstream tempFile;
 
     std::string line;
     bool header = true;
@@ -721,16 +711,12 @@ bool UserManager::SaveUserIcons(const std::string& userId)
         else tempFile << line << "\n";
     }
 
-    inFile.close();
-    tempFile.close();
-    std::remove("UserIcon.csv");
-    std::rename("temp.csv", "UserIcon.csv");
-    return true;
+    return WriteCsv(path, tempFile.str());
 }
 
 
 string UserManager::CheckLogin(const string& id, const string& pw) {
-    lock_guard<mutex> lock(usersMutex); // 내부에서 잠금
+    std::lock_guard<std::recursive_mutex> lock(usersMutex); // 내부에서 잠금
 
     for (const auto& user : users) {
         if (user.id == id) {
@@ -749,7 +735,11 @@ string UserManager::CheckLogin(const string& id, const string& pw) {
 }
 
 string UserManager::RegisterUser(const string& id, const string& pw, const string& nickname) {
-    lock_guard<mutex> lock(usersMutex);
+    Transaction transaction(*this);
+    if (id.empty() || nickname.empty() || id.find_first_of(",\r\n|") != string::npos ||
+        pw.find_first_of(",\r\n|") != string::npos || nickname.find_first_of(",\r\n|") != string::npos)
+        return "REGISTER_ERROR|\n";
+    std::lock_guard<std::recursive_mutex> lock(usersMutex);
 
     // 중복 체크
     for (const auto& user : users) {
@@ -795,6 +785,7 @@ string UserManager::RegisterUser(const string& id, const string& pw, const strin
     userBallons.push_back(newBallon);
     userIcons.push_back(newIcon);
 
+    if (!transaction.Commit()) return "FILE_WRITE_ERROR|\n";
     return "REGISTER_SUCCESS|\n";
 }
 
@@ -809,7 +800,7 @@ void UserManager::BroadcastLobbyUserList() {
     }
     std::string message = "LOBBY_USER_LIST";
     {
-        std::lock_guard<std::mutex> lock(usersMutex);
+        std::lock_guard<std::recursive_mutex> lock(usersMutex);
         for (const auto& recipient : recipients) {
             const auto& id = recipient.second;
             auto user = std::find_if(users.begin(), users.end(), [&](const UserAccount& u) { return u.id == id; });
@@ -825,7 +816,7 @@ void UserManager::BroadcastLobbyUserList() {
 
 void UserManager::SendUserInfoByNickname(shared_ptr<ClientInfo> client, const string& nickname)
 {
-    lock_guard<mutex> lock(usersMutex);
+    std::lock_guard<std::recursive_mutex> lock(usersMutex);
 
     auto itUser = find_if(users.begin(), users.end(), [&](const UserAccount& u) {
         return u.nickname == nickname;
@@ -907,6 +898,7 @@ void UserManager::LogoutUser(std::shared_ptr<ClientInfo> client)
 //}
 
 std::vector<int> UserManager::GetEmotionsByUserId(const std::string& userId) {
+    auto state = LockState();
     std::ifstream file("UserProfile.csv");
     if (!file.is_open()) {
         std::cerr << "[GET_EMO] UserProfile.csv 열기 실패" << std::endl;
@@ -956,6 +948,7 @@ std::vector<int> UserManager::GetEmotionsByUserId(const std::string& userId) {
 }
 
 int UserManager::GetBalloonByUserId(const std::string& userId) {
+    auto state = LockState();
     std::ifstream file("UserProfile.csv");
     if (!file.is_open()) {
         std::cerr << "[GET_BALLOON] UserProfile.csv 열기 실패" << std::endl;
@@ -1001,6 +994,7 @@ int UserManager::GetBalloonByUserId(const std::string& userId) {
 
 std::vector<int> UserManager::GetCharactersByUserId(const std::string& userId)
 {
+    auto state = LockState();
     std::ifstream file("UserCharacters.csv");
     std::string line;
 
@@ -1027,7 +1021,7 @@ std::vector<int> UserManager::GetCharactersByUserId(const std::string& userId)
 
 UserProfile& UserManager::GetUserProfileById(const std::string& id)
 {
-    std::lock_guard<std::mutex> lock(usersMutex);
+    std::lock_guard<std::recursive_mutex> lock(usersMutex);
 
     for (auto& profile : userProfiles)
     {
@@ -1042,6 +1036,7 @@ UserProfile& UserManager::GetUserProfileById(const std::string& id)
 
 void UserManager::UpdateWinLoss(const std::string& userId, bool isWin, int charIndex)
 {
+    auto state = LockState();
     auto it = std::find_if(userStats.begin(), userStats.end(),
         [&](const UserWinLossStats& s) { return s.id == userId; });
     if (it == userStats.end())
@@ -1212,4 +1207,37 @@ int UserManager::GetAttackByIndex(int index)
 {
     const auto found = attackByIndex_.find(index);
     return found == attackByIndex_.end() ? 0 : found->second;
+}
+
+
+UserManager::Transaction::Transaction(UserManager& o)
+    : owner_(o), lock_(o.usersMutex), users_(o.users), profiles_(o.userProfiles),
+      characters_(o.userCharacters), emotes_(o.userEmotes), stats_(o.userStats),
+      balloons_(o.userBallons), icons_(o.userIcons) {
+    if (o.transactionActive_) throw std::logic_error("Nested user transaction");
+    o.transactionActive_ = true;
+    o.pending_.clear();
+}
+UserManager::Transaction::~Transaction() {
+    if (!committed_) {
+        owner_.users = std::move(users_); owner_.userProfiles = std::move(profiles_);
+        owner_.userCharacters = std::move(characters_); owner_.userEmotes = std::move(emotes_);
+        owner_.userStats = std::move(stats_); owner_.userBallons = std::move(balloons_);
+        owner_.userIcons = std::move(icons_);
+    }
+    owner_.pending_.clear(); owner_.transactionActive_ = false;
+}
+bool UserManager::Transaction::Commit() {
+    if (committed_) return true;
+    if (!CsvStore::Commit(owner_.pending_)) return false;
+    committed_ = true; return true;
+}
+std::string UserManager::ReadCsv(const std::string& path) {
+    const auto found = pending_.find(path);
+    return found == pending_.end() ? CsvStore::Read(path) : found->second;
+}
+bool UserManager::WriteCsv(const std::string& path, const std::string& data) {
+    if (!transactionActive_) throw std::logic_error("CSV mutation requires a user transaction");
+    pending_[path] = data;
+    return true;
 }

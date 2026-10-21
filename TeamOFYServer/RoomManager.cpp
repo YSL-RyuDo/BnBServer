@@ -69,6 +69,9 @@ bool RoomManager::CreateRoom(
 
     {
         lock_guard<mutex> lock(roomsMutex);
+        for (const auto& room : rooms) {
+            if (room.roomName == roomName || std::find(room.users.begin(), room.users.end(), client->id) != room.users.end()) return false;
+        }
 
         // 새 룸 생성
         Room newRoom;
@@ -155,6 +158,9 @@ bool RoomManager::EnterRoom(
     }
 
     lock_guard<mutex> lock(roomsMutex);
+    for (const auto& room : rooms) if (std::find(room.users.begin(), room.users.end(), client->id) != room.users.end()) {
+        response = "ENTER_ROOM_FAIL|ALREADY_IN_ROOM\n"; return false;
+    }
 
     auto it = std::find_if(rooms.begin(), rooms.end(),
         [&roomName](const Room& r) { return r.roomName == roomName; });
@@ -177,7 +183,8 @@ bool RoomManager::EnterRoom(
     }
 
     // 유저 추가
-    room.users.push_back(client->id);
+    if (room.users.size() >= 4) { response = "ENTER_ROOM_FAIL|ROOM_FULL\n"; return false; }
+            room.users.push_back(client->id);
 
     // 협동전이면 팀 할당
     if (room.isCoopMode) {
@@ -244,7 +251,8 @@ void RoomManager::HandleRoomChatMessage(shared_ptr<ClientInfo> sender, const str
     {
         if (room.roomName == roomName)
         {
-            auto& clientsMap = clientHandler_.GetClientsMap();
+            std::lock_guard<std::mutex> clientsLock(server_.clientsMutex);
+            auto& clientsMap = clientHandler_.GetClientsMapLocked();
 
             for (const auto& user : room.users)
             {
@@ -269,7 +277,8 @@ void RoomManager::SendServerMessageToRoom(const std::string& roomName, const std
     Room* room = FindRoomByName_NoLock(roomName);
     if (!room) return;
 
-    auto& clientsMap = clientHandler_.GetClientsMap();
+    std::lock_guard<std::mutex> clientsLock(server_.clientsMutex);
+    auto& clientsMap = clientHandler_.GetClientsMapLocked();
     for (const auto& userId : room->users)
     {
         auto it = clientsMap.find(userId);
@@ -310,7 +319,10 @@ void RoomManager::ExitRoom(const std::string& message) {
 
                 // 퇴장 후 유저가 0명이면 방 제거
                 if (room.users.empty()) {
-                    rooms.erase(it);
+                    deadUsersByRoom.erase(it->roomName);
+            readyUsersByRoom.erase(it->roomName);
+            resolvedRooms_.erase(it->roomName);
+            rooms.erase(it);
                     std::cout << "[서버] 방 '" << roomName << "' 에 유저가 없어 삭제됨\n";
                     roomDeleted = true;
                 }
@@ -338,8 +350,8 @@ void RoomManager::ExitRoom(const std::string& message) {
                     std::lock_guard<std::mutex> lockClients(server_.clientsMutex);
 
                     for (const auto& user : room.users) {
-                        auto clientIt = clientHandler_.GetClientsMap().find(user);
-                        if (clientIt != clientHandler_.GetClientsMap().end()) {
+                        auto clientIt = clientHandler_.GetClientsMapLocked().find(user);
+                        if (clientIt != clientHandler_.GetClientsMapLocked().end()) {
                             SOCKET s = clientIt->second->socket;
                             int sendLen = QueueSend(s, refreshMsg.c_str(), (int)refreshMsg.size(), 0);
                             if (sendLen == SOCKET_ERROR) {
@@ -448,8 +460,8 @@ void RoomManager::HandleCharacterChoice(ClientInfo& client, const std::string& d
         {
             std::lock_guard<std::mutex> lockClients(server_.clientsMutex);
             for (const auto& user : room.users) {
-                auto clientIt = clientHandler_.GetClientsMap().find(user);
-                if (clientIt != clientHandler_.GetClientsMap().end()) {
+                auto clientIt = clientHandler_.GetClientsMapLocked().find(user);
+                if (clientIt != clientHandler_.GetClientsMapLocked().end()) {
                     SOCKET s = clientIt->second->socket;
                     int sendLen = QueueSend(s, msg.c_str(), (int)msg.size(), 0);
                     if (sendLen == SOCKET_ERROR) {
@@ -474,14 +486,15 @@ bool RoomManager::TryStartGame(const string& roomName, vector<string>& usersOut)
     lock_guard<mutex> lock(roomsMutex);
     for (auto& room : rooms) {
         if (room.roomName == roomName) {
-            if (room.users.size() >= 2) {
+            if (!room.isInGame && room.users.size() >= 2) {
                 usersOut.clear();
                 for (const auto& userId : room.users) {
                     std::string rawNickname = clientHandler_.GetNicknameById(userId);
                     string nickname = Trim(rawNickname);
                     usersOut.push_back(nickname);
                 }
-                room.isInGame = true;
+                room.isInGame = true; room.matchId = ++nextMatchId_;
+                deadUsersByRoom.erase(roomName); readyUsersByRoom.erase(roomName); resolvedRooms_.erase(roomName);
                 return true;
             }
             return false;
@@ -503,7 +516,7 @@ bool RoomManager::TryStartCoopGame(
         if (room.roomName == roomName)
         {
             // 인원 4명 아니면 실패
-            if (room.users.size() != 4)
+            if (room.isInGame || room.users.size() != 4)
                 return false;
 
             userList.clear();
@@ -531,7 +544,8 @@ bool RoomManager::TryStartCoopGame(
             // 팀 인원 조건 확인
             if (blueTeam.size() == 2 && redTeam.size() == 2)
             {
-                room.isInGame = true;
+                room.isInGame = true; room.matchId = ++nextMatchId_;
+                deadUsersByRoom.erase(roomName); readyUsersByRoom.erase(roomName); resolvedRooms_.erase(roomName);
                 return true;
             }
 
@@ -543,7 +557,7 @@ bool RoomManager::TryStartCoopGame(
 
 
 
-Room* RoomManager::FindRoomByName(const std::string& roomName)
+std::shared_ptr<const Room> RoomManager::FindRoomByName(const std::string& roomName)
 {
     std::lock_guard<std::mutex> lock(roomsMutex);
     cout << "[DEBUG] START_GAME 요청: '" << roomName << "'" << endl;
@@ -551,7 +565,7 @@ Room* RoomManager::FindRoomByName(const std::string& roomName)
     {
         cout << "[DEBUG] 방 리스트: '" << room.roomName << "'" << endl;
         if (room.roomName == roomName)
-            return &room;
+            return std::make_shared<const Room>(room);
     }
     return nullptr;
 }
@@ -588,76 +602,44 @@ string RoomManager::GetGameUserListResponse(const string& roomName)
 
 // RoomManager 클래스 내부에 추가
 void RoomManager::BroadcastToUserRoom(const std::string& senderId, const std::string& message) {
-    std::lock_guard<std::mutex> lockRooms(roomsMutex);
-
-    // senderId가 속한 방 찾기
-    auto it = std::find_if(rooms.begin(), rooms.end(), [&](const Room& room) {
-        return std::find(room.users.begin(), room.users.end(), senderId) != room.users.end();
+    std::vector<std::shared_ptr<ClientInfo>> recipients;
+    {
+        std::lock_guard<std::mutex> roomLock(roomsMutex);
+        auto room = std::find_if(rooms.begin(), rooms.end(), [&](const Room& r) {
+            return std::find(r.users.begin(), r.users.end(), senderId) != r.users.end();
         });
-
-    if (it == rooms.end()) {
-        std::cerr << "[BroadcastToUserRoom] senderId가 속한 방을 찾을 수 없음: " << senderId << std::endl;
-        return;
-    }
-
-    Room& room = *it;
-
-    std::lock_guard<std::mutex> lockClients(server_.clientsMutex);
-    auto& clientsMap = clientHandler_.GetClientsMap();
-
-    for (const auto& userId : room.users) {
-        auto clientIt = clientsMap.find(userId);
-        if (clientIt != clientsMap.end()) {
-            int sendLen = QueueSend(clientIt->second->socket, message.c_str(), (int)message.size(), 0);
-            if (sendLen == SOCKET_ERROR) {
-                std::cerr << "[BroadcastToUserRoom] send 실패: " << WSAGetLastError() << " - userId: " << userId << std::endl;
-            }
-        }
-        else {
-            std::cerr << "[BroadcastToUserRoom] 클라이언트 검색 실패 - userId: " << userId << std::endl;
+        if (room == rooms.end()) return;
+        std::lock_guard<std::mutex> clientLock(server_.clientsMutex);
+        const auto& clients = clientHandler_.GetClientsMapLocked();
+        for (const auto& id : room->users) {
+            auto it = clients.find(id);
+            if (it != clients.end()) recipients.push_back(it->second);
         }
     }
+    // Retain connection ownership, then enqueue outside both shared state locks.
+    for (const auto& client : recipients)
+        QueueSend(client->socket, message.data(), static_cast<int>(message.size()), 0);
 }
 
-void RoomManager::BroadcastToRoomExcept(SOCKET exceptSocket, const std::string& message)
-{
-    std::lock_guard<std::mutex> lockRooms(roomsMutex);
-    std::lock_guard<std::mutex> lockClients(server_.clientsMutex);
-
-    // excludedSocket이 속한 방 찾기
-    auto it = std::find_if(rooms.begin(), rooms.end(), [&](const Room& room) {
-        for (const auto& userId : room.users)
-        {
-            auto clientIt = clientHandler_.GetClientsMap().find(userId);
-            if (clientIt != clientHandler_.GetClientsMap().end())
-            {
-                if (clientIt->second->socket == exceptSocket)
-                    return true;
-            }
-        }
-        return false;
-        });
-
-    if (it == rooms.end()) return;
-
-    Room& room = *it;
-
-    auto& clientsMap = clientHandler_.GetClientsMap();
-
-    std::string msgWithNewline = message;
-    if (!msgWithNewline.empty() && msgWithNewline.back() != '\n') {
-        msgWithNewline += "\n";
-    }
-
-    for (const auto& userId : room.users)
+void RoomManager::BroadcastToRoomExcept(const std::string& senderId, SOCKET exceptSocket, const std::string& message) {
+    std::vector<std::shared_ptr<ClientInfo>> recipients;
     {
-        auto clientIt = clientsMap.find(userId);
-        if (clientIt != clientsMap.end())
-        {
-            if (clientIt->second->socket == exceptSocket) continue;
-            QueueSend(clientIt->second->socket, msgWithNewline.c_str(), (int)msgWithNewline.size(), 0);
+        std::lock_guard<std::mutex> roomLock(roomsMutex);
+        auto room = std::find_if(rooms.begin(), rooms.end(), [&](const Room& r) {
+            return std::find(r.users.begin(), r.users.end(), senderId) != r.users.end();
+        });
+        if (room == rooms.end()) return;
+        std::lock_guard<std::mutex> clientLock(server_.clientsMutex);
+        const auto& clients = clientHandler_.GetClientsMapLocked();
+        for (const auto& id : room->users) {
+            auto it = clients.find(id);
+            if (it != clients.end() && it->second->socket != exceptSocket) recipients.push_back(it->second);
         }
     }
+    std::string framed = message;
+    if (!framed.empty() && framed.back() != '\n') framed += '\n';
+    for (const auto& client : recipients)
+        QueueSend(client->socket, framed.data(), static_cast<int>(framed.size()), 0);
 }
 
 std::string RoomManager::GetUserRoomId(const std::string& userId) {
@@ -676,7 +658,7 @@ std::string RoomManager::GetUserRoomId(const std::string& userId) {
 }
 
 // RoomManager.cpp
-Room* RoomManager::GetRoomByUserId(const std::string& userId) {
+std::shared_ptr<const Room> RoomManager::GetRoomByUserId(const std::string& userId) {
     std::lock_guard<std::mutex> lock(roomsMutex);
 
     auto it = std::find_if(rooms.begin(), rooms.end(), [&](Room& room) {
@@ -688,7 +670,7 @@ Room* RoomManager::GetRoomByUserId(const std::string& userId) {
         return nullptr;
     }
 
-    return &(*it); // Room* 반환
+    return std::make_shared<const Room>(*it); // Room* 반환
 }
 
 
@@ -706,97 +688,68 @@ std::vector<std::string> RoomManager::GetUserIdsInRoom(const std::string& roomId
     return {};
 }
 
-bool RoomManager::HandleReadyToExit(const std::string& userId, const std::string& roomId, SOCKET excludeSocket)
-{
-    std::string nickname = Trim(clientHandler_.GetNicknameById(userId));
+bool RoomManager::HandleReadyToExit(const std::string& userId, const std::string& roomId, SOCKET excludeSocket) {
+    std::vector<std::string> members;
     bool allReady = false;
-    std::vector<std::string> roomUsers;
-
     {
         std::lock_guard<std::mutex> lock(roomsMutex);
-        readyUsersByRoom[roomId].insert(userId);
-
-        auto it = std::find_if(rooms.begin(), rooms.end(),
-            [&](const Room& r) { return r.roomName == roomId; });
-
-        if (it == rooms.end())
-            return false;
-
-        Room& room = *it;
-        roomUsers = room.users;
-
-        allReady = true;
-        for (const auto& user : roomUsers)
-        {
-            if (readyUsersByRoom[roomId].find(user) == readyUsersByRoom[roomId].end())
-            {
-                allReady = false;
-                break;
-            }
-        }
-        if (allReady)
-        {
-            // 게임 종료 상태로 설정
-            room.isInGame = false;
-            std::cout << "[RoomManager] 방 '" << room.roomName << "' isInGame = false 로 변경됨 (게임 종료)\n";
+        Room* room = FindRoomByName_NoLock(roomId);
+        if (!room || !room->isInGame || std::find(room->users.begin(), room->users.end(), userId) == room->users.end()) return false;
+        auto& ready = readyUsersByRoom[roomId];
+        if (!ready.insert(userId).second) return false;
+        members = room->users;
+        allReady = std::all_of(members.begin(), members.end(), [&](const std::string& id) { return ready.count(id) != 0; });
+        if (allReady) {
+            room->isInGame = false;
+            readyUsersByRoom.erase(roomId); deadUsersByRoom.erase(roomId); resolvedRooms_.erase(roomId);
         }
     }
-
-    // 준비 신호 브로드캐스트
-    {
-        std::lock_guard<std::mutex> clientLock(server_.clientsMutex);
-        auto& clientsMap = clientHandler_.GetClientsMap();
-
-        for (const auto& uid : roomUsers)
-        {
-            if (uid == userId) continue; // 자신 제외
-
-            auto it = clientsMap.find(uid);
-            if (it != clientsMap.end())
-            {
-                SOCKET s = it->second->socket;
-                std::string msg = "READY_TO_EXIT|" + nickname + "\n";
-                QueueSend(s, msg.c_str(), (int)msg.size(), 0);
-            }
+    // No room lock is acquired while the client lock is held.
+    const auto nickname = Trim(clientHandler_.GetNicknameById(userId));
+    std::lock_guard<std::mutex> clientsLock(server_.clientsMutex);
+    const auto& clients = clientHandler_.GetClientsMapLocked();
+    for (const auto& id : members) {
+        const auto it = clients.find(id);
+        if (it == clients.end()) continue;
+        if (id != userId) {
+            const auto message = "READY_TO_EXIT|" + nickname + "\n";
+            QueueSend(it->second->socket, message.data(), static_cast<int>(message.size()), 0);
         }
+        if (allReady) QueueSend(it->second->socket, "GAME_END\n", 9, 0);
     }
-
-    if (allReady)
-    {
-        // GAME_END 전송
-        std::string gameEndMsg = "GAME_END\n";
-
-        std::lock_guard<std::mutex> clientLock(server_.clientsMutex);
-        auto& clientsMap = clientHandler_.GetClientsMap();
-
-        for (const auto& userId : roomUsers)
-        {
-            auto clientIt = clientsMap.find(userId);
-            if (clientIt != clientsMap.end())
-            {
-                QueueSend(clientIt->second->socket, gameEndMsg.c_str(), (int)gameEndMsg.size(), 0);
-            }
-        }
-
-        // 준비 상태 초기화
-        {
-            std::lock_guard<std::mutex> lock(roomsMutex);
-
-            std::cout << "[DEBUG] HandleReadyToExit: 초기화 전 준비 유저 수: "
-                << readyUsersByRoom[roomId].size() << ", 죽은 유저 수: "
-                << deadUsersByRoom[roomId].size() << std::endl;
-
-            readyUsersByRoom[roomId].clear();
-            deadUsersByRoom[roomId].clear();
-
-            std::cout << "[DEBUG] HandleReadyToExit: 초기화 완료. 준비 유저 수: "
-                << readyUsersByRoom[roomId].size() << ", 죽은 유저 수: "
-                << deadUsersByRoom[roomId].size() << std::endl;
-        }
-
-    }
-
     return allReady;
+}
+
+RoomManager::DeathResult RoomManager::RecordDeath(const std::string& userId) {
+    std::lock_guard<std::mutex> lock(roomsMutex);
+    for (auto& room : rooms) {
+        if (std::find(room.users.begin(), room.users.end(), userId) == room.users.end()) continue;
+        if (!room.isInGame || resolvedRooms_.count(room.roomName)) return {};
+        auto& dead = deadUsersByRoom[room.roomName];
+        if (!dead.insert(userId).second) return {};
+        size_t survivors = 0; std::unordered_set<std::string> teams;
+        for (const auto& id : room.users) if (!dead.count(id)) {
+            ++survivors;
+            auto team = room.teamAssignments.find(id);
+            teams.insert(team == room.teamAssignments.end() ? "None" : team->second);
+        }
+        bool resolved = room.isCoopMode ? teams.size() == 1 : survivors == 1;
+        if (resolved) resolvedRooms_.insert(room.roomName);
+        return {std::make_shared<const Room>(room), dead, resolved};
+    }
+    return {};
+}
+
+std::shared_ptr<const Room> RoomManager::ChangeTeam(const std::string& userId) {
+    std::lock_guard<std::mutex> lock(roomsMutex);
+    for (auto& room : rooms) {
+        if (!room.isCoopMode || room.isInGame || std::find(room.users.begin(), room.users.end(), userId) == room.users.end()) continue;
+        auto it = room.teamAssignments.find(userId);
+        if (it == room.teamAssignments.end() || (it->second != "Blue" && it->second != "Red")) return nullptr;
+        it->second = it->second == "Blue" ? "Red" : "Blue";
+        return std::make_shared<const Room>(room);
+    }
+    return nullptr;
 }
 
 void RoomManager::ForceExitRoomByUserId(const std::string& userId)
@@ -832,6 +785,9 @@ void RoomManager::ForceExitRoomByUserId(const std::string& userId)
         // 방이 비었으면 삭제
         if (room.users.empty())
         {
+            deadUsersByRoom.erase(it->roomName);
+            readyUsersByRoom.erase(it->roomName);
+            resolvedRooms_.erase(it->roomName);
             rooms.erase(it);
             roomDeleted = true;
         }
@@ -882,7 +838,7 @@ void RoomManager::ForceExitRoomByUserId(const std::string& userId)
 
     const auto members = GetUserIdsInRoom(roomName);
     std::lock_guard<std::mutex> lock(server_.clientsMutex);
-    auto& clientsMap = clientHandler_.GetClientsMap();
+    auto& clientsMap = clientHandler_.GetClientsMapLocked();
 
     for (const auto& uid : members)
     {
@@ -895,4 +851,12 @@ void RoomManager::ForceExitRoomByUserId(const std::string& userId)
                 0);
         }
     }
+}
+
+void RoomManager::RetryDeath(const Room& snapshot, const std::string& userId) {
+    std::lock_guard<std::mutex> lock(roomsMutex);
+    Room* room = FindRoomByName_NoLock(snapshot.roomName);
+    if (!room || !room->isInGame || room->matchId != snapshot.matchId) return;
+    resolvedRooms_.erase(room->roomName);
+    deadUsersByRoom[room->roomName].erase(userId);
 }

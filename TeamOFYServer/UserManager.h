@@ -1,10 +1,11 @@
-#pragma once
+﻿#pragma once
 #include <iostream>
 #include <vector>
 #include <fstream>
 #include <sstream>
 #include <mutex>
 #include <unordered_map>
+#include "CsvStore.h"
 #include "UserAccount.h"
 #include "Utils.h"
 #include "ClientInfo.h"
@@ -16,6 +17,22 @@ class UserManager
 {
 public:
 	UserManager(Server& server);
+    // Borrowed user references are valid only while this guard is alive.
+    std::unique_lock<std::recursive_mutex> LockState() { return std::unique_lock<std::recursive_mutex>(usersMutex); }
+    class Transaction {
+        UserManager& owner_;
+        std::unique_lock<std::recursive_mutex> lock_;
+        vector<UserAccount> users_; vector<UserProfile> profiles_;
+        vector<UserCharacters> characters_; vector<UserCharacterEmotes> emotes_;
+        vector<UserWinLossStats> stats_; vector<UserBallons> balloons_; vector<UserIcons> icons_;
+        bool committed_ = false;
+    public:
+        explicit Transaction(UserManager& owner);
+        ~Transaction();
+        bool Commit();
+        Transaction(const Transaction&) = delete;
+        Transaction& operator=(const Transaction&) = delete;
+    };
 	void SetClientHandler(ClientHandler* handler) { clientHandler_ = handler; }
 
 	vector<UserAccount> LoadAccountUsers(const string&);
@@ -70,7 +87,11 @@ private:
 	Server& server_;
 	ClientHandler* clientHandler_ = nullptr;
 	//ClientHandler& clientHandler_;
-	mutex usersMutex;
+	std::recursive_mutex usersMutex;
+    CsvStore::Images pending_;
+    bool transactionActive_ = false;
+    std::string ReadCsv(const std::string& path);
+    bool WriteCsv(const std::string& path, const std::string& data);
 	std::unordered_map<int, int> attackByIndex_; // Immutable after startup.
 	vector<UserAccount> users;
 	vector<UserProfile> userProfiles;

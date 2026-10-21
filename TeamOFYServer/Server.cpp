@@ -56,6 +56,9 @@ bool Server::Initialize(unsigned short port) {
 }
 
 void Server::Run() {
+    std::unique_ptr<CsvStore::DirectoryLease> dataLease;
+    try { dataLease.reset(new CsvStore::DirectoryLease()); CsvStore::Recover(); }
+    catch (const std::exception& e) { cerr << e.what() << std::endl; return; }
     if (!userManager_.LoadAttackStats("CharStat.csv")) {
         cerr << "Invalid attack configuration, server startup stopped\n";
         return;

@@ -22,29 +22,13 @@ public:
     void HandleClient(shared_ptr<ClientInfo>);
 
     
-    unordered_map<string, shared_ptr<ClientInfo>>& GetClientsMap() {
+    // Caller must hold Server::clientsMutex for the entire map access.
+    unordered_map<string, shared_ptr<ClientInfo>>& GetClientsMapLocked() {
         return clientsMap;
     }
 
-    string GetNicknameById(const std::string& id) const {
-        string trimmedID = Trim(id);
-        for (const auto& pair : clientsMap) {
-            if (pair.second && pair.second->id == trimmedID) {
-                return pair.second->nickname;
-            }
-        }
-        return id;
-    }
-
-    string GetIdByNickname(const string& nickname) const {
-        string trimmedNick = Trim(nickname);
-        for (const auto& pair : clientsMap) {
-            if (pair.second && Trim(pair.second->nickname) == trimmedNick) {
-                return pair.second->id;
-            }
-        }
-        return "";
-    }
+    string GetNicknameById(const std::string& id) const;
+    string GetIdByNickname(const string& nickname) const;
 
     bool GetUserPositionById(const std::string& userId, std::pair<float, float>& outPos);
 

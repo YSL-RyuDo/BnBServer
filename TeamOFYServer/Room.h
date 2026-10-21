@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include <cstdint>
 #include <vector>
 #include <unordered_map>
 
@@ -14,6 +15,7 @@ struct Room {
     unordered_map<string, int> characterSelections; 
     unordered_map<string, string> teamAssignments; // <유저ID, 팀 이름>
 
+    uint64_t matchId = 0;
     bool isInGame = false;
     bool isCoopMode = false; // true면 2VS2 협동전, false면 개인전
 };

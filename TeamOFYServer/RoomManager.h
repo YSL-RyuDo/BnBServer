@@ -19,6 +19,11 @@ private:
     ClientHandler& clientHandler_;
     vector<Room> rooms;
     mutex roomsMutex;
+    uint64_t nextMatchId_ = 0;
+    Room* FindRoomByName_NoLock(const std::string& roomName);
+    std::unordered_map<std::string, std::unordered_set<std::string>> deadUsersByRoom;
+    std::unordered_map<std::string, std::unordered_set<std::string>> readyUsersByRoom;
+    std::unordered_set<std::string> resolvedRooms_;
 
 public:
     RoomManager(Server& server, ClientHandler& clientHandler);
@@ -48,20 +53,28 @@ public:
         vector<string>& userList,
         vector<string>& blueTeam,
         vector<string>& redTeam);
-    Room* FindRoomByName(const std::string& roomName);
-    Room* FindRoomByName_NoLock(const std::string& roomName);
+    std::shared_ptr<const Room> FindRoomByName(const std::string& roomName);
+
 
     string GetGameUserListResponse(const string& roomName);
     void BroadcastToUserRoom(const std::string& senderId, const std::string& message);
-    void BroadcastToRoomExcept(SOCKET excludedSocket, const std::string& message);
-    const std::vector<Room>& GetRooms() const { return rooms; }
+    void BroadcastToRoomExcept(const std::string& senderId, SOCKET excludedSocket, const std::string& message);
+    std::vector<Room> GetRooms() { std::lock_guard<std::mutex> lock(roomsMutex); return rooms; }
     
-    std::unordered_map<std::string, std::unordered_set<std::string>> deadUsersByRoom;
+
     string GetUserRoomId(const std::string& userId);
-    Room* GetRoomByUserId(const std::string& userId);
+    std::shared_ptr<const Room> GetRoomByUserId(const std::string& userId);
     vector<std::string> GetUserIdsInRoom(const std::string& roomId);
     bool HandleReadyToExit(const std::string& userId, const std::string& roomId, SOCKET excludeSocket);
-    std::unordered_map<std::string, std::unordered_set<std::string>> readyUsersByRoom;
 
+
+    struct DeathResult {
+        std::shared_ptr<const Room> room;
+        std::unordered_set<std::string> dead;
+        bool resolvesMatch = false;
+    };
+    void RetryDeath(const Room& snapshot, const std::string& userId);
+    DeathResult RecordDeath(const std::string& userId);
+    std::shared_ptr<const Room> ChangeTeam(const std::string& userId);
     void ForceExitRoomByUserId(const std::string& userId);
 };

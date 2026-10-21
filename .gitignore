@@ -1,3 +1,7 @@
 __pycache__/
 *.pyc
 .bench-work/
+
+users.lock
+users.redo
+*.stage.*
