@@ -6,7 +6,7 @@
   <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
    <cc:Work>
     <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
-    <dc:date>2026-10-21T13:51:20.556480</dc:date>
+    <dc:date>2026-10-21T14:25:06.726092</dc:date>
     <dc:format>image/svg+xml</dc:format>
     <dc:creator>
      <cc:Agent>
@@ -32,8 +32,8 @@ z
    <g id="patch_2">
     <path d="M 52.58 279.2
 L 636.12 279.2
-L 636.12 39.96
-L 52.58 39.96
+L 636.12 40.53375
+L 52.58 40.53375
 z
 " style="fill: #ffffff"/>
    </g>
@@ -43,7 +43,7 @@ L 148.804081 279.2
 L 148.804081 279.2
 L 79.104545 279.2
 z
-" clip-path="url(#pa40821a3b4)" style="fill: #9b9385"/>
+" clip-path="url(#p44de021f7e)" style="fill: #9b9385"/>
    </g>
    <g id="patch_4">
     <path d="M 272.714366 279.2
@@ -51,7 +51,7 @@ L 342.413902 279.2
 L 342.413902 279.2
 L 272.714366 279.2
 z
-" clip-path="url(#pa40821a3b4)" style="fill: #9b9385"/>
+" clip-path="url(#p44de021f7e)" style="fill: #9b9385"/>
    </g>
    <g id="patch_5">
     <path d="M 466.324187 279.2
@@ -59,42 +59,42 @@ L 536.023723 279.2
 L 536.023723 279.2
 L 466.324187 279.2
 z
-" clip-path="url(#pa40821a3b4)" style="fill: #9b9385"/>
+" clip-path="url(#p44de021f7e)" style="fill: #9b9385"/>
    </g>
    <g id="patch_6">
     <path d="M 152.676277 279.2
 L 222.375813 279.2
-L 222.375813 90.326316
-L 152.676277 90.326316
+L 222.375813 90.779276
+L 152.676277 90.779276
 z
-" clip-path="url(#pa40821a3b4)" style="fill: #4d654b"/>
+" clip-path="url(#p44de021f7e)" style="fill: #4d654b"/>
    </g>
    <g id="patch_7">
     <path d="M 346.286098 279.2
 L 415.985634 279.2
-L 415.985634 90.326316
-L 346.286098 90.326316
+L 415.985634 90.779276
+L 346.286098 90.779276
 z
-" clip-path="url(#pa40821a3b4)" style="fill: #4d654b"/>
+" clip-path="url(#p44de021f7e)" style="fill: #4d654b"/>
    </g>
    <g id="patch_8">
     <path d="M 539.895919 279.2
 L 609.595455 279.2
-L 609.595455 90.326316
-L 539.895919 90.326316
+L 609.595455 90.779276
+L 539.895919 90.779276
 z
-" clip-path="url(#pa40821a3b4)" style="fill: #4d654b"/>
+" clip-path="url(#p44de021f7e)" style="fill: #4d654b"/>
    </g>
    <g id="matplotlib.axis_1">
     <g id="xtick_1">
      <g id="line2d_1">
       <defs>
-       <path id="m224ce19b42" d="M 0 0
+       <path id="m712cbe9c9b" d="M 0 0
 L 0 3.5
 " style="stroke: #000000; stroke-width: 0.8"/>
       </defs>
       <g>
-       <use xlink:href="#m224ce19b42" x="150.740179" y="279.2" style="stroke: #000000; stroke-width: 0.8"/>
+       <use xlink:href="#m712cbe9c9b" x="150.740179" y="279.2" style="stroke: #000000; stroke-width: 0.8"/>
       </g>
      </g>
      <g id="text_1">
@@ -104,7 +104,7 @@ L 0 3.5
     <g id="xtick_2">
      <g id="line2d_2">
       <g>
-       <use xlink:href="#m224ce19b42" x="344.35" y="279.2" style="stroke: #000000; stroke-width: 0.8"/>
+       <use xlink:href="#m712cbe9c9b" x="344.35" y="279.2" style="stroke: #000000; stroke-width: 0.8"/>
       </g>
      </g>
      <g id="text_2">
@@ -114,7 +114,7 @@ L 0 3.5
     <g id="xtick_3">
      <g id="line2d_3">
       <g>
-       <use xlink:href="#m224ce19b42" x="537.959821" y="279.2" style="stroke: #000000; stroke-width: 0.8"/>
+       <use xlink:href="#m712cbe9c9b" x="537.959821" y="279.2" style="stroke: #000000; stroke-width: 0.8"/>
       </g>
      </g>
      <g id="text_3">
@@ -126,12 +126,12 @@ L 0 3.5
     <g id="ytick_1">
      <g id="line2d_4">
       <defs>
-       <path id="ma92fe5a0fd" d="M 0 0
+       <path id="m23fb0de479" d="M 0 0
 L -3.5 0
 " style="stroke: #000000; stroke-width: 0.8"/>
       </defs>
       <g>
-       <use xlink:href="#ma92fe5a0fd" x="52.58" y="279.2" style="stroke: #000000; stroke-width: 0.8"/>
+       <use xlink:href="#m23fb0de479" x="52.58" y="279.2" style="stroke: #000000; stroke-width: 0.8"/>
       </g>
      </g>
      <g id="text_4">
@@ -141,80 +141,80 @@ L -3.5 0
     <g id="ytick_2">
      <g id="line2d_5">
       <g>
-       <use xlink:href="#ma92fe5a0fd" x="52.58" y="247.721053" style="stroke: #000000; stroke-width: 0.8"/>
+       <use xlink:href="#m23fb0de479" x="52.58" y="247.796546" style="stroke: #000000; stroke-width: 0.8"/>
       </g>
      </g>
      <g id="text_5">
-      <text style="font-size: 11px; font-family: 'Malgun Gothic'; text-anchor: end" x="45.58" y="251.896756" transform="rotate(-0 45.58 251.896756)">50</text>
+      <text style="font-size: 11px; font-family: 'Malgun Gothic'; text-anchor: end" x="45.58" y="251.972249" transform="rotate(-0 45.58 251.972249)">50</text>
      </g>
     </g>
     <g id="ytick_3">
      <g id="line2d_6">
       <g>
-       <use xlink:href="#ma92fe5a0fd" x="52.58" y="216.242105" style="stroke: #000000; stroke-width: 0.8"/>
+       <use xlink:href="#m23fb0de479" x="52.58" y="216.393092" style="stroke: #000000; stroke-width: 0.8"/>
       </g>
      </g>
      <g id="text_6">
-      <text style="font-size: 11px; font-family: 'Malgun Gothic'; text-anchor: end" x="45.58" y="220.417808" transform="rotate(-0 45.58 220.417808)">100</text>
+      <text style="font-size: 11px; font-family: 'Malgun Gothic'; text-anchor: end" x="45.58" y="220.568795" transform="rotate(-0 45.58 220.568795)">100</text>
      </g>
     </g>
     <g id="ytick_4">
      <g id="line2d_7">
       <g>
-       <use xlink:href="#ma92fe5a0fd" x="52.58" y="184.763158" style="stroke: #000000; stroke-width: 0.8"/>
+       <use xlink:href="#m23fb0de479" x="52.58" y="184.989638" style="stroke: #000000; stroke-width: 0.8"/>
       </g>
      </g>
      <g id="text_7">
-      <text style="font-size: 11px; font-family: 'Malgun Gothic'; text-anchor: end" x="45.58" y="188.938861" transform="rotate(-0 45.58 188.938861)">150</text>
+      <text style="font-size: 11px; font-family: 'Malgun Gothic'; text-anchor: end" x="45.58" y="189.165341" transform="rotate(-0 45.58 189.165341)">150</text>
      </g>
     </g>
     <g id="ytick_5">
      <g id="line2d_8">
       <g>
-       <use xlink:href="#ma92fe5a0fd" x="52.58" y="153.284211" style="stroke: #000000; stroke-width: 0.8"/>
+       <use xlink:href="#m23fb0de479" x="52.58" y="153.586184" style="stroke: #000000; stroke-width: 0.8"/>
       </g>
      </g>
      <g id="text_8">
-      <text style="font-size: 11px; font-family: 'Malgun Gothic'; text-anchor: end" x="45.58" y="157.459914" transform="rotate(-0 45.58 157.459914)">200</text>
+      <text style="font-size: 11px; font-family: 'Malgun Gothic'; text-anchor: end" x="45.58" y="157.761887" transform="rotate(-0 45.58 157.761887)">200</text>
      </g>
     </g>
     <g id="ytick_6">
      <g id="line2d_9">
       <g>
-       <use xlink:href="#ma92fe5a0fd" x="52.58" y="121.805263" style="stroke: #000000; stroke-width: 0.8"/>
+       <use xlink:href="#m23fb0de479" x="52.58" y="122.18273" style="stroke: #000000; stroke-width: 0.8"/>
       </g>
      </g>
      <g id="text_9">
-      <text style="font-size: 11px; font-family: 'Malgun Gothic'; text-anchor: end" x="45.58" y="125.980966" transform="rotate(-0 45.58 125.980966)">250</text>
+      <text style="font-size: 11px; font-family: 'Malgun Gothic'; text-anchor: end" x="45.58" y="126.358433" transform="rotate(-0 45.58 126.358433)">250</text>
      </g>
     </g>
     <g id="ytick_7">
      <g id="line2d_10">
       <g>
-       <use xlink:href="#ma92fe5a0fd" x="52.58" y="90.326316" style="stroke: #000000; stroke-width: 0.8"/>
+       <use xlink:href="#m23fb0de479" x="52.58" y="90.779276" style="stroke: #000000; stroke-width: 0.8"/>
       </g>
      </g>
      <g id="text_10">
-      <text style="font-size: 11px; font-family: 'Malgun Gothic'; text-anchor: end" x="45.58" y="94.502019" transform="rotate(-0 45.58 94.502019)">300</text>
+      <text style="font-size: 11px; font-family: 'Malgun Gothic'; text-anchor: end" x="45.58" y="94.954979" transform="rotate(-0 45.58 94.954979)">300</text>
      </g>
     </g>
     <g id="ytick_8">
      <g id="line2d_11">
       <g>
-       <use xlink:href="#ma92fe5a0fd" x="52.58" y="58.847368" style="stroke: #000000; stroke-width: 0.8"/>
+       <use xlink:href="#m23fb0de479" x="52.58" y="59.375822" style="stroke: #000000; stroke-width: 0.8"/>
       </g>
      </g>
      <g id="text_11">
-      <text style="font-size: 11px; font-family: 'Malgun Gothic'; text-anchor: end" x="45.58" y="63.023072" transform="rotate(-0 45.58 63.023072)">350</text>
+      <text style="font-size: 11px; font-family: 'Malgun Gothic'; text-anchor: end" x="45.58" y="63.551525" transform="rotate(-0 45.58 63.551525)">350</text>
      </g>
     </g>
     <g id="text_12">
-     <text style="font-size: 11px; font-family: 'Malgun Gothic'; text-anchor: middle" x="20.80375" y="159.58" transform="rotate(-90 20.80375 159.58)">응답 수 / 기대값 300</text>
+     <text style="font-size: 11px; font-family: 'Malgun Gothic'; text-anchor: middle" x="20.80375" y="159.866875" transform="rotate(-90 20.80375 159.866875)">응답 수 / 기대값 300</text>
     </g>
    </g>
    <g id="patch_9">
     <path d="M 52.58 279.2
-L 52.58 39.96
+L 52.58 40.53375
 " style="fill: none; stroke: #000000; stroke-width: 0.8; stroke-linejoin: miter; stroke-linecap: square"/>
    </g>
    <g id="patch_10">
@@ -223,55 +223,55 @@ L 636.12 279.2
 " style="fill: none; stroke: #000000; stroke-width: 0.8; stroke-linejoin: miter; stroke-linecap: square"/>
    </g>
    <g id="text_13">
-    <text style="font-size: 11px; font-family: 'Malgun Gothic'; text-anchor: middle" x="113.954313" y="273.451637" transform="rotate(-0 113.954313 273.451637)">0</text>
+    <text style="font-size: 11px; font-family: 'Malgun Gothic'; text-anchor: middle" x="113.954313" y="273.459186" transform="rotate(-0 113.954313 273.459186)">0</text>
    </g>
    <g id="text_14">
-    <text style="font-size: 11px; font-family: 'Malgun Gothic'; text-anchor: middle" x="307.564134" y="273.451637" transform="rotate(-0 307.564134 273.451637)">0</text>
+    <text style="font-size: 11px; font-family: 'Malgun Gothic'; text-anchor: middle" x="307.564134" y="273.459186" transform="rotate(-0 307.564134 273.459186)">0</text>
    </g>
    <g id="text_15">
-    <text style="font-size: 11px; font-family: 'Malgun Gothic'; text-anchor: middle" x="501.173955" y="273.451637" transform="rotate(-0 501.173955 273.451637)">0</text>
+    <text style="font-size: 11px; font-family: 'Malgun Gothic'; text-anchor: middle" x="501.173955" y="273.459186" transform="rotate(-0 501.173955 273.459186)">0</text>
    </g>
    <g id="text_16">
-    <text style="font-size: 11px; font-family: 'Malgun Gothic'; text-anchor: middle" x="187.526045" y="84.577952" transform="rotate(-0 187.526045 84.577952)">300</text>
+    <text style="font-size: 11px; font-family: 'Malgun Gothic'; text-anchor: middle" x="187.526045" y="85.038462" transform="rotate(-0 187.526045 85.038462)">300</text>
    </g>
    <g id="text_17">
-    <text style="font-size: 11px; font-family: 'Malgun Gothic'; text-anchor: middle" x="381.135866" y="84.577952" transform="rotate(-0 381.135866 84.577952)">300</text>
+    <text style="font-size: 11px; font-family: 'Malgun Gothic'; text-anchor: middle" x="381.135866" y="85.038462" transform="rotate(-0 381.135866 85.038462)">300</text>
    </g>
    <g id="text_18">
-    <text style="font-size: 11px; font-family: 'Malgun Gothic'; text-anchor: middle" x="574.745687" y="84.577952" transform="rotate(-0 574.745687 84.577952)">300</text>
+    <text style="font-size: 11px; font-family: 'Malgun Gothic'; text-anchor: middle" x="574.745687" y="85.038462" transform="rotate(-0 574.745687 85.038462)">300</text>
    </g>
    <g id="text_19">
-    <text style="font-size: 13.2px; font-family: 'Malgun Gothic'; text-anchor: start" x="52.58" y="21.96" transform="rotate(-0 52.58 21.96)">읽기 중단 조건에서 다른 방으로 전달된 응답</text>
+    <text style="font-size: 13.2px; font-family: 'Malgun Gothic'; text-anchor: start" x="52.58" y="22.53375" transform="rotate(-0 52.58 22.53375)">A방 수신 중단 시, 정상 B방 내부 응답 성공 수</text>
    </g>
    <g id="legend_1">
     <g id="patch_11">
-     <path d="M 558.552812 58.211406
-L 580.552812 58.211406
-L 580.552812 50.511406
-L 558.552812 50.511406
+     <path d="M 558.552812 58.785156
+L 580.552812 58.785156
+L 580.552812 51.085156
+L 558.552812 51.085156
 z
 " style="fill: #9b9385"/>
     </g>
     <g id="text_20">
-     <text style="font-size: 11px; font-family: 'Malgun Gothic'; text-anchor: start" x="589.352812" y="58.211406" transform="rotate(-0 589.352812 58.211406)">수정 전</text>
+     <text style="font-size: 11px; font-family: 'Malgun Gothic'; text-anchor: start" x="589.352812" y="58.785156" transform="rotate(-0 589.352812 58.785156)">수정 전</text>
     </g>
     <g id="patch_12">
-     <path d="M 558.552812 74.663281
-L 580.552812 74.663281
-L 580.552812 66.963281
-L 558.552812 66.963281
+     <path d="M 558.552812 75.237031
+L 580.552812 75.237031
+L 580.552812 67.537031
+L 558.552812 67.537031
 z
 " style="fill: #4d654b"/>
     </g>
     <g id="text_21">
-     <text style="font-size: 11px; font-family: 'Malgun Gothic'; text-anchor: start" x="589.352812" y="74.663281" transform="rotate(-0 589.352812 74.663281)">수정 후</text>
+     <text style="font-size: 11px; font-family: 'Malgun Gothic'; text-anchor: start" x="589.352812" y="75.237031" transform="rotate(-0 589.352812 75.237031)">수정 후</text>
     </g>
    </g>
   </g>
  </g>
  <defs>
-  <clipPath id="pa40821a3b4">
-   <rect x="52.58" y="39.96" width="583.54" height="239.24"/>
+  <clipPath id="p44de021f7e">
+   <rect x="52.58" y="40.53375" width="583.54" height="238.66625"/>
   </clipPath>
  </defs>
 </svg>

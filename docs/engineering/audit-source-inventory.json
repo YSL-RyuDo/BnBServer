@@ -1,0 +1,1361 @@
+[
+  {
+    "repo": "BnBServer",
+    "path": "TeamOFYServer/CharacterStatsManager.cpp",
+    "lines": 62,
+    "sha256": "1a7861c3c9a291607bc867148686a97490d5cb7a43cc92ac8256a5208a61d454",
+    "matches": {
+      "file_io": [
+        12
+      ],
+      "scene_search": [],
+      "allocation_or_linq": [],
+      "locking": [],
+      "spawn_destroy": [],
+      "thread": []
+    }
+  },
+  {
+    "repo": "BnBServer",
+    "path": "TeamOFYServer/CharacterStatsManager.h",
+    "lines": 23,
+    "sha256": "c7c5d030798e3c12506dc12394602e548a479c57c777c927e3b3d08c992cb570",
+    "matches": {
+      "file_io": [],
+      "scene_search": [],
+      "allocation_or_linq": [],
+      "locking": [],
+      "spawn_destroy": [],
+      "thread": []
+    }
+  },
+  {
+    "repo": "BnBServer",
+    "path": "TeamOFYServer/ClientHandler.cpp",
+    "lines": 2367,
+    "sha256": "15b171cf9f414673dfda768e9c0eb424019ae61f3d644011230166c892ff2b8a",
+    "matches": {
+      "file_io": [],
+      "scene_search": [],
+      "allocation_or_linq": [],
+      "locking": [
+        99,
+        125,
+        1260,
+        2356
+      ],
+      "spawn_destroy": [],
+      "thread": []
+    }
+  },
+  {
+    "repo": "BnBServer",
+    "path": "TeamOFYServer/ClientHandler.h",
+    "lines": 77,
+    "sha256": "a0758438085c19b4007bee93b1822725597558a6c73c62bce388417846d9c472",
+    "matches": {
+      "file_io": [],
+      "scene_search": [],
+      "allocation_or_linq": [],
+      "locking": [],
+      "spawn_destroy": [],
+      "thread": []
+    }
+  },
+  {
+    "repo": "BnBServer",
+    "path": "TeamOFYServer/ClientInfo.cpp",
+    "lines": 5,
+    "sha256": "ba08341028de4df83f37296728b69a0725ec18bab376bc6d9c10c1cd165d9a02",
+    "matches": {
+      "file_io": [],
+      "scene_search": [],
+      "allocation_or_linq": [],
+      "locking": [],
+      "spawn_destroy": [],
+      "thread": []
+    }
+  },
+  {
+    "repo": "BnBServer",
+    "path": "TeamOFYServer/ClientInfo.h",
+    "lines": 26,
+    "sha256": "b7115f8f728c1fb9072751ba05965b9f4b92f8efd197294cdc07739f93f707d6",
+    "matches": {
+      "file_io": [],
+      "scene_search": [],
+      "allocation_or_linq": [],
+      "locking": [],
+      "spawn_destroy": [],
+      "thread": []
+    }
+  },
+  {
+    "repo": "BnBServer",
+    "path": "TeamOFYServer/main.cpp",
+    "lines": 24,
+    "sha256": "1d0f170be52b5532177619641d9f2fe715c1791bd5dabdd72e277e4cd7890b9c",
+    "matches": {
+      "file_io": [],
+      "scene_search": [],
+      "allocation_or_linq": [],
+      "locking": [],
+      "spawn_destroy": [],
+      "thread": []
+    }
+  },
+  {
+    "repo": "BnBServer",
+    "path": "TeamOFYServer/MapManager.cpp",
+    "lines": 44,
+    "sha256": "a500ed1f000eecf4e121ecc3296e9dd43089113359442c7307e69134f53b1cb5",
+    "matches": {
+      "file_io": [
+        6
+      ],
+      "scene_search": [],
+      "allocation_or_linq": [],
+      "locking": [],
+      "spawn_destroy": [],
+      "thread": []
+    }
+  },
+  {
+    "repo": "BnBServer",
+    "path": "TeamOFYServer/MapManager.h",
+    "lines": 15,
+    "sha256": "ceab6660e25c1a23604cf651011e96e9fb5d4324c32814037892e997d9e1d6f9",
+    "matches": {
+      "file_io": [],
+      "scene_search": [],
+      "allocation_or_linq": [],
+      "locking": [],
+      "spawn_destroy": [],
+      "thread": []
+    }
+  },
+  {
+    "repo": "BnBServer",
+    "path": "TeamOFYServer/Player.cpp",
+    "lines": 17,
+    "sha256": "4a63f7ca2dd1e59584aa133918f26b7610ecf609c174798240260dd411e04b93",
+    "matches": {
+      "file_io": [],
+      "scene_search": [],
+      "allocation_or_linq": [],
+      "locking": [
+        5,
+        12
+      ],
+      "spawn_destroy": [],
+      "thread": []
+    }
+  },
+  {
+    "repo": "BnBServer",
+    "path": "TeamOFYServer/Player.h",
+    "lines": 24,
+    "sha256": "413d9b5f643d81978d618d4cc03de20b0528f91030e1d838b34e837dafe1e1a3",
+    "matches": {
+      "file_io": [],
+      "scene_search": [],
+      "allocation_or_linq": [],
+      "locking": [],
+      "spawn_destroy": [],
+      "thread": []
+    }
+  },
+  {
+    "repo": "BnBServer",
+    "path": "TeamOFYServer/Room.cpp",
+    "lines": 1,
+    "sha256": "c4bf7c41a09a6597817e7549fe43db87e8cd1bb69f064c27adb9e6b54a12bba6",
+    "matches": {
+      "file_io": [],
+      "scene_search": [],
+      "allocation_or_linq": [],
+      "locking": [],
+      "spawn_destroy": [],
+      "thread": []
+    }
+  },
+  {
+    "repo": "BnBServer",
+    "path": "TeamOFYServer/Room.h",
+    "lines": 19,
+    "sha256": "d7b9db2ffa28b83ace19e91a17e82d5850bdb8c14eb329b41a26cb5f88f90a7f",
+    "matches": {
+      "file_io": [],
+      "scene_search": [],
+      "allocation_or_linq": [],
+      "locking": [],
+      "spawn_destroy": [],
+      "thread": []
+    }
+  },
+  {
+    "repo": "BnBServer",
+    "path": "TeamOFYServer/RoomManager.cpp",
+    "lines": 898,
+    "sha256": "4281b172414fc08760f11c00501303f5603ff82de862f905ecd40c5871cc8ad3",
+    "matches": {
+      "file_io": [],
+      "scene_search": [],
+      "allocation_or_linq": [],
+      "locking": [
+        13,
+        71,
+        133,
+        157,
+        241,
+        267,
+        297,
+        338,
+        370,
+        381,
+        426,
+        449,
+        474,
+        499,
+        548,
+        571,
+        591,
+        605,
+        624,
+        625,
+        664,
+        680,
+        698,
+        716,
+        747,
+        769,
+        783,
+        809,
+        871,
+        884
+      ],
+      "spawn_destroy": [],
+      "thread": []
+    }
+  },
+  {
+    "repo": "BnBServer",
+    "path": "TeamOFYServer/RoomManager.h",
+    "lines": 67,
+    "sha256": "1c8660ed039c281636ba43b1117912f083f930d8c591fbd8d9a65dc1546cb0da",
+    "matches": {
+      "file_io": [],
+      "scene_search": [],
+      "allocation_or_linq": [],
+      "locking": [],
+      "spawn_destroy": [],
+      "thread": []
+    }
+  },
+  {
+    "repo": "BnBServer",
+    "path": "TeamOFYServer/Server.cpp",
+    "lines": 131,
+    "sha256": "6ff8c5828fb574cc8d87ee95345216885a04ce678dd7bf43a09b55552f653083",
+    "matches": {
+      "file_io": [],
+      "scene_search": [],
+      "allocation_or_linq": [],
+      "locking": [
+        102,
+        114
+      ],
+      "spawn_destroy": [],
+      "thread": [
+        106,
+        108
+      ]
+    }
+  },
+  {
+    "repo": "BnBServer",
+    "path": "TeamOFYServer/Server.h",
+    "lines": 33,
+    "sha256": "6cf83cdc8e1ea41c3c3085b5748a941b06e071295b25931aa65fa536c2daf7be",
+    "matches": {
+      "file_io": [],
+      "scene_search": [],
+      "allocation_or_linq": [],
+      "locking": [],
+      "spawn_destroy": [],
+      "thread": []
+    }
+  },
+  {
+    "repo": "BnBServer",
+    "path": "TeamOFYServer/SocketOutput.cpp",
+    "lines": 197,
+    "sha256": "10cfc25019d271a421bf9c1cc56f3660253c0b1cfd596901e1948b0b606d6c1a",
+    "matches": {
+      "file_io": [
+        96
+      ],
+      "scene_search": [],
+      "allocation_or_linq": [],
+      "locking": [
+        59,
+        74,
+        87,
+        95,
+        107,
+        128,
+        141,
+        160,
+        184,
+        188,
+        193
+      ],
+      "spawn_destroy": [],
+      "thread": [
+        41,
+        45,
+        62
+      ]
+    }
+  },
+  {
+    "repo": "BnBServer",
+    "path": "TeamOFYServer/SocketOutput.h",
+    "lines": 52,
+    "sha256": "c2323509d0f349bfdd467e050cbd981a2f8ae32172ed4a66f8a5774d407d7e3f",
+    "matches": {
+      "file_io": [],
+      "scene_search": [],
+      "allocation_or_linq": [],
+      "locking": [],
+      "spawn_destroy": [],
+      "thread": [
+        10
+      ]
+    }
+  },
+  {
+    "repo": "BnBServer",
+    "path": "TeamOFYServer/StoreData.cpp",
+    "lines": 203,
+    "sha256": "0eddfbf2d1e6e644b63f8e7df307c0c59ef49151ea66b923052fcc1e8ab17573",
+    "matches": {
+      "file_io": [
+        20,
+        56,
+        92,
+        129
+      ],
+      "scene_search": [],
+      "allocation_or_linq": [],
+      "locking": [],
+      "spawn_destroy": [],
+      "thread": []
+    }
+  },
+  {
+    "repo": "BnBServer",
+    "path": "TeamOFYServer/StoreData.h",
+    "lines": 53,
+    "sha256": "4139fc8bf2d48c5479418e884ec546b71b10514a65f7d8c0f4b3374fd684e161",
+    "matches": {
+      "file_io": [],
+      "scene_search": [],
+      "allocation_or_linq": [],
+      "locking": [],
+      "spawn_destroy": [],
+      "thread": []
+    }
+  },
+  {
+    "repo": "BnBServer",
+    "path": "TeamOFYServer/UserAccount.cpp",
+    "lines": 1,
+    "sha256": "17c46f1aea564cb43bc1d044a394e94d7fb4a212f663b57945694ed8bc4b4688",
+    "matches": {
+      "file_io": [],
+      "scene_search": [],
+      "allocation_or_linq": [],
+      "locking": [],
+      "spawn_destroy": [],
+      "thread": []
+    }
+  },
+  {
+    "repo": "BnBServer",
+    "path": "TeamOFYServer/UserAccount.h",
+    "lines": 148,
+    "sha256": "94c28ffa8863881ff555d7dc8b3a6f48b23729a3aca784f0c500cb0e0c6a9122",
+    "matches": {
+      "file_io": [],
+      "scene_search": [],
+      "allocation_or_linq": [],
+      "locking": [],
+      "spawn_destroy": [],
+      "thread": []
+    }
+  },
+  {
+    "repo": "BnBServer",
+    "path": "TeamOFYServer/UserManager.cpp",
+    "lines": 1215,
+    "sha256": "36f8098f6b66afd128663e5e4c856f2af61256f68ee681e60d0014de49651fa9",
+    "matches": {
+      "file_io": [
+        9,
+        54,
+        102,
+        144,
+        232,
+        272,
+        323,
+        368,
+        375,
+        385,
+        395,
+        413,
+        430,
+        442,
+        457,
+        459,
+        493,
+        495,
+        532,
+        534,
+        569,
+        571,
+        618,
+        620,
+        658,
+        660,
+        696,
+        698,
+        910,
+        959,
+        1004,
+        1194
+      ],
+      "scene_search": [],
+      "allocation_or_linq": [],
+      "locking": [
+        45,
+        733,
+        752,
+        806,
+        812,
+        828,
+        864,
+        876,
+        1030
+      ],
+      "spawn_destroy": [],
+      "thread": []
+    }
+  },
+  {
+    "repo": "BnBServer",
+    "path": "TeamOFYServer/UserManager.h",
+    "lines": 83,
+    "sha256": "a0e2e2aa159a58ff088a3252fd0f8765f01c5c44009aa1c07340c15ff875bd7f",
+    "matches": {
+      "file_io": [],
+      "scene_search": [],
+      "allocation_or_linq": [],
+      "locking": [],
+      "spawn_destroy": [],
+      "thread": []
+    }
+  },
+  {
+    "repo": "BnBServer",
+    "path": "TeamOFYServer/Utils.h",
+    "lines": 11,
+    "sha256": "eb42aa3bc165fe04e1a4d5aa5b18df1cdf67ce78c1ea570ca613266cc254b53f",
+    "matches": {
+      "file_io": [],
+      "scene_search": [],
+      "allocation_or_linq": [],
+      "locking": [],
+      "spawn_destroy": [],
+      "thread": []
+    }
+  },
+  {
+    "repo": "BNB",
+    "path": "Assets/Script/ButtonSoundManager.cs",
+    "lines": 25,
+    "sha256": "43e32f2c8b04d13af47ab5e2cd9b23f24ab47127c3a6192fdb5494cab2f10b9f",
+    "matches": {
+      "file_io": [],
+      "scene_search": [],
+      "allocation_or_linq": [],
+      "locking": [],
+      "spawn_destroy": [
+        17
+      ],
+      "thread": []
+    }
+  },
+  {
+    "repo": "BNB",
+    "path": "Assets/Script/CreditsUI.cs",
+    "lines": 66,
+    "sha256": "aa6f8dabd9f8ba38bb662c05efd0ef629bae4ae8f839d03652fa024ec4ab4210",
+    "matches": {
+      "file_io": [],
+      "scene_search": [],
+      "allocation_or_linq": [],
+      "locking": [],
+      "spawn_destroy": [],
+      "thread": []
+    }
+  },
+  {
+    "repo": "BNB",
+    "path": "Assets/Script/Game/BalloonSystem.cs",
+    "lines": 439,
+    "sha256": "02a3d178af9b0376fffc95561124dfaa7beae5a31a78adae101f764757ee2cd6",
+    "matches": {
+      "file_io": [],
+      "scene_search": [
+        120,
+        266
+      ],
+      "allocation_or_linq": [
+        18,
+        313,
+        315,
+        316,
+        317,
+        318,
+        319,
+        350,
+        353,
+        358
+      ],
+      "locking": [],
+      "spawn_destroy": [
+        30,
+        110,
+        271,
+        416,
+        417
+      ],
+      "thread": []
+    }
+  },
+  {
+    "repo": "BNB",
+    "path": "Assets/Script/Game/CharacterSystem.cs",
+    "lines": 95,
+    "sha256": "5cf76def4ff6bd55b5bca4b2f7ea72f77fc4e4dc26b5e7b79d0d69c62a9ecc73",
+    "matches": {
+      "file_io": [],
+      "scene_search": [],
+      "allocation_or_linq": [
+        11,
+        12
+      ],
+      "locking": [],
+      "spawn_destroy": [
+        42
+      ],
+      "thread": []
+    }
+  },
+  {
+    "repo": "BNB",
+    "path": "Assets/Script/Game/EmoticonSystem.cs",
+    "lines": 190,
+    "sha256": "23ee898375b78268116273c97b3c9d188c9b0c6f6b62fd5ff1130374fe7ff4aa",
+    "matches": {
+      "file_io": [],
+      "scene_search": [
+        107
+      ],
+      "allocation_or_linq": [],
+      "locking": [],
+      "spawn_destroy": [],
+      "thread": []
+    }
+  },
+  {
+    "repo": "BNB",
+    "path": "Assets/Script/Game/FootStepSound.cs",
+    "lines": 35,
+    "sha256": "a48c4ab0b2655b832ccbce98f18a4304cc11e3cfef8e8c0ebf9943e82d3e1242",
+    "matches": {
+      "file_io": [],
+      "scene_search": [],
+      "allocation_or_linq": [],
+      "locking": [],
+      "spawn_destroy": [],
+      "thread": []
+    }
+  },
+  {
+    "repo": "BNB",
+    "path": "Assets/Script/Game/GameSystem.cs",
+    "lines": 791,
+    "sha256": "70100868ca78d76bc449f166d804be8a2b5822b3738315c3ab5f6b05a214497e",
+    "matches": {
+      "file_io": [],
+      "scene_search": [
+        118,
+        156,
+        337,
+        377,
+        410,
+        424
+      ],
+      "allocation_or_linq": [
+        20,
+        33,
+        34,
+        109
+      ],
+      "locking": [],
+      "spawn_destroy": [
+        61,
+        222,
+        503,
+        505,
+        515,
+        618
+      ],
+      "thread": []
+    }
+  },
+  {
+    "repo": "BNB",
+    "path": "Assets/Script/Game/LocalPlayerController.cs",
+    "lines": 609,
+    "sha256": "b2fc04c3cd6a30a7540280a2658d067d0a72a7e0c0d958d3eff117de79ced5fe",
+    "matches": {
+      "file_io": [],
+      "scene_search": [
+        64,
+        65
+      ],
+      "allocation_or_linq": [],
+      "locking": [],
+      "spawn_destroy": [],
+      "thread": []
+    }
+  },
+  {
+    "repo": "BNB",
+    "path": "Assets/Script/Game/MapSystem.cs",
+    "lines": 170,
+    "sha256": "06636b3220fb725f8ac2ae512b5e44c209b2e8af1204787ee45f6afc2bbc68c3",
+    "matches": {
+      "file_io": [],
+      "scene_search": [],
+      "allocation_or_linq": [
+        9
+      ],
+      "locking": [],
+      "spawn_destroy": [
+        69,
+        97,
+        123,
+        159
+      ],
+      "thread": []
+    }
+  },
+  {
+    "repo": "BNB",
+    "path": "Assets/Script/Game/RewardData.cs",
+    "lines": 15,
+    "sha256": "49c9a0b726fa0f8103485ba7339c7e6c6f5e2034a787e9d7e363f870145ab27f",
+    "matches": {
+      "file_io": [],
+      "scene_search": [],
+      "allocation_or_linq": [],
+      "locking": [],
+      "spawn_destroy": [],
+      "thread": []
+    }
+  },
+  {
+    "repo": "BNB",
+    "path": "Assets/Script/Game/Weapon/Arrow.cs",
+    "lines": 60,
+    "sha256": "1e5022f413abe64a45f04606ef3f1917b19fd58be4f4fb4a00bb031ecf37e38a",
+    "matches": {
+      "file_io": [],
+      "scene_search": [],
+      "allocation_or_linq": [],
+      "locking": [],
+      "spawn_destroy": [
+        23,
+        54
+      ],
+      "thread": []
+    }
+  },
+  {
+    "repo": "BNB",
+    "path": "Assets/Script/Game/Weapon/Laser.cs",
+    "lines": 71,
+    "sha256": "8bb74ecf79537d139f4d88eb54b4dbf4354cc7fbb99f376e29df246be2c828ff",
+    "matches": {
+      "file_io": [],
+      "scene_search": [],
+      "allocation_or_linq": [],
+      "locking": [],
+      "spawn_destroy": [
+        44
+      ],
+      "thread": []
+    }
+  },
+  {
+    "repo": "BNB",
+    "path": "Assets/Script/Game/Weapon/Mace.cs",
+    "lines": 57,
+    "sha256": "5a93bc9e8837c31c531c8ae53c02ee89f37573f8c14ec6fad774121985d5a17c",
+    "matches": {
+      "file_io": [],
+      "scene_search": [],
+      "allocation_or_linq": [],
+      "locking": [],
+      "spawn_destroy": [
+        31
+      ],
+      "thread": []
+    }
+  },
+  {
+    "repo": "BNB",
+    "path": "Assets/Script/Game/Weapon/Melody.cs",
+    "lines": 106,
+    "sha256": "93fd3bf15a19f4b8aa70a0aaa74f758807e4cd8a22029cafae60cf89965241ff",
+    "matches": {
+      "file_io": [],
+      "scene_search": [],
+      "allocation_or_linq": [],
+      "locking": [],
+      "spawn_destroy": [
+        42,
+        104
+      ],
+      "thread": []
+    }
+  },
+  {
+    "repo": "BNB",
+    "path": "Assets/Script/Game/Weapon/Pitchfork.cs",
+    "lines": 78,
+    "sha256": "d441770ee0dc5ccbfcfdeac51ff68ddb188cf6a93ce53e89696e9462dfa909dc",
+    "matches": {
+      "file_io": [],
+      "scene_search": [],
+      "allocation_or_linq": [],
+      "locking": [],
+      "spawn_destroy": [
+        36,
+        74
+      ],
+      "thread": []
+    }
+  },
+  {
+    "repo": "BNB",
+    "path": "Assets/Script/Game/Weapon/Spell.cs",
+    "lines": 64,
+    "sha256": "c5164f37c94e874d3dbe46feded9a931cf1c97ca43feaf65462f00f696622488",
+    "matches": {
+      "file_io": [],
+      "scene_search": [],
+      "allocation_or_linq": [],
+      "locking": [],
+      "spawn_destroy": [
+        24
+      ],
+      "thread": []
+    }
+  },
+  {
+    "repo": "BNB",
+    "path": "Assets/Script/Game/Weapon/Sword.cs",
+    "lines": 66,
+    "sha256": "dad29c273ab8cbf7c35ce217d55a7d8c3af8fe01dede964737b95447ad4ed3a6",
+    "matches": {
+      "file_io": [],
+      "scene_search": [],
+      "allocation_or_linq": [],
+      "locking": [],
+      "spawn_destroy": [
+        35
+      ],
+      "thread": []
+    }
+  },
+  {
+    "repo": "BNB",
+    "path": "Assets/Script/Game/WeaponSystem.cs",
+    "lines": 345,
+    "sha256": "359eb31511a0ba79b0b8032be29951612eee3c910da50c48b7a5355d980fb3a0",
+    "matches": {
+      "file_io": [],
+      "scene_search": [
+        140
+      ],
+      "allocation_or_linq": [],
+      "locking": [],
+      "spawn_destroy": [
+        38,
+        133,
+        205,
+        282
+      ],
+      "thread": []
+    }
+  },
+  {
+    "repo": "BNB",
+    "path": "Assets/Script/Lobby/LobbyChat.cs",
+    "lines": 58,
+    "sha256": "eb359caf67b56dd2470186acb04c21c2adedca78cb8e8fd7c171d06dd76a0ddc",
+    "matches": {
+      "file_io": [],
+      "scene_search": [],
+      "allocation_or_linq": [],
+      "locking": [],
+      "spawn_destroy": [
+        48
+      ],
+      "thread": []
+    }
+  },
+  {
+    "repo": "BNB",
+    "path": "Assets/Script/Lobby/LobbyLogout.cs",
+    "lines": 50,
+    "sha256": "c95019c49a2d35e706275ab72c5f4890fb851690b600d15a59bd5ac81474b8bd",
+    "matches": {
+      "file_io": [],
+      "scene_search": [],
+      "allocation_or_linq": [],
+      "locking": [],
+      "spawn_destroy": [],
+      "thread": []
+    }
+  },
+  {
+    "repo": "BNB",
+    "path": "Assets/Script/Lobby/LobbyReceiver.cs",
+    "lines": 489,
+    "sha256": "b746fee4a6174d56d6433b3fd9d1c1464a564a8af0913a7036723ec95d66c4dc",
+    "matches": {
+      "file_io": [],
+      "scene_search": [],
+      "allocation_or_linq": [
+        282,
+        283,
+        399,
+        464
+      ],
+      "locking": [],
+      "spawn_destroy": [
+        122
+      ],
+      "thread": []
+    }
+  },
+  {
+    "repo": "BNB",
+    "path": "Assets/Script/Lobby/LobbyRoom.cs",
+    "lines": 387,
+    "sha256": "e264cd3bab2ab870ca5e7aefc8365165dd51ec1a1e195cb27f49e6a2e4bb3978",
+    "matches": {
+      "file_io": [],
+      "scene_search": [],
+      "allocation_or_linq": [
+        28,
+        58,
+        59
+      ],
+      "locking": [],
+      "spawn_destroy": [],
+      "thread": []
+    }
+  },
+  {
+    "repo": "BNB",
+    "path": "Assets/Script/Lobby/LobbyRoomData.cs",
+    "lines": 17,
+    "sha256": "8d785914aba88d18373e99c94f90e5354d7195114651899cebfc33df781ef5a5",
+    "matches": {
+      "file_io": [],
+      "scene_search": [],
+      "allocation_or_linq": [],
+      "locking": [],
+      "spawn_destroy": [],
+      "thread": []
+    }
+  },
+  {
+    "repo": "BNB",
+    "path": "Assets/Script/Lobby/LobbySender.cs",
+    "lines": 100,
+    "sha256": "845337a475d1d82d213327b7f471b4ff908c0a9b7ea49caab48811112a70e99e",
+    "matches": {
+      "file_io": [],
+      "scene_search": [],
+      "allocation_or_linq": [],
+      "locking": [],
+      "spawn_destroy": [],
+      "thread": []
+    }
+  },
+  {
+    "repo": "BNB",
+    "path": "Assets/Script/Lobby/LobbySystem.cs",
+    "lines": 720,
+    "sha256": "3ad3ffebce6abbc7a28ec047064ea606ac5de2d518b93ed0e64e0efdbbbfbb5c",
+    "matches": {
+      "file_io": [],
+      "scene_search": [],
+      "allocation_or_linq": [
+        64,
+        296,
+        297,
+        369,
+        422
+      ],
+      "locking": [],
+      "spawn_destroy": [
+        122,
+        142,
+        676
+      ],
+      "thread": []
+    }
+  },
+  {
+    "repo": "BNB",
+    "path": "Assets/Script/Lobby/LobbyUserInfo.cs",
+    "lines": 43,
+    "sha256": "622cb4404d592fd0949824e5e57a8c5a03b1df93b59eb52a1787c46ae94ad096",
+    "matches": {
+      "file_io": [],
+      "scene_search": [],
+      "allocation_or_linq": [],
+      "locking": [],
+      "spawn_destroy": [],
+      "thread": []
+    }
+  },
+  {
+    "repo": "BNB",
+    "path": "Assets/Script/Lobby/LobbyUserList.cs",
+    "lines": 94,
+    "sha256": "e4674768b41ad4bc921f724b9040661b8dfcacf3a1afcae85a2e26ba3550985e",
+    "matches": {
+      "file_io": [],
+      "scene_search": [],
+      "allocation_or_linq": [],
+      "locking": [],
+      "spawn_destroy": [
+        27
+      ],
+      "thread": []
+    }
+  },
+  {
+    "repo": "BNB",
+    "path": "Assets/Script/Lobby/LobbyUserPage.cs",
+    "lines": 178,
+    "sha256": "7ee586119c4a1cf528ca0c56f05f4afff2be3fa4a913beb410514386ccca066b",
+    "matches": {
+      "file_io": [],
+      "scene_search": [],
+      "allocation_or_linq": [],
+      "locking": [],
+      "spawn_destroy": [
+        57,
+        73
+      ],
+      "thread": []
+    }
+  },
+  {
+    "repo": "BNB",
+    "path": "Assets/Script/Login/AuthReceiver.cs",
+    "lines": 121,
+    "sha256": "d1ea5eb806e21c7620a6676ae4253ad8ee1f98afa8d3a3d00958fb491f27dd4e",
+    "matches": {
+      "file_io": [],
+      "scene_search": [],
+      "allocation_or_linq": [],
+      "locking": [],
+      "spawn_destroy": [],
+      "thread": []
+    }
+  },
+  {
+    "repo": "BNB",
+    "path": "Assets/Script/Login/AuthSender.cs",
+    "lines": 42,
+    "sha256": "2401dc8f5cc9f094be09487144952b032846e1b7b062b9b3f9433b5f08ca37c3",
+    "matches": {
+      "file_io": [],
+      "scene_search": [],
+      "allocation_or_linq": [],
+      "locking": [],
+      "spawn_destroy": [],
+      "thread": []
+    }
+  },
+  {
+    "repo": "BNB",
+    "path": "Assets/Script/Login/LoginSystem.cs",
+    "lines": 129,
+    "sha256": "5277434336e5ff4eacaa773c1461d76eee8418535f0785718c39ba67fff8b7cd",
+    "matches": {
+      "file_io": [],
+      "scene_search": [],
+      "allocation_or_linq": [],
+      "locking": [],
+      "spawn_destroy": [],
+      "thread": []
+    }
+  },
+  {
+    "repo": "BNB",
+    "path": "Assets/Script/Login/LoginUI.cs",
+    "lines": 54,
+    "sha256": "db95c66034f39952c17ef9ee5a00da872c33b471108f3f234d0703cd4ec6df79",
+    "matches": {
+      "file_io": [],
+      "scene_search": [],
+      "allocation_or_linq": [],
+      "locking": [],
+      "spawn_destroy": [],
+      "thread": []
+    }
+  },
+  {
+    "repo": "BNB",
+    "path": "Assets/Script/Login/RegisterSystem.cs",
+    "lines": 91,
+    "sha256": "f89c186db0325a75ef13f77f3577313541f22c2f852796395dd84c9139b71598",
+    "matches": {
+      "file_io": [],
+      "scene_search": [],
+      "allocation_or_linq": [],
+      "locking": [],
+      "spawn_destroy": [],
+      "thread": []
+    }
+  },
+  {
+    "repo": "BNB",
+    "path": "Assets/Script/Login/RegisterUI.cs",
+    "lines": 54,
+    "sha256": "0e9f0d032015ef43e965f55eef5356b0704c71947710ff88aedb87c428a89102",
+    "matches": {
+      "file_io": [],
+      "scene_search": [],
+      "allocation_or_linq": [],
+      "locking": [],
+      "spawn_destroy": [],
+      "thread": []
+    }
+  },
+  {
+    "repo": "BNB",
+    "path": "Assets/Script/LogoScene.cs",
+    "lines": 31,
+    "sha256": "586379c080c00b217128b967e5ab2b162f528ec3fd9c9b223af102de393e83d6",
+    "matches": {
+      "file_io": [],
+      "scene_search": [],
+      "allocation_or_linq": [],
+      "locking": [],
+      "spawn_destroy": [],
+      "thread": []
+    }
+  },
+  {
+    "repo": "BNB",
+    "path": "Assets/Script/MainSoundManager.cs",
+    "lines": 57,
+    "sha256": "22bab2df8ad27a8c38dc8961dc81c07d9e365079904ea18767caaea524833275",
+    "matches": {
+      "file_io": [],
+      "scene_search": [],
+      "allocation_or_linq": [],
+      "locking": [],
+      "spawn_destroy": [
+        19
+      ],
+      "thread": []
+    }
+  },
+  {
+    "repo": "BNB",
+    "path": "Assets/Script/MyPage/MyPageReceiver.cs",
+    "lines": 215,
+    "sha256": "8012ed9695baffc690a415bccafa3b2e74f51fd64f5054b5c4be30424dfbea4c",
+    "matches": {
+      "file_io": [],
+      "scene_search": [],
+      "allocation_or_linq": [
+        103,
+        158,
+        178,
+        199
+      ],
+      "locking": [],
+      "spawn_destroy": [],
+      "thread": []
+    }
+  },
+  {
+    "repo": "BNB",
+    "path": "Assets/Script/MyPage/MyPageSender.cs",
+    "lines": 66,
+    "sha256": "b4e084c6ed31bd66af52e74d36b01e4e48afa8cfbdfd91594b2a860762c30c4c",
+    "matches": {
+      "file_io": [],
+      "scene_search": [],
+      "allocation_or_linq": [],
+      "locking": [],
+      "spawn_destroy": [],
+      "thread": []
+    }
+  },
+  {
+    "repo": "BNB",
+    "path": "Assets/Script/MyPage/MyPageUserInfo.cs",
+    "lines": 538,
+    "sha256": "9c88ea8b6a06e6028b42024eceff94f1e2c2f1d9b3646ef3665f321188bfc183",
+    "matches": {
+      "file_io": [],
+      "scene_search": [],
+      "allocation_or_linq": [],
+      "locking": [],
+      "spawn_destroy": [
+        197,
+        219,
+        245,
+        294,
+        303,
+        316,
+        331,
+        389,
+        404,
+        466,
+        481
+      ],
+      "thread": []
+    }
+  },
+  {
+    "repo": "BNB",
+    "path": "Assets/Script/Network/IMessageHandler.cs",
+    "lines": 9,
+    "sha256": "04a2f97b043bc107a0ea1e818fe8a75fc92847230b9abbe3b895896d12784e6c",
+    "matches": {
+      "file_io": [],
+      "scene_search": [],
+      "allocation_or_linq": [],
+      "locking": [],
+      "spawn_destroy": [],
+      "thread": []
+    }
+  },
+  {
+    "repo": "BNB",
+    "path": "Assets/Script/Network/LineMessageBuffer.cs",
+    "lines": 35,
+    "sha256": "edfe1ccb5ae00dbc4ae556a5072d2daa60d9646e0cd2ac5b0dd1e945d1d0a122",
+    "matches": {
+      "file_io": [],
+      "scene_search": [],
+      "allocation_or_linq": [],
+      "locking": [],
+      "spawn_destroy": [],
+      "thread": []
+    }
+  },
+  {
+    "repo": "BNB",
+    "path": "Assets/Script/Network/NetworkConnector.cs",
+    "lines": 974,
+    "sha256": "b7e069f9cebf4b020f93199076a952bf3df2832c367a3b36134492892185ecf7",
+    "matches": {
+      "file_io": [],
+      "scene_search": [
+        594,
+        681,
+        698,
+        717,
+        738
+      ],
+      "allocation_or_linq": [
+        30,
+        31,
+        51,
+        104,
+        206,
+        822,
+        946
+      ],
+      "locking": [],
+      "spawn_destroy": [
+        135,
+        700,
+        720,
+        741
+      ],
+      "thread": []
+    }
+  },
+  {
+    "repo": "BNB",
+    "path": "Assets/Script/Room/RoomChatManager.cs",
+    "lines": 64,
+    "sha256": "b8361c26e5bc487a15f9e3ec0a1a3e4146576e7e6a39785d490771de7e2dc2e0",
+    "matches": {
+      "file_io": [],
+      "scene_search": [],
+      "allocation_or_linq": [],
+      "locking": [],
+      "spawn_destroy": [
+        55
+      ],
+      "thread": []
+    }
+  },
+  {
+    "repo": "BNB",
+    "path": "Assets/Script/Room/RoomReceiver.cs",
+    "lines": 76,
+    "sha256": "f117c88c0481bbb95de0302b059bd726eefcf848350fe0752b0363c5325c2706",
+    "matches": {
+      "file_io": [],
+      "scene_search": [],
+      "allocation_or_linq": [],
+      "locking": [],
+      "spawn_destroy": [],
+      "thread": []
+    }
+  },
+  {
+    "repo": "BNB",
+    "path": "Assets/Script/Room/RoomSender.cs",
+    "lines": 84,
+    "sha256": "1db4339f316704e797dcadded7df8351e64fe35b03d462bed25670ac6caa4102",
+    "matches": {
+      "file_io": [],
+      "scene_search": [],
+      "allocation_or_linq": [],
+      "locking": [],
+      "spawn_destroy": [],
+      "thread": []
+    }
+  },
+  {
+    "repo": "BNB",
+    "path": "Assets/Script/Room/RoomSystem.cs",
+    "lines": 359,
+    "sha256": "2fade03680468eff05f5011ff2256b89c625cf9dc31fc70b7335a209b73d36ba",
+    "matches": {
+      "file_io": [],
+      "scene_search": [],
+      "allocation_or_linq": [
+        89,
+        256,
+        257
+      ],
+      "locking": [],
+      "spawn_destroy": [],
+      "thread": []
+    }
+  },
+  {
+    "repo": "BNB",
+    "path": "Assets/Script/Room/RoomUI.cs",
+    "lines": 463,
+    "sha256": "99e153b9399703ac37a8eebe09fdd2ed3254d1121c251ce3f81dac1f807d8481",
+    "matches": {
+      "file_io": [],
+      "scene_search": [],
+      "allocation_or_linq": [
+        147,
+        248,
+        249
+      ],
+      "locking": [],
+      "spawn_destroy": [],
+      "thread": []
+    }
+  },
+  {
+    "repo": "BNB",
+    "path": "Assets/Script/Shop/ShopItemUI.cs",
+    "lines": 44,
+    "sha256": "da875136a07db0c158f7628a517f53f82c3398b810791feb6fe28f7b75446c93",
+    "matches": {
+      "file_io": [],
+      "scene_search": [],
+      "allocation_or_linq": [],
+      "locking": [],
+      "spawn_destroy": [],
+      "thread": []
+    }
+  },
+  {
+    "repo": "BNB",
+    "path": "Assets/Script/Shop/ShopReceiver.cs",
+    "lines": 131,
+    "sha256": "3a24da279618473a2d7016ba866350afc546be9e8ea2419bcc3368be5997e11b",
+    "matches": {
+      "file_io": [],
+      "scene_search": [],
+      "allocation_or_linq": [],
+      "locking": [],
+      "spawn_destroy": [],
+      "thread": []
+    }
+  },
+  {
+    "repo": "BNB",
+    "path": "Assets/Script/Shop/ShopSender.cs",
+    "lines": 92,
+    "sha256": "cffa3efc5fde6b2cb8bc504e78efa7570750f08cdd7518670c02da2a62f4a848",
+    "matches": {
+      "file_io": [],
+      "scene_search": [],
+      "allocation_or_linq": [],
+      "locking": [],
+      "spawn_destroy": [],
+      "thread": []
+    }
+  },
+  {
+    "repo": "BNB",
+    "path": "Assets/Script/Shop/ShopUI.cs",
+    "lines": 370,
+    "sha256": "2e057462a2d918274e97777b17acd672cb120eee8bbea82dffbb42542b06f4b6",
+    "matches": {
+      "file_io": [],
+      "scene_search": [],
+      "allocation_or_linq": [],
+      "locking": [],
+      "spawn_destroy": [
+        143,
+        186,
+        267,
+        269,
+        316
+      ],
+      "thread": []
+    }
+  }
+]

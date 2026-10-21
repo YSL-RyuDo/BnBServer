@@ -12,7 +12,28 @@ I implemented the C++ server and Unity weapon behaviors, and connected movement,
 
 [![Slap Squad, four-player gameplay](https://ysl-ryudo.github.io/assets/evidence/slap-four-balloons.webp)](https://ysl-ryudo.github.io/en/work/bnb/#gameplay)
 
-## Output queue design and reproduction
+## Reducing output-thread cost without losing slow-reader isolation
+
+At 64 connections, the median observed peak thread count fell from 132 to 69, and server CPU from 12.03% to 7.34% of one logical core. Median peak RSS fell from 16.03 to 14.49 MiB. The p95 median increased from 14.81 to 15.35 ms. This is a reduction in resource cost, not a claim that every response became faster.
+
+| Connections | Threads, before → after | CPU %, before → after | p95 ms, before → after | Peak RSS MiB, before → after |
+| --- | --- | --- | --- | --- |
+| 8 | 20 → 13 | 1.87 → 1.72 | 12.41 → 15.31 | 11.65 → 11.45 |
+| 32 | 68 → 37 | 11.09 → 4.06 | 13.53 → 14.16 | 13.60 → 12.83 |
+| 64 | 132 → 69 | 12.03 → 7.34 | 14.81 → 15.35 | 16.03 → 14.49 |
+
+Same Windows machine, Release x64, TCP loopback, 4 clients per room, MOVE at 20 Hz per client. Each variant has three runs per connection count, with 2 s warmup, 10 s measurement and 2 s drain. Variant order alternates. Values below are medians of per-run values; p95 is the median of run p95s. CPU 100% means one logical core. These populated waiting-room tests exclude Unity rendering, WAN traffic and full battle simulation.
+
+GetAttackByIndex reopened and parsed CharStat.csv for every HIT. The server now validates and loads the seven-entry attack table before accepting connections, then reads an immutable in-memory map. Unknown indices still return zero. Invalid startup data fails loading; changes to the file require a restart. This is a deliberate startup-snapshot policy, not hot reload or a database migration.
+
+Actual UserManager code, 100,000 lookups, five alternating runs per variant, matching checksums. Warm filesystem cache; initial loading is excluded. Median elapsed time: 9044.14 ms → 0.2805 ms. This isolates file-open/parsing work versus a tiny hot map. It must not be presented as an equivalent speedup in the game or server throughput.
+
+[Implementation and reproduction](https://github.com/YSL-RyuDo/BnBServer/blob/main/docs/engineering/IOCP.md), [Raw measurements](https://github.com/YSL-RyuDo/BnBServer/tree/main/docs/engineering/measurements/2026-10-21-iocp), [Code audit and remaining work](https://github.com/YSL-RyuDo/BnBServer/blob/main/docs/engineering/AUDIT.md)
+
+
+## Earlier fix: isolating a stalled reader
+
+Earlier stage, one blocking writer per connection. The current implementation is the IOCP version above. These original measurements are retained as history.
 
 With a stopped reader in another room: 0/300 responses before, 300/300 after in each of three runs. Bounded queues, serialized partial writes and tested connection cleanup.
 
@@ -29,7 +50,7 @@ With a stopped reader in another room: 0/300 responses before, 300/300 after in 
 
 ## Engineering evidence
 
-October 2026 follow-up: room isolation, TCP framing, bounded output queues, lifecycle fixes, UML and 36 measured runs.
+October 2026 follow-up: room delivery and TCP framing fixes, IOCP output, startup attack-table cache, UML, reproducible measurements and gameplay clips.
 
 The original MOVE handler called BroadcastMessageExcept, which sent to every connected client except the sender. With 64 clients in 16 four-player rooms, each move could reach 63 clients although only three were intended recipients. This was a correctness bug as well as unnecessary work.
 

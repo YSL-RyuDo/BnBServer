@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 
 def main(a):
  rows=json.loads(Path(a.results).read_text()); out=Path(a.out);out.mkdir(parents=True,exist_ok=True)
- for lang,labels in {'en':['Healthy-room deliveries with a stopped reader','Responses / expected 300','Before','After','Run'], 'ko':['읽기 중단 조건에서 다른 방으로 전달된 응답','응답 수 / 기대값 300','수정 전','수정 후','회차'], 'ja':['読み取り停止時の別室への応答','応答数 / 期待値300','変更前','変更後','回']}.items():
+ for lang,labels in {'en':['Room A reader stalled: successful responses inside room B','Responses / expected 300','Before','After','Run'], 'ko':['A방 수신 중단 시, 정상 B방 내부 응답 성공 수','응답 수 / 기대값 300','수정 전','수정 후','회차'], 'ja':['A室の受信停止時、正常なB室内の応答成功数','応答数 / 期待値300','変更前','変更後','回']}.items():
   plt.rcParams.update({'font.family':'MS Gothic' if lang=='ja' else 'Malgun Gothic','svg.fonttype':'none','axes.unicode_minus':False,'font.size':11})
   fig,ax=plt.subplots(figsize=(9,4.3));x=list(range(3))
   for v,offset,color,label in [('baseline',-.19,'#9b9385',labels[2]),('candidate',.19,'#4d654b',labels[3])]:

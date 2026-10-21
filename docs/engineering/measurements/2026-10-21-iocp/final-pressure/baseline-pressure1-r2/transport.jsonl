@@ -1,0 +1,8 @@
+{"accepted_frames":198,"completed_frames":72,"send_calls":71,"batches":71,"sent_bytes":130589,"peak_pending_bytes":260190,"peak_pending_frames":126,"stop_reason":3}
+{"accepted_frames":3492,"completed_frames":3491,"send_calls":3185,"batches":3185,"sent_bytes":7186796,"peak_pending_bytes":14455,"peak_pending_frames":7,"stop_reason":2}
+{"accepted_frames":3491,"completed_frames":3491,"send_calls":3170,"batches":3170,"sent_bytes":7186796,"peak_pending_bytes":16520,"peak_pending_frames":8,"stop_reason":1}
+{"accepted_frames":13,"completed_frames":12,"send_calls":13,"batches":13,"sent_bytes":627,"peak_pending_bytes":82,"peak_pending_frames":2,"stop_reason":2}
+{"accepted_frames":113,"completed_frames":112,"send_calls":112,"batches":112,"sent_bytes":4014,"peak_pending_bytes":82,"peak_pending_frames":2,"stop_reason":2}
+{"accepted_frames":114,"completed_frames":113,"send_calls":113,"batches":113,"sent_bytes":4068,"peak_pending_bytes":82,"peak_pending_frames":2,"stop_reason":2}
+{"accepted_frames":115,"completed_frames":114,"send_calls":114,"batches":114,"sent_bytes":4102,"peak_pending_bytes":82,"peak_pending_frames":2,"stop_reason":2}
+{"accepted_frames":3495,"completed_frames":3493,"send_calls":3170,"batches":3170,"sent_bytes":7186874,"peak_pending_bytes":18585,"peak_pending_frames":9,"stop_reason":2}

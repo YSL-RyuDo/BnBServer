@@ -61,17 +61,31 @@ One shared handler and manager set per server
 end note
 class SocketOutput {
   - queue : deque<string>
-  - writer : thread
+  - active : bool
   - pendingBytes : size_t
   + Enqueue(bytes, length)
   + Stop()
-  - Run()
+  - Begin(operation)
+  - Submit(operation)
+  - Complete(bytes, success)
 }
-ClientInfo *-- "1" SocketOutput
+ClientInfo o-- "1" SocketOutput
 ClientHandler ..> SocketOutput : QueueSend
 RoomManager ..> SocketOutput : QueueSend
 note bottom of SocketOutput
 256 KiB / 4096 frames, including in-flight batch
-1 writer per connection, partial-send loop
+1 shared IOCP output worker, partial completions
 end note
+class OutputDispatcher {
+  - worker : thread
+  - port : HANDLE
+}
+class OutputOperation {
+  + owner : shared_ptr<SocketOutput>
+  + bytes : string
+  + offset : size_t
+}
+OutputDispatcher --> "0..*" OutputOperation : completion queue
+OutputOperation --> SocketOutput : retains lifetime
+SocketOutput ..> OutputDispatcher : post
 @enduml

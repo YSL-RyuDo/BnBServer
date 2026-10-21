@@ -6,6 +6,7 @@
 #include <thread>
 #include <atomic>
 #include <stdexcept>
+#pragma comment(lib, "Ws2_32.lib")
 void require(bool ok) { if (!ok) throw std::runtime_error("attack table check failed"); }
 int main(int argc, char**) {
     Server server; UserManager users(server);

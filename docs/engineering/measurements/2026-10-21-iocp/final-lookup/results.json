@@ -1,0 +1,72 @@
+[
+  {
+    "calls": 100000,
+    "checksum": 1299995,
+    "elapsed_ms": 8166.23,
+    "variant": "baseline",
+    "repeat": 1
+  },
+  {
+    "calls": 100000,
+    "checksum": 1299995,
+    "elapsed_ms": 0.3359,
+    "variant": "candidate",
+    "repeat": 1
+  },
+  {
+    "calls": 100000,
+    "checksum": 1299995,
+    "elapsed_ms": 0.2805,
+    "variant": "candidate",
+    "repeat": 2
+  },
+  {
+    "calls": 100000,
+    "checksum": 1299995,
+    "elapsed_ms": 9229.88,
+    "variant": "baseline",
+    "repeat": 2
+  },
+  {
+    "calls": 100000,
+    "checksum": 1299995,
+    "elapsed_ms": 9044.14,
+    "variant": "baseline",
+    "repeat": 3
+  },
+  {
+    "calls": 100000,
+    "checksum": 1299995,
+    "elapsed_ms": 0.2687,
+    "variant": "candidate",
+    "repeat": 3
+  },
+  {
+    "calls": 100000,
+    "checksum": 1299995,
+    "elapsed_ms": 0.2776,
+    "variant": "candidate",
+    "repeat": 4
+  },
+  {
+    "calls": 100000,
+    "checksum": 1299995,
+    "elapsed_ms": 9091.17,
+    "variant": "baseline",
+    "repeat": 4
+  },
+  {
+    "calls": 100000,
+    "checksum": 1299995,
+    "elapsed_ms": 8342.54,
+    "variant": "baseline",
+    "repeat": 5
+  },
+  {
+    "calls": 100000,
+    "checksum": 1299995,
+    "elapsed_ms": 0.2884,
+    "variant": "candidate",
+    "repeat": 5
+  }
+]

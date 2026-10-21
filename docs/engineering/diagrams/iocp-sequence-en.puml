@@ -1,0 +1,33 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam defaultFontName "Malgun Gothic"
+skinparam defaultFontSize 15
+skinparam sequenceMessageAlign center
+hide footbox
+title IOCP output, completion ownership and cancellation
+participant "Handler" as H
+participant "Connection queue" as Q
+participant "Shared output worker" as W
+participant "Windows IOCP" as K
+H -> Q : Enqueue(bytes)
+note over Q : 256 KiB / 4096 frames, in-flight included
+Q -> K : PostQueuedCompletionStatus
+K -> W : Begin, batch <= 16 KiB target
+note over Q,W : One operation per connection
+W -> K : WSASend(OVERLAPPED)
+W -> W : GetQueuedCompletionStatus
+note over W,K : Buffer + connection stay alive through completion
+K --> W : completion(bytes, status)
+alt partial
+ W -> K : partial: advance offset and resubmit
+else full batch
+ W -> K : complete batch: enqueue next batch
+else disconnect / overflow
+ H -> Q : Stop()
+ Q -> K : CancelIoEx; retain until completion
+ K --> W : cancelled / completed
+ W -> W : release operation owner
+end
+@enduml

@@ -1,0 +1,100 @@
+{
+  "pressure": true,
+  "clients": 8,
+  "rooms": 2,
+  "probe_requests": 100,
+  "expected_deliveries": 300,
+  "received_deliveries": 300,
+  "missing_deliveries": 0,
+  "duplicates": 0,
+  "p50_ms": 0.5796000186819583,
+  "p95_ms": 16.646400006720796,
+  "p99_ms": 27.354099991498515,
+  "pressure_requests_written": 3480,
+  "server_cpu_core_percent": 8.300525707378627,
+  "peak_rss_mib": 11.84375,
+  "peak_threads": 13,
+  "duration_s": 6.964920300000813,
+  "transport": [
+    {
+      "accepted_frames": 198,
+      "completed_frames": 72,
+      "send_calls": 40,
+      "batches": 40,
+      "sent_bytes": 130589,
+      "peak_pending_bytes": 260190,
+      "peak_pending_frames": 126,
+      "stop_reason": 3
+    },
+    {
+      "accepted_frames": 3491,
+      "completed_frames": 3491,
+      "send_calls": 2027,
+      "batches": 2027,
+      "sent_bytes": 7186796,
+      "peak_pending_bytes": 30975,
+      "peak_pending_frames": 15,
+      "stop_reason": 1
+    },
+    {
+      "accepted_frames": 3492,
+      "completed_frames": 3492,
+      "send_calls": 1910,
+      "batches": 1910,
+      "sent_bytes": 7186840,
+      "peak_pending_bytes": 26845,
+      "peak_pending_frames": 13,
+      "stop_reason": 1
+    },
+    {
+      "accepted_frames": 114,
+      "completed_frames": 113,
+      "send_calls": 113,
+      "batches": 113,
+      "sent_bytes": 4068,
+      "peak_pending_bytes": 136,
+      "peak_pending_frames": 3,
+      "stop_reason": 2
+    },
+    {
+      "accepted_frames": 13,
+      "completed_frames": 12,
+      "send_calls": 12,
+      "batches": 12,
+      "sent_bytes": 627,
+      "peak_pending_bytes": 82,
+      "peak_pending_frames": 2,
+      "stop_reason": 2
+    },
+    {
+      "accepted_frames": 3495,
+      "completed_frames": 3493,
+      "send_calls": 1781,
+      "batches": 1781,
+      "sent_bytes": 7186874,
+      "peak_pending_bytes": 26845,
+      "peak_pending_frames": 13,
+      "stop_reason": 2
+    },
+    {
+      "accepted_frames": 113,
+      "completed_frames": 112,
+      "send_calls": 112,
+      "batches": 112,
+      "sent_bytes": 4014,
+      "peak_pending_bytes": 136,
+      "peak_pending_frames": 3,
+      "stop_reason": 2
+    },
+    {
+      "accepted_frames": 118,
+      "completed_frames": 117,
+      "send_calls": 114,
+      "batches": 114,
+      "sent_bytes": 4197,
+      "peak_pending_bytes": 136,
+      "peak_pending_frames": 4,
+      "stop_reason": 2
+    }
+  ]
+}

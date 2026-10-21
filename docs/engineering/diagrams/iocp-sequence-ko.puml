@@ -1,0 +1,33 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam defaultFontName "Malgun Gothic"
+skinparam defaultFontSize 15
+skinparam sequenceMessageAlign center
+hide footbox
+title IOCP 송신, 완료 작업의 소유권과 취소
+participant "핸들러" as H
+participant "연결별 큐" as Q
+participant "공용 송신 워커" as W
+participant "Windows IOCP" as K
+H -> Q : Enqueue(bytes)
+note over Q : 256 KiB / 4096 frames, in-flight included
+Q -> K : PostQueuedCompletionStatus
+K -> W : Begin, batch <= 16 KiB target
+note over Q,W : 연결마다 진행 중인 작업 하나
+W -> K : WSASend(OVERLAPPED)
+W -> W : GetQueuedCompletionStatus
+note over W,K : 완료까지 버퍼와 연결 수명 유지
+K --> W : completion(bytes, status)
+alt partial
+ W -> K : 부분 완료: 위치 이동 후 재요청
+else full batch
+ W -> K : 묶음 완료: 다음 묶음을 큐에 등록
+else disconnect / overflow
+ H -> Q : Stop()
+ Q -> K : CancelIoEx, 완료까지 수명 유지
+ K --> W : cancelled / completed
+ W -> W : release operation owner
+end
+@enduml

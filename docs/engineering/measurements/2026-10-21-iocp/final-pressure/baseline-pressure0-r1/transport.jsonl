@@ -1,0 +1,8 @@
+{"accepted_frames":10,"completed_frames":10,"send_calls":10,"batches":10,"sent_bytes":545,"peak_pending_bytes":69,"peak_pending_frames":1,"stop_reason":1}
+{"accepted_frames":9,"completed_frames":9,"send_calls":9,"batches":9,"sent_bytes":494,"peak_pending_bytes":69,"peak_pending_frames":1,"stop_reason":1}
+{"accepted_frames":14,"completed_frames":13,"send_calls":13,"batches":13,"sent_bytes":681,"peak_pending_bytes":92,"peak_pending_frames":2,"stop_reason":1}
+{"accepted_frames":12,"completed_frames":11,"send_calls":11,"batches":11,"sent_bytes":586,"peak_pending_bytes":92,"peak_pending_frames":2,"stop_reason":2}
+{"accepted_frames":115,"completed_frames":115,"send_calls":114,"batches":114,"sent_bytes":4124,"peak_pending_bytes":92,"peak_pending_frames":2,"stop_reason":1}
+{"accepted_frames":117,"completed_frames":117,"send_calls":116,"batches":116,"sent_bytes":4199,"peak_pending_bytes":92,"peak_pending_frames":2,"stop_reason":1}
+{"accepted_frames":120,"completed_frames":119,"send_calls":119,"batches":119,"sent_bytes":4259,"peak_pending_bytes":92,"peak_pending_frames":2,"stop_reason":2}
+{"accepted_frames":15,"completed_frames":14,"send_calls":15,"batches":15,"sent_bytes":715,"peak_pending_bytes":92,"peak_pending_frames":2,"stop_reason":2}

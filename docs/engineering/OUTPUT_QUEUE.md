@@ -1,5 +1,7 @@
 # A slow reader must not stop another room
 
+Earlier stage, one blocking writer per connection. The current implementation is the IOCP version above. These original measurements are retained as history. [IOCP](IOCP.md)
+
 [English](OUTPUT_QUEUE.md), [한국어](OUTPUT_QUEUE.ko.md), [日本語](OUTPUT_QUEUE.ja.md)
 
 2026-10-21

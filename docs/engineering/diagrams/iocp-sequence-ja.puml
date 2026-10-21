@@ -1,0 +1,33 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam defaultFontName "MS Gothic"
+skinparam defaultFontSize 15
+skinparam sequenceMessageAlign center
+hide footbox
+title IOCP送信、完了操作の所有権とキャンセル
+participant "ハンドラー" as H
+participant "接続別キュー" as Q
+participant "共通送信ワーカー" as W
+participant "Windows IOCP" as K
+H -> Q : Enqueue(bytes)
+note over Q : 256 KiB / 4096 frames, in-flight included
+Q -> K : PostQueuedCompletionStatus
+K -> W : Begin, batch <= 16 KiB target
+note over Q,W : 接続ごとに未完了操作は1個
+W -> K : WSASend(OVERLAPPED)
+W -> W : GetQueuedCompletionStatus
+note over W,K : 完了までバッファと接続を保持
+K --> W : completion(bytes, status)
+alt partial
+ W -> K : 部分完了: オフセット更新、再送信
+else full batch
+ W -> K : バッチ完了: 次のバッチを登録
+else disconnect / overflow
+ H -> Q : Stop()
+ Q -> K : CancelIoEx、完了まで保持
+ K --> W : cancelled / completed
+ W -> W : release operation owner
+end
+@enduml
