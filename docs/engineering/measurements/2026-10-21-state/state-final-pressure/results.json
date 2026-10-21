@@ -1,0 +1,104 @@
+[
+  {
+    "pressure": true,
+    "clients": 8,
+    "rooms": 2,
+    "probe_requests": 100,
+    "expected_deliveries": 300,
+    "received_deliveries": 300,
+    "missing_deliveries": 0,
+    "duplicates": 0,
+    "p50_ms": 0.49160001799464226,
+    "p95_ms": 10.207400016952306,
+    "p99_ms": 11.140000016894192,
+    "pressure_requests_written": 3470,
+    "server_cpu_core_percent": 3.816374438100619,
+    "peak_rss_mib": 11.99609375,
+    "peak_threads": 13,
+    "duration_s": 6.960139900009381,
+    "transport": [
+      {
+        "accepted_frames": 201,
+        "completed_frames": 75,
+        "send_calls": 31,
+        "batches": 31,
+        "sent_bytes": 136784,
+        "peak_pending_bytes": 260190,
+        "peak_pending_frames": 126,
+        "stop_reason": 3
+      },
+      {
+        "accepted_frames": 3481,
+        "completed_frames": 3481,
+        "send_calls": 1818,
+        "batches": 1818,
+        "sent_bytes": 7166146,
+        "peak_pending_bytes": 45430,
+        "peak_pending_frames": 22,
+        "stop_reason": 1
+      },
+      {
+        "accepted_frames": 3483,
+        "completed_frames": 3482,
+        "send_calls": 1705,
+        "batches": 1705,
+        "sent_bytes": 7166190,
+        "peak_pending_bytes": 35105,
+        "peak_pending_frames": 17,
+        "stop_reason": 2
+      },
+      {
+        "accepted_frames": 12,
+        "completed_frames": 11,
+        "send_calls": 12,
+        "batches": 12,
+        "sent_bytes": 591,
+        "peak_pending_bytes": 87,
+        "peak_pending_frames": 2,
+        "stop_reason": 2
+      },
+      {
+        "accepted_frames": 112,
+        "completed_frames": 111,
+        "send_calls": 112,
+        "batches": 112,
+        "sent_bytes": 3978,
+        "peak_pending_bytes": 87,
+        "peak_pending_frames": 2,
+        "stop_reason": 2
+      },
+      {
+        "accepted_frames": 113,
+        "completed_frames": 112,
+        "send_calls": 112,
+        "batches": 112,
+        "sent_bytes": 4019,
+        "peak_pending_bytes": 87,
+        "peak_pending_frames": 2,
+        "stop_reason": 2
+      },
+      {
+        "accepted_frames": 113,
+        "completed_frames": 112,
+        "send_calls": 112,
+        "batches": 112,
+        "sent_bytes": 4019,
+        "peak_pending_bytes": 87,
+        "peak_pending_frames": 2,
+        "stop_reason": 2
+      },
+      {
+        "accepted_frames": 3485,
+        "completed_frames": 3484,
+        "send_calls": 1586,
+        "batches": 1586,
+        "sent_bytes": 7166270,
+        "peak_pending_bytes": 33040,
+        "peak_pending_frames": 16,
+        "stop_reason": 2
+      }
+    ],
+    "variant": "candidate",
+    "repeat": 1
+  }
+]

@@ -1,0 +1,52 @@
+{
+  "source_commit": "cf8d48e2dadc5579fbd3df6886a402cac5226648",
+  "source_hashes": {
+    "CharacterStatsManager.cpp": "1a7861c3c9a291607bc867148686a97490d5cb7a43cc92ac8256a5208a61d454",
+    "CharacterStatsManager.h": "c7c5d030798e3c12506dc12394602e548a479c57c777c927e3b3d08c992cb570",
+    "ClientHandler.cpp": "a7f1e3b3f5dc51d9dcbdc02871428747cf03708d6a4f807ef08c935d734e750a",
+    "ClientHandler.h": "dd3daabd5840d776920e6d578743fe38111699c5514d38e7cca779b739e4fad8",
+    "ClientInfo.cpp": "ba08341028de4df83f37296728b69a0725ec18bab376bc6d9c10c1cd165d9a02",
+    "ClientInfo.h": "b7115f8f728c1fb9072751ba05965b9f4b92f8efd197294cdc07739f93f707d6",
+    "CsvStore.h": "b7324999fe2971169867eb9ca0e6cedea9d935e9e03a8d50718f7d8c644614d1",
+    "main.cpp": "1d0f170be52b5532177619641d9f2fe715c1791bd5dabdd72e277e4cd7890b9c",
+    "MapManager.cpp": "a500ed1f000eecf4e121ecc3296e9dd43089113359442c7307e69134f53b1cb5",
+    "MapManager.h": "ceab6660e25c1a23604cf651011e96e9fb5d4324c32814037892e997d9e1d6f9",
+    "Player.cpp": "4a63f7ca2dd1e59584aa133918f26b7610ecf609c174798240260dd411e04b93",
+    "Player.h": "413d9b5f643d81978d618d4cc03de20b0528f91030e1d838b34e837dafe1e1a3",
+    "Room.cpp": "c4bf7c41a09a6597817e7549fe43db87e8cd1bb69f064c27adb9e6b54a12bba6",
+    "Room.h": "b07da1e22e4dc7b6f1de50159eef4d2642890af25f6fc37fdc79ac9bb6503d6c",
+    "RoomManager.cpp": "354bba7be7161993deaffadcfbe5bcc6b1709252f42cb1b84eac794be8e2203c",
+    "RoomManager.h": "da2f1953acf8f9f6a77e6a6c481eea3f6d4b31750f7e95eaec06630f46316eba",
+    "Server.cpp": "51e8e2d37648e7d24350fc7d3348fea1ecf64b592ff64cee88e0e1b2fe24bb14",
+    "Server.h": "6cf83cdc8e1ea41c3c3085b5748a941b06e071295b25931aa65fa536c2daf7be",
+    "SocketOutput.cpp": "ae090fb0d437d204186acf100773951a2028cc00f4cdeba557668d6e4a3a8a20",
+    "SocketOutput.h": "252141c595544977210b7bc006f07f1352c11f138cdf77d69c3d05710d5f1140",
+    "StoreData.cpp": "0eddfbf2d1e6e644b63f8e7df307c0c59ef49151ea66b923052fcc1e8ab17573",
+    "StoreData.h": "4139fc8bf2d48c5479418e884ec546b71b10514a65f7d8c0f4b3374fd684e161",
+    "TeamOFYServer.vcxproj": "3913042703156034b06efc09e7b294804d09f6b3a6c7b64b6f0764520710fa67",
+    "UserAccount.cpp": "17c46f1aea564cb43bc1d044a394e94d7fb4a212f663b57945694ed8bc4b4688",
+    "UserAccount.h": "94c28ffa8863881ff555d7dc8b3a6f48b23729a3aca784f0c500cb0e0c6a9122",
+    "UserManager.cpp": "3570dfed3548fb56bf44eb3db50ec1c3d71cf305975cb803bf36223b3c1382d9",
+    "UserManager.h": "89f97365c0b46fc9ea82f6c5e5fa3609932908afbd5df900368272fa06edb15d",
+    "Utils.h": "eb42aa3bc165fe04e1a4d5aa5b18df1cdf67ce78c1ea570ca613266cc254b53f"
+  },
+  "binary_sha256": "c59c8de030e6e2d3771655bd34e5d42d690a0bbc690d96e11bb37d654f10007c",
+  "port": 39099,
+  "adapter": [
+    "main.cpp: test port instead of 9000",
+    "Server.cpp: bind loopback instead of all interfaces"
+  ],
+  "configuration": "Release x64, MSVC v143, C++14",
+  "source_line_endings": "CRLF, matching the measured Windows checkout",
+  "build_command": [
+    "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\MSBuild\\Current\\Bin\\MSBuild.exe",
+    "{WORKSPACE}\\state-final-unit\\source\\TeamOFYServer.vcxproj",
+    "/p:Configuration=Release",
+    "/p:Platform=x64",
+    "/p:OutDir={WORKSPACE}\\state-final-unit\\bin\\",
+    "/p:IntDir={WORKSPACE}\\state-final-unit\\obj\\",
+    "/v:minimal",
+    "/nologo"
+  ],
+  "path_format": "Machine-specific workspace prefixes replaced with {WORKSPACE}; measurement values, source hashes and binary hashes are unchanged."
+}

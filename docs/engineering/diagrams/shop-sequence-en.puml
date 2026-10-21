@@ -9,26 +9,29 @@ skinparam ArrowColor #444444
 skinparam Padding 10
 skinparam sequenceMessageAlign center
 hide footbox
-title Confirmed ownership in the shop
-participant "ShopUI / ShopSender" as UI
+title Purchase commit and recovery
+participant ShopUI as UI
 participant ClientHandler as H
-participant UserManager as U
-database "CSV files" as D
-UI -> H : BUY_ICON|nickname,index
-H -> U : Read ownership, price and wallet
-alt Owned item or insufficient funds: return
- H -> H : return
-else
- H -> U : Deduct wallet; set owned item
- H -> U : SaveUserProfile(id)
- U -> D : UserProfile.csv
- H -> U : SaveUserIcons(id)
- U -> D : UserIcon.csv
- H -> UI : COIN_INFO + STORE_ICON_LIST
- UI -> UI : Update wallet and current-tab ownership
-end
-note over U,D
-The two CSV writes are sequential.
-They are not an atomic transaction or a durable request ledger.
+participant "UserManager::Transaction" as T
+participant CsvStore as S
+database CSV as D
+UI -> H : BUY_ICON
+H -> T : Validate balance and ownership
+activate T
+H -> T : Stage profile and inventory
+H -> T : Commit()
+T -> S : Commit(afterImages)
+S -> D : Publish flushed redo journal
+S -> D : Replace each CSV atomically
+S -> D : Remove completed journal
+S --> T : true
+T --> H : Commit succeeded
+deactivate T
+H -> UI : COIN_INFO + STORE_ICON_LIST
+UI -> UI : Update balance and owned items
+note over T,D
+One user-state lock from validation through commit.
+Precommit failure restores memory.
+Postcommit replacement failure stops the process; startup replays the journal.
 end note
 @enduml

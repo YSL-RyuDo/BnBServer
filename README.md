@@ -12,6 +12,14 @@ I implemented the C++ server and Unity weapon behaviors, and connected movement,
 
 [![Slap Squad, four-player gameplay](https://ysl-ryudo.github.io/assets/evidence/slap-four-balloons.webp)](https://ysl-ryudo.github.io/en/work/bnb/#gameplay)
 
+## CSV transactions and room lifetime
+
+A 32-client purchase test exposed a persistence failure: all four item categories wrote through the same temp.csv. Different requests could replace or remove one another’s temporary file. The follow-up change keeps CSV storage but commits a purchase’s balance and ownership together.
+
+The median p95 increased at all three loads. At 64 connections, median CPU fell from 9.22% to 7.65%; at 8 and 32 it increased. Thread counts stayed at 13, 37 and 69. All 624,000 expected deliveries arrived with no cross-room delivery or duplication. This change fixes state correctness; it does not establish a general latency improvement.
+
+[Code and test data](https://github.com/YSL-RyuDo/BnBServer/blob/main/docs/engineering/STATE_SAFETY.md)
+
 ## Reducing output-thread cost without losing slow-reader isolation
 
 At 64 connections, the median observed peak thread count fell from 132 to 69, and server CPU from 12.03% to 7.34% of one logical core. Median peak RSS fell from 16.03 to 14.49 MiB. The p95 median increased from 14.81 to 15.35 ms. This is a reduction in resource cost, not a claim that every response became faster.

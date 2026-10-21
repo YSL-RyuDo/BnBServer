@@ -1,4 +1,4 @@
-# 슬랩스쿼드, Slap Squad / C++ Server
+# Slap Squad / C++ Server
 
 [![English](https://ysl-ryudo.github.io/assets/diagrams/language-en.svg)](README.md) [![한국어](https://ysl-ryudo.github.io/assets/diagrams/language-ko-current.svg)](README.ko.md) [![日本語](https://ysl-ryudo.github.io/assets/diagrams/language-ja.svg)](README.ja.md)
 
@@ -11,6 +11,14 @@ C++ 서버와 Unity 무기 동작을 구현하고 이동, 물풍선 상호작용
 [Portfolio](https://ysl-ryudo.github.io/ko/work/bnb/), [전체 기술 문서](https://github.com/YSL-RyuDo/BnBServer/blob/main/docs/engineering/README.ko.md), [Unity](https://github.com/YSL-RyuDo/BNB), [C++ server](https://github.com/YSL-RyuDo/BnBServer)
 
 [![Slap Squad, four-player gameplay](https://ysl-ryudo.github.io/assets/evidence/slap-four-balloons.webp)](https://ysl-ryudo.github.io/ko/work/bnb/#gameplay)
+
+## 동시 구매 저장과 방 객체 수명 수정
+
+32개 클라이언트의 동시 구매에서 저장 충돌을 재현했습니다. 네 종류의 아이템 저장 함수가 모두 temp.csv를 사용해 다른 요청의 임시 파일을 덮어쓰거나 삭제했습니다. 기존 CSV 형식을 유지하면서 재화 차감과 보유 목록을 한 번의 구매 단위로 저장하도록 고쳤습니다.
+
+p95 중앙값은 세 조건 모두 늘었습니다. 64개 연결에서는 CPU 중앙값이 9.22%에서 7.65%로 줄었고, 8개와 32개에서는 늘었습니다. 스레드는 13, 37, 69개로 같았습니다. 기대한 전달 624,000건은 모두 도착했고 다른 방 전달과 중복은 없었습니다. 저장과 방 상태의 오류를 고친 결과이며, 전반적인 지연 개선을 입증한 결과는 아닙니다.
+
+[코드와 측정 원자료](https://github.com/YSL-RyuDo/BnBServer/blob/main/docs/engineering/STATE_SAFETY.ko.md)
 
 ## 느린 수신자 격리를 유지하면서 송신 스레드 비용 줄이기
 

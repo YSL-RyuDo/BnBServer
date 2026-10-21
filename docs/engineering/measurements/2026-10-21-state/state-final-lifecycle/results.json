@@ -1,0 +1,47 @@
+[
+  {
+    "case": "invalid_integer",
+    "passed": true,
+    "deliveries": 3,
+    "expected": 3,
+    "healthy_room_final_deliveries": 3,
+    "threads_before": 13,
+    "threads_after": 12
+  },
+  {
+    "case": "invalid_integer_range",
+    "passed": true,
+    "deliveries": 3,
+    "expected": 3,
+    "healthy_room_final_deliveries": 3,
+    "threads_before": 13,
+    "threads_after": 12
+  },
+  {
+    "case": "logout_relogin",
+    "passed": true,
+    "deliveries": 3,
+    "expected": 3,
+    "healthy_room_final_deliveries": 3,
+    "threads_before": 13,
+    "threads_after": 13
+  },
+  {
+    "case": "quit_eof_churn",
+    "passed": true,
+    "deliveries": 63,
+    "expected": 63,
+    "healthy_room_final_deliveries": 3,
+    "threads_before": 13,
+    "threads_after": 13
+  },
+  {
+    "case": "simultaneous_disconnect",
+    "passed": true,
+    "deliveries": 3,
+    "expected": 3,
+    "healthy_room_final_deliveries": 3,
+    "threads_before": 13,
+    "threads_after": 13
+  }
+]

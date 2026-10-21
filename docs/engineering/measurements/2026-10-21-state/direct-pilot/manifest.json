@@ -1,0 +1,133 @@
+{
+  "date": "2026-10-21",
+  "os": "Windows-10-10.0.26200-SP0",
+  "python": "3.10.6 (tags/v3.10.6:9c7b4bd, Aug  1 2022, 21:53:49) [MSC v.1932 64 bit (AMD64)]",
+  "psutil": "7.1.3",
+  "cpu": "Intel(R) Core(TM) i7-14700",
+  "logical_cpus": 28,
+  "physical_cpus": 20,
+  "ram_gib": 31.69,
+  "variants": {
+    "baseline": {
+      "source_commit": "cf8d48e2dadc5579fbd3df6886a402cac5226648",
+      "source_hashes": {
+        "CharacterStatsManager.cpp": "1a7861c3c9a291607bc867148686a97490d5cb7a43cc92ac8256a5208a61d454",
+        "CharacterStatsManager.h": "c7c5d030798e3c12506dc12394602e548a479c57c777c927e3b3d08c992cb570",
+        "ClientHandler.cpp": "fa500a20eafbb908a986a7e1f2c9ccd217ed7474b18eea3e090a90d54eb7363a",
+        "ClientHandler.h": "b7b57a287816336121fae681cbcef38956d4013e4577d47ca02389bb851275fc",
+        "ClientInfo.cpp": "ba08341028de4df83f37296728b69a0725ec18bab376bc6d9c10c1cd165d9a02",
+        "ClientInfo.h": "b7115f8f728c1fb9072751ba05965b9f4b92f8efd197294cdc07739f93f707d6",
+        "CsvStore.h": "b9069b203623365fd7e1aeec1277fc679a82484addea04cc29efa00202c26722",
+        "main.cpp": "1d0f170be52b5532177619641d9f2fe715c1791bd5dabdd72e277e4cd7890b9c",
+        "MapManager.cpp": "a500ed1f000eecf4e121ecc3296e9dd43089113359442c7307e69134f53b1cb5",
+        "MapManager.h": "ceab6660e25c1a23604cf651011e96e9fb5d4324c32814037892e997d9e1d6f9",
+        "Player.cpp": "4a63f7ca2dd1e59584aa133918f26b7610ecf609c174798240260dd411e04b93",
+        "Player.h": "413d9b5f643d81978d618d4cc03de20b0528f91030e1d838b34e837dafe1e1a3",
+        "Room.cpp": "c4bf7c41a09a6597817e7549fe43db87e8cd1bb69f064c27adb9e6b54a12bba6",
+        "Room.h": "d7b9db2ffa28b83ace19e91a17e82d5850bdb8c14eb329b41a26cb5f88f90a7f",
+        "RoomManager.cpp": "d572cef713536a31e27cda87bc4362e611a4e21e5f17329fe21c2cabdeb911ca",
+        "RoomManager.h": "15d76b186d07e3a169f5d5dd55ed8cc78abef5cd871f1ba5e1ca4b1f239fc547",
+        "Server.cpp": "d7342886415d837fa5b49581891c71f0ee20dcea266c46c5c5af3c7c0fa0cf0b",
+        "Server.h": "6cf83cdc8e1ea41c3c3085b5748a941b06e071295b25931aa65fa536c2daf7be",
+        "SocketOutput.cpp": "ae090fb0d437d204186acf100773951a2028cc00f4cdeba557668d6e4a3a8a20",
+        "SocketOutput.h": "252141c595544977210b7bc006f07f1352c11f138cdf77d69c3d05710d5f1140",
+        "StoreData.cpp": "0eddfbf2d1e6e644b63f8e7df307c0c59ef49151ea66b923052fcc1e8ab17573",
+        "StoreData.h": "4139fc8bf2d48c5479418e884ec546b71b10514a65f7d8c0f4b3374fd684e161",
+        "TeamOFYServer.vcxproj": "3913042703156034b06efc09e7b294804d09f6b3a6c7b64b6f0764520710fa67",
+        "UserAccount.cpp": "17c46f1aea564cb43bc1d044a394e94d7fb4a212f663b57945694ed8bc4b4688",
+        "UserAccount.h": "94c28ffa8863881ff555d7dc8b3a6f48b23729a3aca784f0c500cb0e0c6a9122",
+        "UserManager.cpp": "3570dfed3548fb56bf44eb3db50ec1c3d71cf305975cb803bf36223b3c1382d9",
+        "UserManager.h": "89f97365c0b46fc9ea82f6c5e5fa3609932908afbd5df900368272fa06edb15d",
+        "Utils.h": "eb42aa3bc165fe04e1a4d5aa5b18df1cdf67ce78c1ea570ca613266cc254b53f"
+      },
+      "binary_sha256": "1395f8fd665cfa96c2f3d23cdc4238703e5ef05000b21dcd4a7ee5b516a34662",
+      "port": 39095,
+      "adapter": [
+        "main.cpp: test port instead of 9000",
+        "Server.cpp: bind loopback instead of all interfaces"
+      ],
+      "configuration": "Release x64, MSVC v143, C++14",
+      "source_line_endings": "CRLF, matching the measured Windows checkout",
+      "build_command": [
+        "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\MSBuild\\Current\\Bin\\MSBuild.exe",
+        "{WORKSPACE}\\build-state\\source\\TeamOFYServer.vcxproj",
+        "/p:Configuration=Release",
+        "/p:Platform=x64",
+        "/p:OutDir={WORKSPACE}\\build-state\\bin\\",
+        "/p:IntDir={WORKSPACE}\\build-state\\obj\\",
+        "/v:minimal",
+        "/nologo"
+      ]
+    },
+    "candidate": {
+      "source_commit": "cf8d48e2dadc5579fbd3df6886a402cac5226648",
+      "source_hashes": {
+        "CharacterStatsManager.cpp": "1a7861c3c9a291607bc867148686a97490d5cb7a43cc92ac8256a5208a61d454",
+        "CharacterStatsManager.h": "c7c5d030798e3c12506dc12394602e548a479c57c777c927e3b3d08c992cb570",
+        "ClientHandler.cpp": "fa500a20eafbb908a986a7e1f2c9ccd217ed7474b18eea3e090a90d54eb7363a",
+        "ClientHandler.h": "dd3daabd5840d776920e6d578743fe38111699c5514d38e7cca779b739e4fad8",
+        "ClientInfo.cpp": "ba08341028de4df83f37296728b69a0725ec18bab376bc6d9c10c1cd165d9a02",
+        "ClientInfo.h": "b7115f8f728c1fb9072751ba05965b9f4b92f8efd197294cdc07739f93f707d6",
+        "CsvStore.h": "b7324999fe2971169867eb9ca0e6cedea9d935e9e03a8d50718f7d8c644614d1",
+        "main.cpp": "1d0f170be52b5532177619641d9f2fe715c1791bd5dabdd72e277e4cd7890b9c",
+        "MapManager.cpp": "a500ed1f000eecf4e121ecc3296e9dd43089113359442c7307e69134f53b1cb5",
+        "MapManager.h": "ceab6660e25c1a23604cf651011e96e9fb5d4324c32814037892e997d9e1d6f9",
+        "Player.cpp": "4a63f7ca2dd1e59584aa133918f26b7610ecf609c174798240260dd411e04b93",
+        "Player.h": "413d9b5f643d81978d618d4cc03de20b0528f91030e1d838b34e837dafe1e1a3",
+        "Room.cpp": "c4bf7c41a09a6597817e7549fe43db87e8cd1bb69f064c27adb9e6b54a12bba6",
+        "Room.h": "d7b9db2ffa28b83ace19e91a17e82d5850bdb8c14eb329b41a26cb5f88f90a7f",
+        "RoomManager.cpp": "9d0476883582e0d89141626a2aa061f3dcf91d10822e9f5017ac7b645d395922",
+        "RoomManager.h": "15d76b186d07e3a169f5d5dd55ed8cc78abef5cd871f1ba5e1ca4b1f239fc547",
+        "Server.cpp": "51e8e2d37648e7d24350fc7d3348fea1ecf64b592ff64cee88e0e1b2fe24bb14",
+        "Server.h": "6cf83cdc8e1ea41c3c3085b5748a941b06e071295b25931aa65fa536c2daf7be",
+        "SocketOutput.cpp": "b51d617d197581a949f4ef8eedeacf2a6919e7a98648bbd2b3628fb43bd89944",
+        "SocketOutput.h": "252141c595544977210b7bc006f07f1352c11f138cdf77d69c3d05710d5f1140",
+        "StoreData.cpp": "0eddfbf2d1e6e644b63f8e7df307c0c59ef49151ea66b923052fcc1e8ab17573",
+        "StoreData.h": "4139fc8bf2d48c5479418e884ec546b71b10514a65f7d8c0f4b3374fd684e161",
+        "TeamOFYServer.vcxproj": "3913042703156034b06efc09e7b294804d09f6b3a6c7b64b6f0764520710fa67",
+        "UserAccount.cpp": "17c46f1aea564cb43bc1d044a394e94d7fb4a212f663b57945694ed8bc4b4688",
+        "UserAccount.h": "94c28ffa8863881ff555d7dc8b3a6f48b23729a3aca784f0c500cb0e0c6a9122",
+        "UserManager.cpp": "3570dfed3548fb56bf44eb3db50ec1c3d71cf305975cb803bf36223b3c1382d9",
+        "UserManager.h": "89f97365c0b46fc9ea82f6c5e5fa3609932908afbd5df900368272fa06edb15d",
+        "Utils.h": "eb42aa3bc165fe04e1a4d5aa5b18df1cdf67ce78c1ea570ca613266cc254b53f"
+      },
+      "binary_sha256": "d097d5802ff962a1bdf3af0feea8a0b0f3863605b0bdb9f46c79957380be9b42",
+      "port": 39098,
+      "adapter": [
+        "main.cpp: test port instead of 9000",
+        "Server.cpp: bind loopback instead of all interfaces"
+      ],
+      "configuration": "Release x64, MSVC v143, C++14",
+      "source_line_endings": "CRLF, matching the measured Windows checkout",
+      "build_command": [
+        "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\MSBuild\\Current\\Bin\\MSBuild.exe",
+        "{WORKSPACE}\\build-state-final\\source\\TeamOFYServer.vcxproj",
+        "/p:Configuration=Release",
+        "/p:Platform=x64",
+        "/p:OutDir={WORKSPACE}\\build-state-final\\bin\\",
+        "/p:IntDir={WORKSPACE}\\build-state-final\\obj\\",
+        "/v:minimal",
+        "/nologo"
+      ]
+    }
+  },
+  "method": {
+    "clients": [
+      32
+    ],
+    "rooms": "4 clients per room",
+    "repeats": 3,
+    "warmup_s": 2,
+    "measurement_s": 10,
+    "drain_s": 2,
+    "offered_hz_per_client": 20,
+    "schedule": "all senders scheduled every 50ms, alternating variant order per repeat",
+    "network": "same Windows host, TCP IPv4 loopback; no Unity renderer",
+    "tcp_nodelay": "client: asyncio default on; server: unchanged default",
+    "cpu_percent": "100% = one logical core",
+    "latency": "sender pre-write to observer newline receipt; includes client event loop and TCP scheduling",
+    "quantiles": "nearest rank, per repetition; publication uses median of run quantiles",
+    "workload_scope": "MOVE relay in populated waiting rooms; no battle simulation, DB or shop traffic"
+  },
+  "path_format": "Machine-specific workspace prefixes replaced with {WORKSPACE}; measurement values, source hashes and binary hashes are unchanged."
+}

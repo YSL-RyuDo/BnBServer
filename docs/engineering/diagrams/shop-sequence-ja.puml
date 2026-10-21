@@ -9,26 +9,29 @@ skinparam ArrowColor #444444
 skinparam Padding 10
 skinparam sequenceMessageAlign center
 hide footbox
-title 確定した所有状態をショップに表示
-participant "ShopUI / ShopSender" as UI
+title 購入の確定と復旧
+participant ShopUI as UI
 participant ClientHandler as H
-participant UserManager as U
-database "CSV ファイル" as D
-UI -> H : BUY_ICON|nickname,index
-H -> U : 所有状態、価格、残高を確認
-alt 所有済み、または残高不足なら終了
- H -> H : return
-else
- H -> U : 残高を減算し、所有状態を更新
- H -> U : SaveUserProfile(id)
- U -> D : UserProfile.csv
- H -> U : SaveUserIcons(id)
- U -> D : UserIcon.csv
- H -> UI : COIN_INFO + STORE_ICON_LIST
- UI -> UI : 残高と現在のタブの所有状態を更新
-end
-note over U,D
-2つの CSV を順番に保存します。
-原子的トランザクションや永続的な要求台帳ではありません。
+participant "UserManager::Transaction" as T
+participant CsvStore as S
+database CSV as D
+UI -> H : BUY_ICON
+H -> T : 残高と所持情報を検証
+activate T
+H -> T : プロフィールと所持情報を準備
+H -> T : Commit()
+T -> S : Commit(afterImages)
+S -> D : フラッシュ済みジャーナルを確定
+S -> D : 各CSVをアトミックに置換
+S -> D : 完了したジャーナルを削除
+S --> T : true
+T --> H : コミット成功
+deactivate T
+H -> UI : COIN_INFO + STORE_ICON_LIST
+UI -> UI : 残高と所持情報を更新
+note over T,D
+検証から確定までユーザー状態のロックを保持します。
+確定前の失敗ではメモリを復元します。
+確定後の置換失敗では終了し、次回起動時に再適用します。
 end note
 @enduml

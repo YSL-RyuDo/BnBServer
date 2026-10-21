@@ -1,0 +1,17 @@
+[
+  {
+    "case": "state",
+    "exit": 0,
+    "pass": true
+  },
+  {
+    "case": "crash",
+    "exit": 73,
+    "pass": true
+  },
+  {
+    "case": "recover",
+    "exit": 0,
+    "pass": true
+  }
+]

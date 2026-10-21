@@ -1,20 +1,13 @@
-# 코드 점검과 남은 작업
+# Slap Squad, 남은 작업
 
 [English](AUDIT.md), [한국어](AUDIT.ko.md), [日本語](AUDIT.ja.md)
 
-네이티브 소스와 헤더 26개, Unity C# 51개, 총 15,313줄을 목록화했습니다. 패턴 검색 후 메시지 처리, 저장, 방 객체 수명, 프레임별 동작을 직접 확인했습니다. 정적 점검 결과이며 모든 경로를 실행해 프로파일링했거나 안전성을 증명했다는 뜻은 아닙니다.
+2026-10-21, [3e3dcef](https://github.com/YSL-RyuDo/BnBServer/tree/3e3dcef826fa09c4349038ca0b81ccc97f2c63a6)
 
-| 상태 | 위치 | 확인한 내용 / 다음 작업 |
-| --- | --- | --- |
-| 수정, 측정 완료 | SocketOutput.cpp | 연결별 송신 스레드를 공용 IOCP 워커로 교체하고 같은 부하로 비교했습니다. |
-| 수정, 측정 완료 | UserManager.cpp | HIT마다 CSV를 읽던 경로를 시작 시 공격력 캐시로 바꿨습니다. 조회 함수 측정은 별도로 표시했습니다. |
-| 수정, 검사 완료 | NetworkConnector.cs, LineMessageBuffer.cs | 미완성 메시지 처리와 UTF-8 분할 문제를 수정했습니다. 독립 C# 검사는 통과했고 Unity 전체 빌드는 아직 검증하지 않았습니다. |
-| 우선 수정 대상 | UserManager.cpp | 여러 저장 함수가 temp.csv를 공유하며 재화와 소유 목록은 따로 저장합니다. 쓰기 직렬화와 원자적 저장을 먼저 설계해야 합니다. |
-| 우선 수정 대상 | RoomManager.cpp | HandleReadyToExit에 clientsMutex → roomsMutex 순서가 남아 방송 경로와 반대입니다. GetRoomByUserId는 잠금 해제 후 raw pointer를 반환합니다. 동시 퇴장과 방 삭제 재현 검사가 먼저 필요합니다. |
-| 우선 수정 대상 | ClientHandler.h | 닉네임과 ID 조회 함수가 clientsMap을 일관된 잠금 경계 없이 읽습니다. 방 객체 수명과 함께 호출 경로를 정리해야 합니다. |
-| 프로파일링 대상 | GameSystem.cs, NetworkConnector.cs | 프레임별 리스트 복사와 반복적인 오브젝트, 컴포넌트 검색이 있습니다. 참조 캐시와 상태 변경 시 갱신을 검토하되 Unity Profiler로 할당량부터 측정해야 합니다. |
-| 프로파일링 대상 | WeaponSystem.cs, BalloonSystem.cs | 효과의 Instantiate/Destroy와 장면 전체 검색이 있습니다. 할당과 수명을 측정한 뒤 풀링이나 위치 인덱스 적용 여부를 결정해야 합니다. |
+실제 서버에 32개 계정으로 접속해 캐릭터, 물풍선, 감정 표현, 아이콘 구매를 동시에 요청하고 계정마다 같은 요청을 두 번 보냈습니다. 저장된 잔액과 보유 목록이 모두 맞은 계정은 이 재현에서 수정 전 0/32, 수정 후 32/32였습니다. 별도로 프로필과 전적 저장 96건, 동시 구매 시도 16건, 가입 시 파일 7개 저장, 기록 확정 전 실패 시 복원, 파일 두 개 중 하나를 교체한 직후 종료한 상태의 복구를 검사했습니다. 방 검사는 다른 방의 이동과 경기 종료 12회를 겹치고, 경기마다 보상과 GAME_END가 한 번인지 확인한 뒤 임시 방 30개를 생성하고 삭제합니다.
 
-[Source inventory](audit-source-inventory.json)
+계정 쓰기는 하나의 사용자 잠금으로 직렬화하며, 트랜잭션마다 사용자 벡터를 복사하고 변경한 CSV를 다시 씁니다. 기존 형식과 저장 일관성을 유지하는 선택이며 높은 쓰기 처리량을 입증한 결과는 없습니다. 디스크 손상 복구와 재시작 후 진행 중 경기 복원도 검증 범위에 포함되지 않습니다. 클라이언트가 보고하는 명중의 서버 검증, 서버 전체 종료, Unity 할당량 측정은 남아 있습니다.
 
-[Server code](https://github.com/YSL-RyuDo/BnBServer/tree/8a6245d1a58fdbed77fc62b48eb6984a3af7f017/TeamOFYServer), [Unity code](https://github.com/YSL-RyuDo/BNB/tree/9b024d899e8aae17844ae6faacaaab4267c12509/Assets/Script), [Measured changes](IOCP.ko.md)
+[코드와 측정 원자료](STATE_SAFETY.ko.md), [IOCP](IOCP.ko.md), [Initial source inventory before the state-safety change](audit-source-inventory.json)
+
+GameSystem.cs와 NetworkConnector.cs의 리스트 복사와 오브젝트, 컴포넌트 반복 검색, WeaponSystem.cs와 BalloonSystem.cs의 효과 생성과 제거, 장면 검색은 프로파일링 대상으로 남아 있습니다. Unity Profiler로 할당량과 프레임 시간을 측정한 뒤 참조 캐시나 풀링 적용 여부를 정합니다.

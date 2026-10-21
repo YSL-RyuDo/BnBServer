@@ -9,83 +9,59 @@ skinparam ArrowColor #444444
 skinparam Padding 10
 skinparam sequenceMessageAlign center
 hide footbox
-title 서버 객체 소유 관계와 공유 상태
+title 방 소유 관계와 공유 상태
 hide empty members
-class Server {
-  - clients : vector<shared_ptr<ClientInfo>>
-  + clientsMutex : mutex
-  + AcceptClients()
-}
+class Server
 class ClientHandler {
-  - clientsMap : unordered_map<string, shared_ptr<ClientInfo>>
-  + HandleClient(client)
-  - ProcessMessages(client, line)
-}
-class ClientInfo {
-  + socket : SOCKET
-  + id : string
-  + nickname : string
+  GetClientsMapLocked()
 }
 class RoomManager {
-  - rooms : vector<Room>
   - roomsMutex : mutex
-  + BroadcastToRoomExcept(socket, message)
+  - rooms : vector<Room>
+  - resolvedRooms
+  + GetRoomByUserId() : shared_ptr<const Room>
+  + RecordDeath()
+  + RetryDeath(snapshot, userId)
+  + HandleReadyToExit()
 }
 class Room {
-  + users : vector<string>
-  + isInGame : bool
-  + isCoopMode : bool
+  users : vector<string>
+  matchId : uint64_t
+  isInGame : bool
 }
 class UserManager {
-  + CheckLogin(id, password)
-  + SaveUserProfile(id)
-  + SaveUserIcons(id)
+  - usersMutex : recursive_mutex
+  + LockState()
 }
-class Player {
-  + playerPositions : unordered_map<string, pair<float, float>>
-  + playerPositionsMutex : mutex
+class Transaction {
+  - beforeImages
+  - pendingFiles
+  + Commit()
+}
+class CsvStore {
+  Commit(afterImages)
+  Recover()
+}
+class ClientInfo
+class SocketOutput {
+  Enqueue()
+  Stop()
 }
 Server *-- ClientHandler
 Server *-- RoomManager
 Server *-- UserManager
-Server *-- Player
-Server *-- MapManager
-Server o-- "0..*" ClientInfo
+RoomManager *-- Room
 ClientHandler --> RoomManager
 ClientHandler --> UserManager
-ClientHandler --> Player
-RoomManager *-- "0..*" Room
-note top of ClientHandler
-연결마다 수신 스레드 하나를 생성하고 detach
-서버 하나가 핸들러와 매니저를 공유
-end note
-class SocketOutput {
-  - queue : deque<string>
-  - active : bool
-  - pendingBytes : size_t
-  + Enqueue(bytes, length)
-  + Stop()
-  - Begin(operation)
-  - Submit(operation)
-  - Complete(bytes, success)
-}
-ClientInfo o-- "1" SocketOutput
-ClientHandler ..> SocketOutput : QueueSend
-RoomManager ..> SocketOutput : QueueSend
+UserManager +-- Transaction
+Transaction --> CsvStore
+ClientInfo o-- SocketOutput
+RoomManager ..> ClientInfo : retain recipients under lock
+RoomManager ..> SocketOutput : enqueue after releasing locks
+ClientHandler --> ClientInfo : clientsMutex
 note bottom of SocketOutput
-256 KiB / 4096 frames, including in-flight batch
-1 shared IOCP output worker, partial completions
+1 shared IOCP output worker
+256 KiB / 4096 frames per connection
+1 in-flight send per connection
 end note
-class OutputDispatcher {
-  - worker : thread
-  - port : HANDLE
-}
-class OutputOperation {
-  + owner : shared_ptr<SocketOutput>
-  + bytes : string
-  + offset : size_t
-}
-OutputDispatcher --> "0..*" OutputOperation : completion queue
-OutputOperation --> SocketOutput : retains lifetime
-SocketOutput ..> OutputDispatcher : post
 @enduml

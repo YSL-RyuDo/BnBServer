@@ -1,0 +1,9 @@
+PASS 96 concurrent profile/stats commits, no lost updates
+PASS precommit I/O failure rolls memory back and retains original CSV
+PASS 16 simultaneous purchase attempts charge and grant once
+PASS registration commits all seven files
+PASS malformed journal rejected
+로드된 사용자 수: 4
+로드된 사용자 수: 4
+로드된 사용자 수: 4
+로드된 사용자 수: 5

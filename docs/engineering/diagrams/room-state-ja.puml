@@ -21,4 +21,9 @@ note bottom of Results
 結果は概念上のフェーズです。
 保存するのは isInGame、deadUsersByRoom、readyUsersByRoom です。
 end note
+note right of Results
+RecordDeath: one result per matchId
+RetryDeath: retry only the same match
+READY_TO_EXIT: clear state under roomsMutex
+end note
 @enduml

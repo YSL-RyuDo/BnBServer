@@ -9,26 +9,29 @@ skinparam ArrowColor #444444
 skinparam Padding 10
 skinparam sequenceMessageAlign center
 hide footbox
-title 상점에서 확정된 소유 상태 표시
-participant "ShopUI / ShopSender" as UI
+title 구매 저장과 복구
+participant ShopUI as UI
 participant ClientHandler as H
-participant UserManager as U
-database "CSV 파일" as D
-UI -> H : BUY_ICON|nickname,index
-H -> U : 소유 여부, 가격과 잔액 조회
-alt 이미 소유했거나 잔액 부족이면 반환
- H -> H : return
-else
- H -> U : 재화 차감, 소유 상태 변경
- H -> U : SaveUserProfile(id)
- U -> D : UserProfile.csv
- H -> U : SaveUserIcons(id)
- U -> D : UserIcon.csv
- H -> UI : COIN_INFO + STORE_ICON_LIST
- UI -> UI : 잔액과 현재 탭의 소유 상태 갱신
-end
-note over U,D
-두 CSV 파일을 순서대로 저장합니다.
-원자적 트랜잭션이나 영속적인 요청 원장은 아닙니다.
+participant "UserManager::Transaction" as T
+participant CsvStore as S
+database CSV as D
+UI -> H : BUY_ICON
+H -> T : 잔액과 보유 여부 검증
+activate T
+H -> T : 프로필과 보유 목록 저장 내용 준비
+H -> T : Commit()
+T -> S : Commit(afterImages)
+S -> D : 복구 기록을 디스크에 확정
+S -> D : CSV 파일별 원자적 교체
+S -> D : 완료한 복구 기록 제거
+S --> T : true
+T --> H : 저장 확정
+deactivate T
+H -> UI : COIN_INFO + STORE_ICON_LIST
+UI -> UI : 잔액과 보유 목록 갱신
+note over T,D
+검증부터 확정까지 사용자 상태 잠금을 유지합니다.
+기록 확정 전 실패는 메모리를 되돌립니다.
+확정 후 교체 실패는 서버를 종료하고 다음 시작 때 기록을 재적용합니다.
 end note
 @enduml

@@ -1,0 +1,6 @@
+{
+  "server_alive": true,
+  "correct_wallet_and_inventory": 0,
+  "expected": 32,
+  "passed": false
+}

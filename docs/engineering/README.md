@@ -1,4 +1,4 @@
-# Slap Squad, Engineering evidence
+# Slap Squad / Engineering
 
 [English](README.md), [한국어](README.ko.md), [日本語](README.ja.md)
 
@@ -7,6 +7,14 @@ March 2025 to February 2026, 2 programmers and 6 graphics team members
 I implemented the C++ server and Unity weapon behaviors, and connected movement, balloon interactions, match results and purchase feedback.
 
 October 2026 follow-up: room delivery and TCP framing fixes, IOCP output, startup attack-table cache, UML, reproducible measurements and gameplay clips.
+
+## CSV transactions and room lifetime
+
+A 32-client purchase test exposed a persistence failure: all four item categories wrote through the same temp.csv. Different requests could replace or remove one another’s temporary file. The follow-up change keeps CSV storage but commits a purchase’s balance and ownership together.
+
+The median p95 increased at all three loads. At 64 connections, median CPU fell from 9.22% to 7.65%; at 8 and 32 it increased. Thread counts stayed at 13, 37 and 69. All 624,000 expected deliveries arrived with no cross-room delivery or duplication. This change fixes state correctness; it does not establish a general latency improvement.
+
+[Code and test data](https://github.com/YSL-RyuDo/BnBServer/blob/main/docs/engineering/STATE_SAFETY.md)
 
 ## Reducing output-thread cost without losing slow-reader isolation
 
@@ -48,7 +56,7 @@ With a stopped reader in another room: 0/300 responses before, 300/300 after in 
 
 Server owns a shared ClientHandler and the room, user, map and position managers. AcceptClients creates a detached receive thread for each connection. The protocol is newline-delimited text over blocking Winsock TCP.
 
-ClientInfo shares ownership of SocketOutput. Handlers enqueue under existing shared-state locks; one IOCP output worker processes completions outside those locks. Each pending operation retains the connection and its immutable bytes. Receive threads remain per connection.
+Room lookups now return immutable copies made under the room lock. Team changes and death registration mutate state only inside RoomManager. Death registration claims the result once per match, while the ready barrier clears match state before releasing its lock. A failed reward commit releases the claim for retry, checking the match generation. Broadcasts retain their recipients before releasing the room and client locks; queue insertion occurs after both locks are released.
 
 ![The server and its shared state](diagrams/server-classes-en.svg)
 
@@ -117,17 +125,15 @@ I chose CSV because it was easy to start with before I had learned databases. I 
 
 In my ShopUI change, BuyItem sends the request and disables the button without immediately setting selectedOwned to true. Returned item data refreshes the relevant tab only when that tab is selected. This avoids turning a click into confirmed ownership and keeps a response for one category from replacing another category’s visible content.
 
-For BUY_ICON, the server checks ownership, price and balance, updates memory, then saves the profile and icon files separately. It returns the balance and item list afterward. Those writes are not one atomic transaction, and the handler does not act on their boolean save results. Waiting for returned ownership improves UI correctness but does not guarantee crash-safe persistence.
+A user transaction holds the user-state lock from validation through mutation and commit. Writes build after-images in memory. A flushed redo journal is atomically published before replacing individual CSV files; startup replays an unfinished journal before accepting clients. A failed precommit write rolls memory back. Failure after the journal commit point stops the process with the journal retained for recovery. A directory lease rejects a second server process using the same data directory.
 
-A database migration would need to commit debit and ownership together, define retry identity and handle save failure. Optimistic UI would additionally require rollback. Those are follow-up designs, not completed features of this game.
+A unique temporary filename alone would leave lost updates and a balance/ownership split. A shared_ptr to a mutable Room alone would prevent deletion but not data races. The selected transaction boundary covers one logical account operation; room snapshots cover one consistent read. MOVE does not acquire the user persistence lock.
 
 ![CSV persistence and confirmed purchase feedback](diagrams/shop-sequence-en.svg)
 
 ## What I would test next
 
-The bounded output experiment and client teardown tests are complete. The next concurrency work is a consistent ownership and locking policy for legacy session lookups and room references, plus coordinated server shutdown. IOCP scalability requires another experiment.
-
-For persistence, the next checks are concurrent purchases and a forced interruption between the two writes. For gameplay authority, client-reported hits and water damage need independent server validation. These are separate failure modes from MOVE fan-out and need separate experiments.
+The user-state mutex serializes account writes, and each transaction snapshots the user vectors and rewrites affected CSVs. This favors correctness and compatibility over high write throughput. These tests do not establish database-scale capacity, recovery from disk corruption, or match restoration after a server restart. Client-reported hits still need independent server validation. Full process shutdown and Unity allocation profiling remain separate work.
 
 ## From implementation to a pricing question
 
