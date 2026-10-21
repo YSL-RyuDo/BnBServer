@@ -800,52 +800,27 @@ string UserManager::RegisterUser(const string& id, const string& pw, const strin
 
 
 void UserManager::BroadcastLobbyUserList() {
+    // Snapshot both identity and ownership before concurrent removal mutates clients.
+    std::vector<std::pair<std::shared_ptr<ClientInfo>, std::string>> recipients;
+    {
+        std::lock_guard<std::mutex> lock(server_.clientsMutex);
+        for (const auto& c : server_.GetClients())
+            if (!c->id.empty()) recipients.emplace_back(c, c->id);
+    }
     std::string message = "LOBBY_USER_LIST";
     {
-        lock_guard<mutex> lockUsers(usersMutex);
-        auto& clients = server_.GetClients();
-
-        for (const auto& c : clients) {
-            if (c->id.empty()) continue;
-
-            auto itUser = std::find_if(users.begin(), users.end(), [&](const UserAccount& u) {
-                return u.id == c->id;
-                });
-
-            if (itUser != users.end()) {
-                const std::string& nickname = itUser->nickname;
-
-                // UserProfile에서 레벨 찾기
-                auto itProfile = std::find_if(userProfiles.begin(), userProfiles.end(), [&](const UserProfile& p) {
-                    return p.id == c->id;
-                    });
-
-                int level = 1;  // 기본 레벨
-                if (itProfile != userProfiles.end()) {
-                    level = itProfile->level;
-                }
-
-                message += "|" + nickname + "," + std::to_string(level);
-            }
-            else {
-                // UserAccount가 없으면 id로 기본 레벨 1 전송
-                message += "|" + c->id + ",1";
-            }
-        }
-
-        message += "\n";
-
-        for (const auto& c : clients) {
-            if (c->id.empty()) continue;
-            int sendLen = QueueSend(c->socket, message.c_str(), (int)message.size(), 0);
-            if (sendLen == SOCKET_ERROR) {
-                std::cout << "[BroadcastLobbyUserList] send 오류 - user: "
-                    << c->id << ", 오류 코드: " << WSAGetLastError() << std::endl;
-            }
+        std::lock_guard<std::mutex> lock(usersMutex);
+        for (const auto& recipient : recipients) {
+            const auto& id = recipient.second;
+            auto user = std::find_if(users.begin(), users.end(), [&](const UserAccount& u) { return u.id == id; });
+            auto profile = std::find_if(userProfiles.begin(), userProfiles.end(), [&](const UserProfile& p) { return p.id == id; });
+            message += "|" + (user == users.end() ? id : user->nickname) + "," +
+                std::to_string(profile == userProfiles.end() ? 1 : profile->level);
         }
     }
-
-    cout << "[BroadcastLobbyUserList] 메시지 전송 완료: " << message;
+    message += "\n";
+    for (const auto& recipient : recipients)
+        QueueSend(recipient.first->socket, message.c_str(), static_cast<int>(message.size()), 0);
 }
 
 void UserManager::SendUserInfoByNickname(shared_ptr<ClientInfo> client, const string& nickname)

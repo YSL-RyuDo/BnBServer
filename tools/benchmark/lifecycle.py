@@ -15,7 +15,7 @@ async def check(build, out, name):
         except OSError: pass
     try:
         await setup(peers)
-        tasks = [asyncio.create_task(collect(p)) for p in peers[1:]]
+        tasks = [asyncio.create_task(collect(p)) for p in (peers[4:] if name == 'simultaneous_disconnect' else peers[1:])]
         before = psutil.Process(proc.pid).num_threads()
         if name.startswith('invalid_'):
             value = 'not-a-number' if name == 'invalid_integer' else '9'*50
@@ -30,6 +30,15 @@ async def check(build, out, name):
             await peers[0].until('LOGIN_SUCCESS|')
             await peers[0].send('ENTER_ROOM|r0||0\n')
             await peers[0].until('ENTER_ROOM_SUCCESS|')
+        elif name == 'simultaneous_disconnect':
+            for p in peers[:4]: p.w.transport.abort()
+            await asyncio.sleep(.5)
+            for i in range(4):
+                r,w=await asyncio.open_connection('127.0.0.1',meta['port']);peers[i]=Peer(i,r,w)
+                await peers[i].send(f'LOGIN|u{i},synthetic-only\n')
+                await peers[i].until('LOGIN_SUCCESS|')
+            await peers[0].send('CREATE_ROOM|r0|Map1||0\n')
+            await peers[0].until('CREATE_ROOM_SUCCESS|')
         else:
             # Reuse the same account 20 times while another room sends MOVE.
             # Each close must remove the login session and release both threads.
@@ -55,7 +64,7 @@ async def check(build, out, name):
         after = psutil.Process(proc.pid).num_threads()
         expected = 63 if name == 'quit_eof_churn' else 3
         passed = final == 3 and len(deliveries) == expected and all(i in (5,6,7) for i,_ in deliveries)
-        if name == 'quit_eof_churn': passed = passed and after <= before
+        if name in ('quit_eof_churn','simultaneous_disconnect'): passed = passed and after <= before
         return dict(case=name, passed=passed, deliveries=len(deliveries), expected=expected,
                     healthy_room_final_deliveries=final, threads_before=before, threads_after=after)
     except (OSError, asyncio.TimeoutError, psutil.Error) as e:
@@ -68,7 +77,7 @@ async def check(build, out, name):
 async def main(a):
     build=Path(a.build).resolve(); out=Path(a.out).resolve(); out.mkdir(parents=True, exist_ok=True)
     results=[]
-    for name in ['invalid_integer','invalid_integer_range','logout_relogin','quit_eof_churn']:
+    for name in ['invalid_integer','invalid_integer_range','logout_relogin','quit_eof_churn','simultaneous_disconnect']:
         result=await check(build,out,name); results.append(result); print(json.dumps(result),flush=True)
     (out/'results.json').write_text(json.dumps(results,indent=2),encoding='utf-8')
     if not all(r['passed'] for r in results): raise SystemExit(1)
