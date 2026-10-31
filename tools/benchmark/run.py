@@ -32,7 +32,7 @@ class Peer:
                 if line.startswith(prefix.encode()):return line.decode().strip()
         return await asyncio.wait_for(read(),timeout)
 
-async def start(exe,port,folder,n):
+async def start(exe,port,folder,n,startup_timeout=60):
     fixture(folder,n)
     log=(folder/'server.log').open('wb')
     proc=subprocess.Popen([str(exe)],cwd=folder,stdout=log,stderr=subprocess.STDOUT,creationflags=subprocess.CREATE_NO_WINDOW)
@@ -44,11 +44,18 @@ async def start(exe,port,folder,n):
             except OSError:await asyncio.sleep(.05)
         else:raise TimeoutError('listen')
         peers.append(Peer(0,r,w))
+        # listen() precedes CSV loading/migration. A TCP connection alone does not
+        # mean the server is ready to authenticate or process gameplay requests.
+        # Use an existing, credential-free request as an application readiness probe.
+        # Keep the normal per-request timeout at 5 seconds once startup completes.
+        await peers[0].send('GET_ROOM_LIST|\n')
+        await peers[0].until('ROOM_LIST|',timeout=startup_timeout)
         for i in range(1,n):
             r,w=await asyncio.open_connection('127.0.0.1',port);peers.append(Peer(i,r,w))
         return proc,log,peers
     except:
-        proc.kill();proc.wait();log.close();raise
+        await stop(proc,log,peers)
+        raise
 
 async def setup(peers,room_size=4):
     for p in peers:
