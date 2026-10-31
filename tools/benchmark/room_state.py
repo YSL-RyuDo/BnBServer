@@ -1,6 +1,12 @@
 import asyncio,json,argparse
 from pathlib import Path
 from run import start,setup,stop
+import run
+original_fixture=run.fixture
+def low_health_fixture(folder,n):
+ original_fixture(folder,n)
+ (folder/'CharStat.csv').write_text('CharIndex,Health,Attack\n'+''.join(f'{i},10,10\n' for i in range(7)))
+run.fixture=low_health_fixture
 async def case(build,out):
  meta=json.loads((build/'build.json').read_text());proc,log,peers=await start(build/'bin/TeamOFYServer.exe',meta['port'],out,8)
  tasks=[];lines=[]
@@ -15,6 +21,7 @@ async def case(build,out):
   await setup(peers);tasks=[asyncio.create_task(collect(p)) for p in peers]
   for cycle in range(12):
    await peers[0].send('START_GAME|r0\n');await asyncio.sleep(.05)
+   await peers[3].send(''.join(f'HIT|0|n3|n{i}|{cycle+1}\n' for i in range(3)))
    await asyncio.gather(*(p.send(f'DEAD|n{p.i}\nDEAD|n{p.i}\n') for p in peers[:3]))
    await asyncio.sleep(.15)
    # Room B keeps moving while room A's ready barrier completes; catches lock inversion.

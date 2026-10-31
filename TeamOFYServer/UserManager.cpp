@@ -1191,18 +1191,32 @@ bool UserManager::LoadAttackStats(const std::string& path)
     std::ifstream file(path);
     std::string line;
     if (!file || !std::getline(file, line)) return false;
-    std::unordered_map<int, int> parsed;
+    std::unordered_map<int, int> parsed, healthParsed;
     while (std::getline(file, line)) {
         if (line.empty()) continue;
         std::stringstream row(line);
         std::string index, health, attack;
         if (!std::getline(row, index, ',') || !std::getline(row, health, ',') || !std::getline(row, attack, ',')) return false;
-        try { parsed.emplace(std::stoi(index), std::stoi(attack)); }
+        try {
+            size_t used = 0;
+            int key = std::stoi(index, &used); if (used != index.size() || key < 0 || key > 6) return false;
+            int hp = std::stoi(health, &used); if (used != health.size() || hp <= 0 || hp > 1000000) return false;
+            int hit = std::stoi(attack, &used); if (used != attack.size() || hit <= 0 || hit > 1000000) return false;
+            if (!parsed.emplace(key, hit).second) return false;
+            healthParsed.emplace(key, hp);
+        }
         catch (const std::exception&) { return false; }
     }
     if (parsed.empty()) return false;
     attackByIndex_.swap(parsed);
+    healthByIndex_.swap(healthParsed);
     return true;
+}
+
+int UserManager::GetHealthByIndex(int index)
+{
+    const auto found = healthByIndex_.find(index);
+    return found == healthByIndex_.end() ? 0 : found->second;
 }
 
 int UserManager::GetAttackByIndex(int index)

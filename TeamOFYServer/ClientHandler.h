@@ -43,6 +43,8 @@ public:
     void SendStoreEmoList(std::shared_ptr<ClientInfo> client, const std::string& nickname);
     void SendStoreIconList(std::shared_ptr<ClientInfo> client, const std::string& nickname);
 
+    int CombatHealth(int index) { return userManager_.GetHealthByIndex(index); }
+    int CombatAttack(int index) { return userManager_.GetAttackByIndex(index); }
     void OnClientDisconnected(shared_ptr<ClientInfo> client);
     void RemoveLoginSession(const std::string& userId);
 private:
@@ -54,6 +56,7 @@ private:
     CharacterStatsManager characterStatsManager_;
     unordered_map<string, shared_ptr<ClientInfo>> clientsMap;
     unordered_map<std::string, std::pair<float, float>> userPositions;
+    void FinishDeath(const std::string& userId, const RoomManager::DeathResult& death);
     void ProcessMessages(shared_ptr<ClientInfo>, const string&);
 
     bool SendToClient(std::shared_ptr<ClientInfo> client, const std::string& response);

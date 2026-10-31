@@ -1,0 +1,6 @@
+{
+  "pass": true,
+  "weapons": 7,
+  "expected": 28,
+  "received": 28
+}

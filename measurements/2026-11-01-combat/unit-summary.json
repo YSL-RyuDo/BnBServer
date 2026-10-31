@@ -1,0 +1,18 @@
+[
+  {
+    "test": "test_auth",
+    "exit_code": 0
+  },
+  {
+    "test": "test_state",
+    "exit_code": 0
+  },
+  {
+    "test": "test_output",
+    "exit_code": 0
+  },
+  {
+    "test": "test_startup",
+    "exit_code": 0
+  }
+]

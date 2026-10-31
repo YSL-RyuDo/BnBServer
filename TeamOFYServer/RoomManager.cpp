@@ -433,7 +433,9 @@ void RoomManager::HandleCharacterChoice(ClientInfo& client, const std::string& d
         return;
     }
 
-    string rawuserId = clientHandler_.GetIdByNickname(nickname);
+    if (characterIndexStr != std::to_string(characterIndex) || characterIndex < 0 || characterIndex > 6) return;
+    if (nickname != client.nickname) return;
+    string rawuserId = client.id;
     string userId = Trim(rawuserId);
     std::lock_guard<std::mutex> lock(roomsMutex);
 
@@ -453,6 +455,7 @@ void RoomManager::HandleCharacterChoice(ClientInfo& client, const std::string& d
         }
 
         // 캐릭터 선택 정보 저장
+        if (room.isInGame) return;
         room.characterSelections[userId] = characterIndex;
 
         std::string msg = "UPDATE_CHARACTER|" + nickname + "|" + std::to_string(characterIndex) + "\n";
@@ -493,6 +496,7 @@ bool RoomManager::TryStartGame(const string& roomName, vector<string>& usersOut)
                     string nickname = Trim(rawNickname);
                     usersOut.push_back(nickname);
                 }
+                if (!InitializeCombat(room)) return false;
                 room.isInGame = true; room.matchId = ++nextMatchId_;
                 deadUsersByRoom.erase(roomName); readyUsersByRoom.erase(roomName); resolvedRooms_.erase(roomName);
                 return true;
@@ -544,6 +548,7 @@ bool RoomManager::TryStartCoopGame(
             // 팀 인원 조건 확인
             if (blueTeam.size() == 2 && redTeam.size() == 2)
             {
+                if (!InitializeCombat(room)) return false;
                 room.isInGame = true; room.matchId = ++nextMatchId_;
                 deadUsersByRoom.erase(roomName); readyUsersByRoom.erase(roomName); resolvedRooms_.erase(roomName);
                 return true;
@@ -694,7 +699,7 @@ bool RoomManager::HandleReadyToExit(const std::string& userId, const std::string
     {
         std::lock_guard<std::mutex> lock(roomsMutex);
         Room* room = FindRoomByName_NoLock(roomId);
-        if (!room || !room->isInGame || std::find(room->users.begin(), room->users.end(), userId) == room->users.end()) return false;
+        if (!room || !room->isInGame || !room->rewardsCommitted || std::find(room->users.begin(), room->users.end(), userId) == room->users.end()) return false;
         auto& ready = readyUsersByRoom[roomId];
         if (!ready.insert(userId).second) return false;
         members = room->users;
@@ -720,24 +725,84 @@ bool RoomManager::HandleReadyToExit(const std::string& userId, const std::string
     return allReady;
 }
 
-RoomManager::DeathResult RoomManager::RecordDeath(const std::string& userId) {
+bool RoomManager::InitializeCombat(Room& room) {
+    std::unordered_map<std::string, Room::Combatant> players;
+    for (const auto& id : room.users) {
+        auto selection = room.characterSelections.find(id);
+        int character = selection == room.characterSelections.end() ? 0 : selection->second;
+        Room::Combatant p;
+        p.character = character;
+        p.health = clientHandler_.CombatHealth(character);
+        p.attack = clientHandler_.CombatAttack(character);
+        if (p.health <= 0 || p.attack <= 0) return false;
+        players.emplace(id, p);
+    }
+    room.combat = std::move(players);
+    room.combatRevision = 0;
+    room.rewardsPending = room.rewardsCommitted = false;
+    return true;
+}
+
+RoomManager::DamageResult RoomManager::ApplyDamage(const std::string& attacker,
+    const std::string& target, int weapon, uint64_t matchId, bool water) {
     std::lock_guard<std::mutex> lock(roomsMutex);
     for (auto& room : rooms) {
-        if (std::find(room.users.begin(), room.users.end(), userId) == room.users.end()) continue;
-        if (!room.isInGame || resolvedRooms_.count(room.roomName)) return {};
-        auto& dead = deadUsersByRoom[room.roomName];
-        if (!dead.insert(userId).second) return {};
-        size_t survivors = 0; std::unordered_set<std::string> teams;
-        for (const auto& id : room.users) if (!dead.count(id)) {
-            ++survivors;
-            auto team = room.teamAssignments.find(id);
-            teams.insert(team == room.teamAssignments.end() ? "None" : team->second);
+        if (std::find(room.users.begin(), room.users.end(), attacker) == room.users.end()) continue;
+        if (!room.isInGame || room.matchId != matchId || room.rewardsPending || resolvedRooms_.count(room.roomName)) return {};
+        if (std::find(room.users.begin(), room.users.end(), target) == room.users.end()) return {};
+        auto a = room.combat.find(attacker), t = room.combat.find(target);
+        if (a == room.combat.end() || t == room.combat.end() || a->second.health <= 0 || t->second.health <= 0) return {};
+        if (water) { if (attacker != target) return {}; }
+        else {
+            if (attacker == target || weapon != a->second.character) return {};
+            if (room.isCoopMode) {
+                auto at = room.teamAssignments.find(attacker), tt = room.teamAssignments.find(target);
+                if (at == room.teamAssignments.end() || tt == room.teamAssignments.end() || at->second == tt->second) return {};
+            }
         }
-        bool resolved = room.isCoopMode ? teams.size() == 1 : survivors == 1;
-        if (resolved) resolvedRooms_.insert(room.roomName);
-        return {std::make_shared<const Room>(room), dead, resolved};
+        auto now = std::chrono::steady_clock::now();
+        if (now < t->second.nextDamage) return {};
+        // Preserve the existing one-second per-victim invulnerability rule on the server.
+        t->second.nextDamage = now + std::chrono::seconds(1);
+        int damage = water ? 10 : a->second.attack;
+        t->second.health = (std::max)(0, t->second.health - damage);
+        DamageResult result;
+        result.accepted = true; result.damage = damage; result.health = t->second.health;
+        result.matchId = room.matchId; result.revision = ++room.combatRevision;
+        if (t->second.health == 0) result.death = RecordDeathLocked(room, target);
+        return result;
     }
     return {};
+}
+
+RoomManager::DeathResult RoomManager::RecordDeathLocked(Room& room, const std::string& userId) {
+    auto player = room.combat.find(userId);
+    if (!room.isInGame || resolvedRooms_.count(room.roomName) || player == room.combat.end() || player->second.health != 0) return {};
+    auto& dead = deadUsersByRoom[room.roomName];
+    if (!dead.insert(userId).second) return {};
+    size_t survivors = 0; std::unordered_set<std::string> teams;
+    for (const auto& id : room.users) if (!dead.count(id)) {
+        ++survivors;
+        auto team = room.teamAssignments.find(id);
+        teams.insert(team == room.teamAssignments.end() ? "None" : team->second);
+    }
+    bool resolved = room.isCoopMode ? teams.size() == 1 : survivors == 1;
+    if (resolved) { resolvedRooms_.insert(room.roomName); room.rewardsPending = true; }
+    return {std::make_shared<const Room>(room), dead, resolved};
+}
+
+RoomManager::DeathResult RoomManager::RecordDeath(const std::string& userId) {
+    std::lock_guard<std::mutex> lock(roomsMutex);
+    for (auto& room : rooms)
+        if (std::find(room.users.begin(), room.users.end(), userId) != room.users.end())
+            return RecordDeathLocked(room, userId);
+    return {};
+}
+
+void RoomManager::MarkRewardsCommitted(const Room& snapshot) {
+    std::lock_guard<std::mutex> lock(roomsMutex);
+    Room* room = FindRoomByName_NoLock(snapshot.roomName);
+    if (room && room->matchId == snapshot.matchId) room->rewardsCommitted = true;
 }
 
 std::shared_ptr<const Room> RoomManager::ChangeTeam(const std::string& userId) {
@@ -856,7 +921,7 @@ void RoomManager::ForceExitRoomByUserId(const std::string& userId)
 void RoomManager::RetryDeath(const Room& snapshot, const std::string& userId) {
     std::lock_guard<std::mutex> lock(roomsMutex);
     Room* room = FindRoomByName_NoLock(snapshot.roomName);
-    if (!room || !room->isInGame || room->matchId != snapshot.matchId) return;
+    if (!room || !room->isInGame || room->rewardsCommitted || room->matchId != snapshot.matchId) return;
     resolvedRooms_.erase(room->roomName);
     deadUsersByRoom[room->roomName].erase(userId);
 }

@@ -19,6 +19,10 @@ jobs:
       - run: python -m pip install -r tools/benchmark/requirements.txt
       - name: Build isolated loopback server
         run: python tools/benchmark/build.py --out .bench-work/candidate --port 39092
+      - name: Verify combat authority and replay rejection
+        run: python tools/benchmark/combat_regression.py --build .bench-work/candidate --out .bench-work/combat
+      - name: Verify cooperative lethal races and reward failure recovery
+        run: python tools/benchmark/combat_completion.py --build .bench-work/candidate --out .bench-work/combat-completion
       - name: Verify credential storage and authentication
         run: python tools/benchmark/auth_regression.py --build .bench-work/candidate --out .bench-work/auth
       - name: Verify simultaneous authentication and framing
@@ -54,6 +58,8 @@ jobs:
           name: socket-regression-results
           path: |
             .bench-work/candidate/build.log
+            .bench-work/combat/results.json
+            .bench-work/combat-completion/results.json
             .bench-work/auth/results.json
             .bench-work/auth-concurrency/results.json
             .bench-work/access/results.json

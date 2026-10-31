@@ -73,8 +73,21 @@ public:
         std::unordered_set<std::string> dead;
         bool resolvesMatch = false;
     };
+    struct DamageResult {
+        bool accepted = false;
+        int damage = 0, health = 0;
+        uint64_t matchId = 0, revision = 0;
+        DeathResult death;
+    };
+    DamageResult ApplyDamage(const std::string& attacker, const std::string& target,
+        int weapon, uint64_t matchId, bool water);
+    void MarkRewardsCommitted(const Room& snapshot);
     void RetryDeath(const Room& snapshot, const std::string& userId);
     DeathResult RecordDeath(const std::string& userId);
+private:
+    bool InitializeCombat(Room& room);
+    DeathResult RecordDeathLocked(Room& room, const std::string& userId);
+public:
     std::shared_ptr<const Room> ChangeTeam(const std::string& userId);
     void ForceExitRoomByUserId(const std::string& userId);
 };

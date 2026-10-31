@@ -10,6 +10,7 @@ async def main(a):
     tasks=[];results=[];damage=[];messages=[];ready=[]
     try:
         await setup(peers)
+        await peers[0].send("START_GAME|r0\n");await peers[0].until("GAME_START|")
         r,w=await asyncio.open_connection('127.0.0.1',meta['port'])
         peers.append(Peer(8,r,w))
         ready=[asyncio.Event() for _ in peers]
@@ -29,21 +30,21 @@ async def main(a):
             for p in peers:
                 if p.i!=sender:await p.send('GET_ROOM_LIST|\n')
             await asyncio.wait_for(asyncio.gather(*(event.wait() for event in ready)),5)
-            wanted=[(i,'DAMAGE|n1|10') for i in range(4)] if expected else []
+            wanted=[(i,'DAMAGE|n1|10|90|1|1') for i in range(4)] if expected else []
             passed=sorted(damage)==wanted and (not requires_auth or sender in messages)
             results.append({'case':name,'pass':passed,'damage_deliveries':len(damage)})
             print(results[-1],flush=True)
-        await exercise('unauthenticated_hit',8,'HIT|0|n0|n1',False,True)
-        await exercise('same_room_sender_spoof',1,'HIT|0|n0|n1',False)
-        await exercise('other_room_sender_spoof',4,'HIT|0|n0|n1',False)
-        await exercise('cross_room_target',0,'HIT|0|n0|n4',False)
-        await exercise('missing_target',0,'HIT|0|n0|missing',False)
-        await exercise('authenticated_hit',0,'HIT|0|n0|n1',True)
+        await exercise('unauthenticated_hit',8,'HIT|0|n0|n1|1',False,True)
+        await exercise('same_room_sender_spoof',1,'HIT|0|n0|n1|1',False)
+        await exercise('other_room_sender_spoof',4,'HIT|0|n0|n1|1',False)
+        await exercise('cross_room_target',0,'HIT|0|n0|n4|1',False)
+        await exercise('missing_target',0,'HIT|0|n0|missing|1',False)
+        await exercise('authenticated_hit',0,'HIT|0|n0|n1|1',True)
         await exercise('unauthenticated_profile_request',8,'GETINFO|n0',False,True)
         await exercise('unauthenticated_purchase',8,'BUY_CHAR|n0,1',False,True)
         await peers[2].send('LOGOUT|n2\n')
         # Same connection: logout is processed before HIT; old identity must be unusable.
-        await exercise('logged_out_hit',2,'HIT|0|n0|n1',False,True)
+        await exercise('logged_out_hit',2,'HIT|0|n0|n1|1',False,True)
         (out/'results.json').write_text(json.dumps(results,indent=2))
         if not all(x['pass'] for x in results):raise SystemExit(1)
     finally:

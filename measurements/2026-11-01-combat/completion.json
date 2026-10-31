@@ -1,0 +1,38 @@
+[
+  {
+    "case": "friendly_fire_rejected",
+    "pass": true
+  },
+  {
+    "case": "concurrent_lethal_hit_once",
+    "pass": true
+  },
+  {
+    "case": "dead_attacker_rejected",
+    "pass": true
+  },
+  {
+    "case": "reward_failure_keeps_money_unchanged",
+    "pass": true
+  },
+  {
+    "case": "no_exit_before_reward_commit",
+    "pass": true
+  },
+  {
+    "case": "zero_hp_receipt_retries_reward_once",
+    "pass": true
+  },
+  {
+    "case": "resolved_match_cannot_damage_or_reward_again",
+    "pass": true
+  },
+  {
+    "case": "ready_owner_spoof_rejected",
+    "pass": true
+  },
+  {
+    "case": "one_end_after_all_members_ready",
+    "pass": true
+  }
+]

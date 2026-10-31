@@ -81,6 +81,7 @@ public:
 	void UpdateWinLoss(const std::string& userId, bool isWin, int charIndex);
 	bool LoadAttackStats(const std::string& path); // Startup only, before accepting clients.
 	int GetAttackByIndex(int index);
+    int GetHealthByIndex(int index);
 
 
 private:
@@ -92,6 +93,7 @@ private:
     bool transactionActive_ = false;
     std::string ReadCsv(const std::string& path);
     bool WriteCsv(const std::string& path, const std::string& data);
+	std::unordered_map<int, int> healthByIndex_;
 	std::unordered_map<int, int> attackByIndex_; // Immutable after startup.
 	vector<UserAccount> users;
 	vector<UserProfile> userProfiles;

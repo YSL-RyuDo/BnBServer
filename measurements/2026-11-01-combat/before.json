@@ -1,0 +1,78 @@
+[
+  {
+    "case": "hit_before_match",
+    "pass": false
+  },
+  {
+    "case": "water_cross_room_spoof",
+    "pass": false
+  },
+  {
+    "case": "water_negative_damage",
+    "pass": false
+  },
+  {
+    "case": "character_owner_spoof",
+    "pass": false
+  },
+  {
+    "case": "weapon_visual_spoof",
+    "pass": false
+  },
+  {
+    "case": "start_match",
+    "pass": true
+  },
+  {
+    "case": "selection_locked_during_match",
+    "pass": false
+  },
+  {
+    "case": "ready_before_resolution",
+    "pass": false
+  },
+  {
+    "case": "forged_death",
+    "pass": false
+  },
+  {
+    "case": "self_death_while_alive",
+    "pass": false
+  },
+  {
+    "case": "wrong_weapon",
+    "pass": false
+  },
+  {
+    "case": "stale_match",
+    "pass": false
+  },
+  {
+    "case": "valid_hit_absolute_hp",
+    "pass": false
+  },
+  {
+    "case": "shared_victim_cooldown",
+    "pass": false
+  },
+  {
+    "case": "water_uses_server_damage",
+    "pass": false
+  },
+  {
+    "case": "water_other_player",
+    "pass": false
+  },
+  {
+    "case": "trailing_fields",
+    "pass": false
+  },
+  {
+    "case": "cooldown_expires",
+    "pass": false
+  },
+  {
+    "case": "exit_room_spoof",
+    "pass": false
+  }
+]
