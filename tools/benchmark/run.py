@@ -1,7 +1,7 @@
 """Socket-level MOVE fan-out experiment. Not a Unity frame-rate or Internet CCU test.
 Requires Python 3.10+ and psutil. All accounts and CSV state are synthetic.
 """
-import argparse, asyncio, csv, hashlib, json, math, platform, shutil, statistics, subprocess, sys, time
+import argparse, asyncio, csv, hashlib, json, math, platform, re, shutil, statistics, subprocess, sys, time
 from pathlib import Path
 import psutil
 
@@ -37,6 +37,7 @@ async def start(exe,port,folder,n,startup_timeout=60):
     log=(folder/'server.log').open('wb')
     proc=subprocess.Popen([str(exe)],cwd=folder,stdout=log,stderr=subprocess.STDOUT,creationflags=subprocess.CREATE_NO_WINDOW)
     peers=[]
+    began=time.perf_counter();connected=None
     try:
         for attempt in range(100):
             if proc.poll() is not None:raise RuntimeError('server startup failed: '+str(proc.returncode))
@@ -44,16 +45,24 @@ async def start(exe,port,folder,n,startup_timeout=60):
             except OSError:await asyncio.sleep(.05)
         else:raise TimeoutError('listen')
         peers.append(Peer(0,r,w))
+        connected=time.perf_counter()-began
         # listen() precedes CSV loading/migration. A TCP connection alone does not
         # mean the server is ready to authenticate or process gameplay requests.
         # Use an existing, credential-free request as an application readiness probe.
         # Keep the normal per-request timeout at 5 seconds once startup completes.
         await peers[0].send('GET_ROOM_LIST|\n')
         await peers[0].until('ROOM_LIST|',timeout=startup_timeout)
+        timing=re.search(rb'\[STARTUP\] accounts_ms=(\d+) total_ms=(\d+)',(folder/'server.log').read_bytes())
+        (folder/'startup.json').write_text(json.dumps({
+            'ready':True,'tcp_connected_s':connected,'application_ready_s':time.perf_counter()-began,
+            'account_load_ms':int(timing[1]) if timing else None,
+            'server_initialization_ms':int(timing[2]) if timing else None},indent=2))
         for i in range(1,n):
             r,w=await asyncio.open_connection('127.0.0.1',port);peers.append(Peer(i,r,w))
         return proc,log,peers
     except:
+        (folder/'startup.json').write_text(json.dumps({'ready':False,'tcp_connected_s':connected,
+            'elapsed_s':time.perf_counter()-began,'process_exit':proc.poll()},indent=2))
         await stop(proc,log,peers)
         raise
 

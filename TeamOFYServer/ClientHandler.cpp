@@ -86,6 +86,24 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
         // Never log raw inbound frames, including malformed authentication requests.
         string response;
 
+        // Identity belongs to the current live TCP session, never to packet fields.
+        std::string sessionId, sessionNickname;
+        {
+            std::lock_guard<std::mutex> lock(server_.clientsMutex);
+            const auto found = clientsMap.find(client->id);
+            if (!client->IsClosing() && !client->id.empty() && found != clientsMap.end() &&
+                found->second == client) {
+                sessionId = client->id;
+                sessionNickname = client->nickname;
+            }
+        }
+        const bool publicRequest = message.rfind("LOGIN|", 0) == 0 ||
+            message.rfind("REGISTER|", 0) == 0 || message == "QUIT|" || message == "GET_ROOM_LIST|";
+        if (sessionId.empty() && !publicRequest) {
+            SendToClient(client, "AUTH_REQUIRED|\n");
+            return;
+        }
+
         if (message.rfind("LOGIN|", 0) == 0) {
             cout << "로그인 요청 감지" << endl;
             string loginData = message.substr(strlen("LOGIN|"));
@@ -151,6 +169,8 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
         }
         else if (message == "GET_ROOM_LIST|")
         {
+            // Permit readiness discovery without exposing rooms before authentication.
+            if (sessionId.empty()) { SendToClient(client, "ROOM_LIST|\n"); return; }
             cout << "방 생성 리스트 요청 감지" << endl;
             roomManager_.BroadcastRoomlist(client);
         }
@@ -1473,13 +1493,16 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
                 targetNick = data.substr(delim2 + 1, delim3 - (delim2 + 1));
 
             // 닉네임 → 유저 ID 변환
-            std::string attackerId = GetIdByNickname(attackerNick);
+            if (attackerNick != sessionNickname) return;
+            const std::string& attackerId = sessionId;
             std::string targetId = GetIdByNickname(targetNick);
 
             // 이제 attackerId와 targetId로 룸 정보 및 팀 체크 가능
             auto room = roomManager_.GetRoomByUserId(attackerId);
             if (room != nullptr)
             {
+                if (targetId.empty() || std::find(room->users.begin(), room->users.end(), targetId) == room->users.end())
+                    return;
                 std::string attackerTeam = "None";
                 std::string targetTeam = "None";
 

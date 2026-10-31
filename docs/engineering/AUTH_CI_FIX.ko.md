@@ -60,3 +60,10 @@ python tools/benchmark/stats_lookup.py --candidate ../validation/ci-fix-lookup-b
 검사용 main으로 교체하므로 별도 빌드 디렉터리를 사용한다.
 
 수정된 테스트는 [feature 브랜치 Actions](https://github.com/YSL-RyuDo/BnBServer/actions/workflows/socket-regression.yml?query=branch%3Afeature%2Fauth-hardening)에서 다시 실행한다.
+
+초기화 대기 수정 커밋 `1a6d43c`의 [원격 실행 41220425855](https://github.com/YSL-RyuDo/BnBServer/actions/runs/41220425855)는
+전체 성공했다. 최초 실패 당시 초기화 시간이 기록되지 않아 해당 실행의 정확한 해싱 소요 시간은
+사후 확정할 수 없다. 이후 `Server::Run`의 계정 로드/전체 초기화 시간, `run.start`의 TCP 연결/
+애플리케이션 준비 시간, 구매 검사의 첫/최대 로그인 응답 시간을 별도로 계측한다.
+기록에는 계정 값이나 자격 증명을 포함하지 않는다. 로컬 32계정 측정에서는 계정 로드 3,284ms,
+준비 완료 3.309초, 첫 로그인 0.102초로 초기화와 로그인 시간을 구분했다.

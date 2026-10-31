@@ -1,4 +1,4 @@
-import asyncio,json,argparse,csv
+import asyncio,json,argparse,csv,time
 from pathlib import Path
 import run
 original_fixture=run.fixture
@@ -18,13 +18,17 @@ async def main(a):
    while line:=await p.r.readline():lines.append((p.i,line.decode(errors='replace').strip()))
   except OSError:pass
  try:
+  login_times=[]
   for p in peers:
+   began=time.perf_counter()
    await p.send(f'LOGIN|u{p.i},synthetic-only\n');await p.until('LOGIN_SUCCESS|')
+   login_times.append(time.perf_counter()-began)
   tasks=[asyncio.create_task(collect(p)) for p in peers]
   commands=['CHAR','BALLOON','EMO','ICON']
   await asyncio.gather(*(p.send((f'BUY_{commands[p.i%4]}|n{p.i},1\n')*2) for p in peers))
   await asyncio.sleep(2)
-  results={'server_alive':proc.poll() is None};correct=0
+  results={'server_alive':proc.poll() is None,'first_login_s':login_times[0],
+           'max_login_s':max(login_times),'startup':json.loads((out/'startup.json').read_text())};correct=0
   try:
    profiles={r['id']:r for r in csv.DictReader((out/'UserProfile.csv').open())}
    tables=[{r['id']:r for r in csv.DictReader((out/(name+'.csv')).open())} for name in ['UserCharacters','UserBalloon','UserEmotes','UserIcon']]

@@ -3,6 +3,7 @@
 후속 CI 정정: 최초 푸시의 원격 구매 테스트는 초기화 중 로그인 시간 초과로 실패했다.
 아래 최초 결과 표는 로컬 실행 결과이며 원격 CI 성공을 의미하지 않는다.
 원인, 동일 조건 재현 및 수정은 [CI 수정 보고서](AUTH_CI_FIX.ko.md)에 기록했다.
+후속 리뷰의 비인증 게임 명령 및 HIT 사칭 보완은 [접근 경계 보고서](AUTH_ACCESS.ko.md)를 참고한다.
 
 대상: `YSL-RyuDo/BnBServer`, `YSL-RyuDo/BNB`의 `feature/auth-hardening`.
 서버 기준 커밋: `7394d2e424f2cb7b7cfad94ba50ddd2c61261f93`.

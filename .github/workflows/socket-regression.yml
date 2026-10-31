@@ -23,6 +23,8 @@ jobs:
         run: python tools/benchmark/auth_regression.py --build .bench-work/candidate --out .bench-work/auth
       - name: Verify simultaneous authentication and framing
         run: python tools/benchmark/auth_concurrency.py --build .bench-work/candidate --out .bench-work/auth-concurrency
+      - name: Verify unauthenticated and spoofed gameplay requests
+        run: python tools/benchmark/access_regression.py --build .bench-work/candidate --out .bench-work/access
       - name: Verify authentication failure and crash recovery
         run: python tools/benchmark/test_auth.py --out .bench-work/auth-unit
       - name: Verify delayed initialization before purchases
@@ -54,11 +56,14 @@ jobs:
             .bench-work/candidate/build.log
             .bench-work/auth/results.json
             .bench-work/auth-concurrency/results.json
+            .bench-work/access/results.json
+            .bench-work/access/startup.json
             .bench-work/auth-unit/results.json
             .bench-work/auth-unit/results-auth.txt
             .bench-work/auth-unit/results-recover.txt
             .bench-work/startup/results.txt
             .bench-work/startup/purchase/results.json
+            .bench-work/startup/purchase/startup.json
             .bench-work/regression/results.json
             .bench-work/output-unit/results.txt
             .bench-work/lifecycle/results.json
@@ -70,3 +75,4 @@ jobs:
             .bench-work/state/results-recover.txt
             .bench-work/room-state/results.json
             .bench-work/purchase/results.json
+            .bench-work/purchase/startup.json

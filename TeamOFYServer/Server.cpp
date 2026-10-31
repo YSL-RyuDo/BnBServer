@@ -1,5 +1,6 @@
 #include "Server.h"
 #include "StoreData.h"
+#include <chrono>
 
 Server::Server()
     : roomManager_(*this, handler_),
@@ -56,6 +57,7 @@ bool Server::Initialize(unsigned short port) {
 }
 
 void Server::Run() {
+    const auto startupBegin = std::chrono::steady_clock::now();
     std::unique_ptr<CsvStore::DirectoryLease> dataLease;
     try { dataLease.reset(new CsvStore::DirectoryLease()); CsvStore::Recover(); }
     catch (const std::exception& e) { cerr << e.what() << std::endl; return; }
@@ -63,9 +65,11 @@ void Server::Run() {
         cerr << "Invalid attack configuration, server startup stopped\n";
         return;
     }
+    const auto accountsBegin = std::chrono::steady_clock::now();
     std::vector<UserAccount> loadedUsers;
     try { loadedUsers = userManager_.LoadAccountUsers("UsersAccount.csv"); }
     catch (const std::exception&) { cerr << "Credential store initialization failed; startup stopped\n"; return; }
+    const auto accountsReady = std::chrono::steady_clock::now();
     auto loadedProfiles = userManager_.LoadUserProfiles("UserProfile.csv");
     auto loadedCharacters = userManager_.LoadUserCharacters("UserCharacters.csv");
     auto loadedEmotes = userManager_.LoadUserEmotes("UserEmotes.csv");
@@ -82,6 +86,11 @@ void Server::Run() {
         return;
     }
     cout << "서버 실행 중..." << endl;
+    const auto initialized = std::chrono::steady_clock::now();
+    cout << "[STARTUP] accounts_ms="
+        << std::chrono::duration_cast<std::chrono::milliseconds>(accountsReady - accountsBegin).count()
+        << " total_ms=" << std::chrono::duration_cast<std::chrono::milliseconds>(initialized - startupBegin).count()
+        << std::endl;
     AcceptClients();
 }
 

@@ -1,0 +1,353 @@
+{
+  "access-before": [
+    {
+      "case": "unauthenticated_hit",
+      "pass": false,
+      "damage_deliveries": 4
+    },
+    {
+      "case": "same_room_sender_spoof",
+      "pass": false,
+      "damage_deliveries": 4
+    },
+    {
+      "case": "other_room_sender_spoof",
+      "pass": false,
+      "damage_deliveries": 4
+    },
+    {
+      "case": "cross_room_target",
+      "pass": false,
+      "damage_deliveries": 4
+    },
+    {
+      "case": "missing_target",
+      "pass": false,
+      "damage_deliveries": 4
+    },
+    {
+      "case": "authenticated_hit",
+      "pass": true,
+      "damage_deliveries": 4
+    },
+    {
+      "case": "unauthenticated_profile_request",
+      "pass": false,
+      "damage_deliveries": 0
+    },
+    {
+      "case": "unauthenticated_purchase",
+      "pass": false,
+      "damage_deliveries": 0
+    },
+    {
+      "case": "logged_out_hit",
+      "pass": false,
+      "damage_deliveries": 3
+    }
+  ],
+  "access-final": [
+    {
+      "case": "unauthenticated_hit",
+      "pass": true,
+      "damage_deliveries": 0
+    },
+    {
+      "case": "same_room_sender_spoof",
+      "pass": true,
+      "damage_deliveries": 0
+    },
+    {
+      "case": "other_room_sender_spoof",
+      "pass": true,
+      "damage_deliveries": 0
+    },
+    {
+      "case": "cross_room_target",
+      "pass": true,
+      "damage_deliveries": 0
+    },
+    {
+      "case": "missing_target",
+      "pass": true,
+      "damage_deliveries": 0
+    },
+    {
+      "case": "authenticated_hit",
+      "pass": true,
+      "damage_deliveries": 4
+    },
+    {
+      "case": "unauthenticated_profile_request",
+      "pass": true,
+      "damage_deliveries": 0
+    },
+    {
+      "case": "unauthenticated_purchase",
+      "pass": true,
+      "damage_deliveries": 0
+    },
+    {
+      "case": "logged_out_hit",
+      "pass": true,
+      "damage_deliveries": 0
+    }
+  ],
+  "access-auth": [
+    {
+      "case": "legacy_login",
+      "pass": true
+    },
+    {
+      "case": "wrong_password",
+      "pass": true
+    },
+    {
+      "case": "duplicate_login",
+      "pass": true
+    },
+    {
+      "case": "password_free_response",
+      "pass": true
+    },
+    {
+      "case": "register",
+      "pass": true
+    },
+    {
+      "case": "duplicate_id",
+      "pass": true
+    },
+    {
+      "case": "duplicate_nickname",
+      "pass": true
+    },
+    {
+      "case": "empty_password",
+      "pass": true
+    },
+    {
+      "case": "new_login",
+      "pass": true
+    },
+    {
+      "case": "same_connection_identity_preserved",
+      "pass": true
+    },
+    {
+      "case": "invalid_register",
+      "pass": true
+    },
+    {
+      "case": "unknown_id",
+      "pass": true
+    },
+    {
+      "case": "legacy_source_unchanged",
+      "pass": true
+    },
+    {
+      "case": "hashed_storage_interoperability",
+      "pass": true
+    },
+    {
+      "case": "independent_salts",
+      "pass": true
+    },
+    {
+      "case": "credential_free_logs",
+      "pass": true
+    },
+    {
+      "case": "restart_legacy_login",
+      "pass": true
+    },
+    {
+      "case": "restart_new_login",
+      "pass": true
+    }
+  ],
+  "access-auth-concurrency": [
+    {
+      "case": "atomic_duplicate_login",
+      "pass": true
+    },
+    {
+      "case": "quit_closes_session",
+      "pass": true
+    },
+    {
+      "case": "reconnect_after_cleanup",
+      "pass": true
+    },
+    {
+      "case": "split_auth_frame",
+      "pass": true
+    },
+    {
+      "case": "coalesced_register_login",
+      "pass": true
+    },
+    {
+      "case": "identity_switch_rejected",
+      "pass": true
+    }
+  ],
+  "access-network": [
+    {
+      "case": "room_isolation",
+      "pass": true,
+      "server_alive": true,
+      "deliveries": 3,
+      "cross_room_deliveries": 0,
+      "peer_closed": false,
+      "expected_deliveries": 3,
+      "subsequent_valid_deliveries": null
+    },
+    {
+      "case": "split_frame",
+      "pass": true,
+      "server_alive": true,
+      "deliveries": 3,
+      "cross_room_deliveries": 0,
+      "peer_closed": false,
+      "expected_deliveries": 3,
+      "subsequent_valid_deliveries": null
+    },
+    {
+      "case": "coalesced_frames",
+      "pass": true,
+      "server_alive": true,
+      "deliveries": 9,
+      "cross_room_deliveries": 0,
+      "peer_closed": false,
+      "expected_deliveries": 9,
+      "subsequent_valid_deliveries": null
+    },
+    {
+      "case": "complete_and_partial",
+      "pass": true,
+      "server_alive": true,
+      "deliveries": 6,
+      "cross_room_deliveries": 0,
+      "peer_closed": false,
+      "expected_deliveries": 6,
+      "subsequent_valid_deliveries": null
+    },
+    {
+      "case": "spoofed_nickname",
+      "pass": true,
+      "server_alive": true,
+      "deliveries": 0,
+      "cross_room_deliveries": 0,
+      "peer_closed": false,
+      "expected_deliveries": 0,
+      "subsequent_valid_deliveries": null
+    },
+    {
+      "case": "invalid_coordinate",
+      "pass": true,
+      "server_alive": true,
+      "deliveries": 0,
+      "cross_room_deliveries": 0,
+      "peer_closed": false,
+      "expected_deliveries": 0,
+      "subsequent_valid_deliveries": 3
+    },
+    {
+      "case": "nonfinite_coordinate",
+      "pass": true,
+      "server_alive": true,
+      "deliveries": 0,
+      "cross_room_deliveries": 0,
+      "peer_closed": false,
+      "expected_deliveries": 0,
+      "subsequent_valid_deliveries": 3
+    },
+    {
+      "case": "oversized_frame",
+      "pass": true,
+      "server_alive": true,
+      "deliveries": 0,
+      "cross_room_deliveries": 0,
+      "peer_closed": true,
+      "expected_deliveries": 0,
+      "subsequent_valid_deliveries": null
+    }
+  ],
+  "access-purchase": {
+    "server_alive": true,
+    "first_login_s": 0.10216729994863272,
+    "max_login_s": 0.10660080006346107,
+    "startup": {
+      "ready": true,
+      "tcp_connected_s": 0.5044020998757333,
+      "application_ready_s": 3.3089918000623584,
+      "account_load_ms": 3284,
+      "server_initialization_ms": 3293
+    },
+    "correct_wallet_and_inventory": 32,
+    "expected": 32,
+    "passed": true
+  },
+  "access-final-hit": {
+    "pass": true,
+    "expected": 28,
+    "received": 28,
+    "cross_room": 0
+  },
+  "access-rooms": {
+    "one_reward_per_match": true,
+    "one_game_end_per_match": true,
+    "other_room_keeps_responding": true,
+    "rewards_saved_once": true,
+    "room_churn_keeps_server_alive": true
+  },
+  "access-lifecycle": [
+    {
+      "case": "invalid_integer",
+      "passed": true,
+      "deliveries": 3,
+      "expected": 3,
+      "healthy_room_final_deliveries": 3,
+      "threads_before": 13,
+      "threads_after": 12
+    },
+    {
+      "case": "invalid_integer_range",
+      "passed": true,
+      "deliveries": 3,
+      "expected": 3,
+      "healthy_room_final_deliveries": 3,
+      "threads_before": 13,
+      "threads_after": 12
+    },
+    {
+      "case": "logout_relogin",
+      "passed": true,
+      "deliveries": 3,
+      "expected": 3,
+      "healthy_room_final_deliveries": 3,
+      "threads_before": 13,
+      "threads_after": 13
+    },
+    {
+      "case": "quit_eof_churn",
+      "passed": true,
+      "deliveries": 63,
+      "expected": 63,
+      "healthy_room_final_deliveries": 3,
+      "threads_before": 13,
+      "threads_after": 13
+    },
+    {
+      "case": "simultaneous_disconnect",
+      "passed": true,
+      "deliveries": 3,
+      "expected": 3,
+      "healthy_room_final_deliveries": 3,
+      "threads_before": 13,
+      "threads_after": 13
+    }
+  ]
+}
