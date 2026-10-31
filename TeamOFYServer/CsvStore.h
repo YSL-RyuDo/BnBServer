@@ -25,7 +25,7 @@ public:
     };
     using Images = std::map<std::string, std::string>;
     static bool Allowed(const std::string& name) {
-        static const Images names{{"UsersAccount.csv", ""}, {"UserProfile.csv", ""},
+        static const Images names{{"UsersAccount.csv", ""}, {"UsersAccount.v2.csv", ""}, {"UserProfile.csv", ""},
             {"UserCharacters.csv", ""}, {"UserEmotes.csv", ""}, {"UserWinLossStats.csv", ""},
             {"UserBalloon.csv", ""}, {"UserIcon.csv", ""}};
         return names.count(name) != 0;

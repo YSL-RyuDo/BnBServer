@@ -63,7 +63,9 @@ void Server::Run() {
         cerr << "Invalid attack configuration, server startup stopped\n";
         return;
     }
-    auto loadedUsers = userManager_.LoadAccountUsers("UsersAccount.csv");
+    std::vector<UserAccount> loadedUsers;
+    try { loadedUsers = userManager_.LoadAccountUsers("UsersAccount.csv"); }
+    catch (const std::exception&) { cerr << "Credential store initialization failed; startup stopped\n"; return; }
     auto loadedProfiles = userManager_.LoadUserProfiles("UserProfile.csv");
     auto loadedCharacters = userManager_.LoadUserCharacters("UserCharacters.csv");
     auto loadedEmotes = userManager_.LoadUserEmotes("UserEmotes.csv");

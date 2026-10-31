@@ -1,51 +1,53 @@
 ﻿#include "UserManager.h"
 #include "Server.h"
+#include "PasswordHash.h"
+#include <unordered_set>
 
 UserManager::UserManager(Server& server)
     : server_(server){}
 
 vector<UserAccount> UserManager::LoadAccountUsers(const string& filename) {
-    vector<UserAccount> loadedUsers;
-    ifstream file(filename);
-    if (!file.is_open()) {
-        std::cerr << "파일 열기 실패: " << filename << std::endl;
-        return loadedUsers;
+    auto state = LockState();
+    // v2 is authoritative. Never fall back to plaintext after a v2 read/parse failure.
+    const std::string target = "UsersAccount.v2.csv";
+    const DWORD attributes = GetFileAttributesA(target.c_str());
+    const bool legacy = attributes == INVALID_FILE_ATTRIBUTES;
+    if (legacy && GetLastError() != ERROR_FILE_NOT_FOUND)
+        throw std::runtime_error("Cannot inspect credential store");
+    std::ifstream file(legacy ? filename : target);
+    if (!file) throw std::runtime_error("Cannot read credential store");
+    std::string line;
+    if (!std::getline(file, line)) throw std::runtime_error("Missing credential header");
+    if (line.compare(0, 3, "\xef\xbb\xbf") == 0) line.erase(0, 3);
+    if (line != (legacy ? "id,password,nickname" : "id,password_hash,nickname"))
+        throw std::runtime_error("Invalid credential header");
+    std::vector<UserAccount> loaded;
+    std::unordered_set<std::string> ids, nicknames;
+    while (std::getline(file, line)) {
+        if (line.empty()) continue;
+        std::istringstream row(line);
+        std::string id, credential, nickname;
+        if (!std::getline(row,id,',') || !std::getline(row,credential,',') || !std::getline(row,nickname) ||
+            !PasswordHash::ValidField(id) || !PasswordHash::ValidField(nickname) ||
+            !ids.insert(id).second || !nicknames.insert(nickname).second ||
+            (legacy ? !PasswordHash::ValidField(credential,true) : !PasswordHash::IsValid(credential)))
+            throw std::runtime_error("Invalid credential row");
+        const auto hash = legacy ? PasswordHash::Create(credential) : credential;
+        PasswordHash::Clear(credential); PasswordHash::Clear(line);
+        loaded.push_back({id, hash, nickname});
     }
-
-    string line;
-    if (!getline(file, line)) {
-        std::cerr << "헤더 읽기 실패" << std::endl;
-        return loadedUsers;
+    if (file.bad()) throw std::runtime_error("Credential read failed");
+    if (legacy) {
+        std::ostringstream image;
+        image << "id,password_hash,nickname\n";
+        for (const auto& user : loaded)
+            image << user.id << ',' << user.passwordHash << ',' << user.nickname << '\n';
+        // DirectoryLease excludes a second server; durable redo supports interrupted import.
+        // The legacy input is never a target of this migration.
+        if (!CsvStore::Commit({{target,image.str()}}))
+            throw std::runtime_error("Credential migration failed");
     }
-
-    int count = 0;
-    while (getline(file, line)) {
-        if (line.empty()) continue; // 빈 줄 건너뛰기
-
-        stringstream ss(line);
-        string id, pw, nick, levelStr, expStr;
-        if (getline(ss, id, ',') && getline(ss, pw, ',') && getline(ss, nick, ',')) {
-            try {
-                UserAccount userAccount = { id, pw, nick};
-                loadedUsers.push_back(userAccount);
-                count++;
-            }
-            catch (const std::exception& e) {
-                std::cerr << "숫자 변환 오류: " << e.what() << " | 라인: " << line << std::endl;
-            }
-        }
-        else {
-            std::cerr << "파싱 실패 라인: " << line << std::endl;
-        }
-    }
-
-    std::cerr << "로드된 사용자 수: " << count << std::endl;
-
-    {
-        std::lock_guard<std::recursive_mutex> lock(usersMutex);
-        users = std::move(loadedUsers);
-    }
-
+    users = std::move(loaded);
     return users;
 }
 
@@ -366,11 +368,12 @@ vector<UserIcons> UserManager::LoadUserIcons(const string& filename)
 
 bool UserManager::RegisterUserAccount(const UserAccount& user) {
     auto state = LockState();
+    if (!PasswordHash::IsValid(user.passwordHash)) return false;
     std::ostringstream outFile;
-    const std::string path = "UsersAccount.csv";
+    const std::string path = "UsersAccount.v2.csv";
     outFile << ReadCsv(path);
 
-    outFile << user.id << "," << user.password << "," << user.nickname << "\n";
+    outFile << user.id << "," << user.passwordHash << "," << user.nickname << "\n";
     return WriteCsv(path, outFile.str());
 }
 bool UserManager::RegisterUserProfile(const UserProfile& profile) {
@@ -469,7 +472,7 @@ bool UserManager::RegisterUserIcons(const UserIcons& icon) {
 bool UserManager::SaveUserAccount(const std::string& userId)
 {
     auto state = LockState();
-    const std::string path = "UsersAccount.csv";
+    const std::string path = "UsersAccount.v2.csv";
     std::istringstream inFile(ReadCsv(path));
     std::ostringstream tempFile;
 
@@ -488,8 +491,10 @@ bool UserManager::SaveUserAccount(const std::string& userId)
         if (id == userId)
         {
             auto it = std::find_if(users.begin(), users.end(), [&](const UserAccount& u) { return u.id == userId; });
-            if (it != users.end())
-                tempFile << it->id << "," << it->password << "," << it->nickname << "\n";
+            if (it != users.end()) {
+                if (!PasswordHash::IsValid(it->passwordHash)) return false;
+                tempFile << it->id << "," << it->passwordHash << "," << it->nickname << "\n";
+            }
         }
         else tempFile << line << "\n";
     }
@@ -716,30 +721,29 @@ bool UserManager::SaveUserIcons(const std::string& userId)
 
 
 string UserManager::CheckLogin(const string& id, const string& pw) {
-    std::lock_guard<std::recursive_mutex> lock(usersMutex); // 내부에서 잠금
-
-    for (const auto& user : users) {
-        if (user.id == id) {
-            if (user.password == pw) {
-                stringstream ss;
-                ss << "LOGIN_SUCCESS|" << user.id << "," << user.password << ","
-                    << user.nickname;
-                return ss.str() + "\n";
-            }
-            else {
-                return "WRONG_PASSWORD|\n";
-            }
-        }
+    if (!PasswordHash::ValidField(id) || !PasswordHash::ValidField(pw,true)) return "AUTH_ERROR|\n";
+    UserAccount account;
+    {
+        auto state = LockState();
+        auto found = std::find_if(users.begin(), users.end(), [&](const UserAccount& u) { return u.id == id; });
+        if (found == users.end()) return "ID_NOT_FOUND|\n";
+        account = *found;
     }
-    return "ID_NOT_FOUND|\n";
+    // KDF work must not hold the gameplay state mutex or the clients mutex.
+    try {
+        if (!PasswordHash::Verify(pw, account.passwordHash)) return "WRONG_PASSWORD|\n";
+    } catch (const std::runtime_error&) { return "AUTH_ERROR|\n"; }
+    return "LOGIN_SUCCESS|" + account.id + "," + account.nickname + "\n";
 }
 
 string UserManager::RegisterUser(const string& id, const string& pw, const string& nickname) {
+    if (!PasswordHash::ValidField(id) || !PasswordHash::ValidField(nickname) ||
+        !PasswordHash::ValidField(pw,true)) return "REGISTER_ERROR|\n";
+    if (pw.empty()) return "EMPTY_PASSWORD|\n";
+    std::string passwordHash;
+    try { passwordHash = PasswordHash::Create(pw); }
+    catch (const std::runtime_error&) { return "AUTH_ERROR|\n"; }
     Transaction transaction(*this);
-    if (id.empty() || nickname.empty() || id.find_first_of(",\r\n|") != string::npos ||
-        pw.find_first_of(",\r\n|") != string::npos || nickname.find_first_of(",\r\n|") != string::npos)
-        return "REGISTER_ERROR|\n";
-    std::lock_guard<std::recursive_mutex> lock(usersMutex);
 
     // 중복 체크
     for (const auto& user : users) {
@@ -747,9 +751,7 @@ string UserManager::RegisterUser(const string& id, const string& pw, const strin
         if (user.nickname == nickname) return "DUPLICATE_NICK|\n";
     }
 
-    if (pw.empty()) return "EMPTY_PASSWORD|\n";
-
-    UserAccount newUser{ id, pw, nickname };
+    UserAccount newUser{ id, passwordHash, nickname };
     if (!RegisterUserAccount(newUser)) return "FILE_WRITE_ERROR|\n";
 
     UserProfile newProfile;

@@ -5,3 +5,6 @@ __pycache__/
 users.lock
 users.redo
 *.stage.*
+
+# Runtime credential store; never publish account data.
+UsersAccount.v2.csv

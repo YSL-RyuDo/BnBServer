@@ -37,8 +37,8 @@ void ClientHandler::HandleClient(shared_ptr<ClientInfo> client)
                 client->Disconnect();
             } catch (const std::out_of_range&) {
                 client->Disconnect();
-            } catch (const std::runtime_error& error) {
-                std::cerr << "Request failed: " << error.what() << std::endl;
+            } catch (const std::runtime_error&) {
+                std::cerr << "Request failed" << std::endl;
                 SendToClient(client, "FILE_WRITE_ERROR|\n");
             }
             if (client->IsClosing()) { invalidFrame = true; break; }
@@ -83,14 +83,10 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
         if (message.empty())
             break;
 
-        if (message.rfind("MOVE|", 0) != 0 && message.rfind("MELODY_MOVE|", 0) != 0)
-        {
-            cout << "[수신] 클라이언트 메시지 - IP: " << client->port << ", 메시지: '" << message << "'" << endl;
-        }
+        // Never log raw inbound frames, including malformed authentication requests.
         string response;
 
         if (message.rfind("LOGIN|", 0) == 0) {
-            auto userState = userManager_.LockState();
             cout << "로그인 요청 감지" << endl;
             string loginData = message.substr(strlen("LOGIN|"));
             size_t commaPos = loginData.find(',');
@@ -101,7 +97,7 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
             // 이미 로그인한 유저인지 확인
             {
                 lock_guard<mutex> lock(server_.clientsMutex);
-                if (clientsMap.find(id) != clientsMap.end()) {
+                if (!client->id.empty() || clientsMap.find(id) != clientsMap.end()) {
                     // 이미 접속중인 아이디
                     SendToClient(client, "ALREADY_LOGGED_IN|\n");
                     return;
@@ -113,8 +109,8 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
 
             if (response.rfind("LOGIN_SUCCESS|", 0) == 0) {
                 std::stringstream fields(response.substr(response.find('|') + 1));
-                std::string parsedId, parsedPassword, nickname;
-                std::getline(fields, parsedId, ','); std::getline(fields, parsedPassword, ','); std::getline(fields, nickname);
+                std::string parsedId, nickname;
+                std::getline(fields, parsedId, ','); std::getline(fields, nickname);
                 std::lock_guard<std::mutex> clientsLock(server_.clientsMutex);
                 if (!client->id.empty() || clientsMap.count(parsedId)) response = "ALREADY_LOGGED_IN|\n";
                 else { client->id = parsedId; client->nickname = Trim(nickname); clientsMap[parsedId] = client; }
@@ -129,7 +125,6 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
             stringstream ss(data);
             string id, pw, nick;
             if (getline(ss, id, ',') && getline(ss, pw, ',') && getline(ss, nick)) {
-                cout << "[ProcessMessages] 회원가입 데이터 파싱 완료 - id: " << id << ", pw: " << pw << ", nick: " << nick << endl;
                 response = userManager_.RegisterUser(id, pw, nick);
             }
             else {
@@ -1854,8 +1849,7 @@ bool ClientHandler::SendToClient(std::shared_ptr<ClientInfo> client, const std::
         return false;
     }
 
-    std::cout << "[SendToClient] 클라이언트 응답 전송 - IP: " << client->ip << ":" << client->port
-        << " -> " << response;
+    // Response bodies can contain credentials in future protocol extensions.
     return true;
 } 
 

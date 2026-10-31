@@ -1,0 +1,802 @@
+{
+  "date": "2026-11-01",
+  "timezone": "Asia/Seoul",
+  "scope": "Synthetic accounts, IPv4 loopback only. No production data or Unity engine execution.",
+  "environment": {
+    "python": "3.14",
+    "psutil": "7.2.2",
+    "dotnet_sdk": "9.0.318",
+    "server": "MSVC v143, Release x64, C++14"
+  },
+  "server_base": "7394d2e424f2cb7b7cfad94ba50ddd2c61261f93",
+  "client_base": "d98ea1da298f3c31713407db6875702ed8383a96",
+  "auth-before": [
+    {
+      "case": "legacy_login",
+      "pass": true
+    },
+    {
+      "case": "wrong_password",
+      "pass": true
+    },
+    {
+      "case": "duplicate_login",
+      "pass": true
+    },
+    {
+      "case": "password_free_response",
+      "pass": false
+    },
+    {
+      "case": "register",
+      "pass": true
+    },
+    {
+      "case": "duplicate_id",
+      "pass": true
+    },
+    {
+      "case": "duplicate_nickname",
+      "pass": true
+    },
+    {
+      "case": "empty_password",
+      "pass": true
+    },
+    {
+      "case": "new_login",
+      "pass": true
+    },
+    {
+      "case": "same_connection_identity_preserved",
+      "pass": true
+    },
+    {
+      "case": "invalid_register",
+      "pass": true
+    },
+    {
+      "case": "unknown_id",
+      "pass": true
+    },
+    {
+      "case": "legacy_source_unchanged",
+      "pass": false
+    },
+    {
+      "case": "hashed_storage_interoperability",
+      "pass": false
+    },
+    {
+      "case": "independent_salts",
+      "pass": false
+    },
+    {
+      "case": "credential_free_logs",
+      "pass": false
+    },
+    {
+      "case": "restart_legacy_login",
+      "pass": true
+    },
+    {
+      "case": "restart_new_login",
+      "pass": true
+    }
+  ],
+  "network-before": [
+    {
+      "case": "room_isolation",
+      "pass": true,
+      "server_alive": true,
+      "deliveries": 3,
+      "cross_room_deliveries": 0,
+      "peer_closed": false,
+      "expected_deliveries": 3,
+      "subsequent_valid_deliveries": null
+    },
+    {
+      "case": "split_frame",
+      "pass": true,
+      "server_alive": true,
+      "deliveries": 3,
+      "cross_room_deliveries": 0,
+      "peer_closed": false,
+      "expected_deliveries": 3,
+      "subsequent_valid_deliveries": null
+    },
+    {
+      "case": "coalesced_frames",
+      "pass": true,
+      "server_alive": true,
+      "deliveries": 9,
+      "cross_room_deliveries": 0,
+      "peer_closed": false,
+      "expected_deliveries": 9,
+      "subsequent_valid_deliveries": null
+    },
+    {
+      "case": "complete_and_partial",
+      "pass": true,
+      "server_alive": true,
+      "deliveries": 6,
+      "cross_room_deliveries": 0,
+      "peer_closed": false,
+      "expected_deliveries": 6,
+      "subsequent_valid_deliveries": null
+    },
+    {
+      "case": "spoofed_nickname",
+      "pass": true,
+      "server_alive": true,
+      "deliveries": 0,
+      "cross_room_deliveries": 0,
+      "peer_closed": false,
+      "expected_deliveries": 0,
+      "subsequent_valid_deliveries": null
+    },
+    {
+      "case": "invalid_coordinate",
+      "pass": true,
+      "server_alive": true,
+      "deliveries": 0,
+      "cross_room_deliveries": 0,
+      "peer_closed": false,
+      "expected_deliveries": 0,
+      "subsequent_valid_deliveries": 3
+    },
+    {
+      "case": "nonfinite_coordinate",
+      "pass": true,
+      "server_alive": true,
+      "deliveries": 0,
+      "cross_room_deliveries": 0,
+      "peer_closed": false,
+      "expected_deliveries": 0,
+      "subsequent_valid_deliveries": 3
+    },
+    {
+      "case": "oversized_frame",
+      "pass": true,
+      "server_alive": true,
+      "deliveries": 0,
+      "cross_room_deliveries": 0,
+      "peer_closed": true,
+      "expected_deliveries": 0,
+      "subsequent_valid_deliveries": null
+    }
+  ],
+  "auth-final": [
+    {
+      "case": "legacy_login",
+      "pass": true
+    },
+    {
+      "case": "wrong_password",
+      "pass": true
+    },
+    {
+      "case": "duplicate_login",
+      "pass": true
+    },
+    {
+      "case": "password_free_response",
+      "pass": true
+    },
+    {
+      "case": "register",
+      "pass": true
+    },
+    {
+      "case": "duplicate_id",
+      "pass": true
+    },
+    {
+      "case": "duplicate_nickname",
+      "pass": true
+    },
+    {
+      "case": "empty_password",
+      "pass": true
+    },
+    {
+      "case": "new_login",
+      "pass": true
+    },
+    {
+      "case": "same_connection_identity_preserved",
+      "pass": true
+    },
+    {
+      "case": "invalid_register",
+      "pass": true
+    },
+    {
+      "case": "unknown_id",
+      "pass": true
+    },
+    {
+      "case": "legacy_source_unchanged",
+      "pass": true
+    },
+    {
+      "case": "hashed_storage_interoperability",
+      "pass": true
+    },
+    {
+      "case": "independent_salts",
+      "pass": true
+    },
+    {
+      "case": "credential_free_logs",
+      "pass": true
+    },
+    {
+      "case": "restart_legacy_login",
+      "pass": true
+    },
+    {
+      "case": "restart_new_login",
+      "pass": true
+    }
+  ],
+  "auth-concurrency-final": [
+    {
+      "case": "atomic_duplicate_login",
+      "pass": true
+    },
+    {
+      "case": "quit_closes_session",
+      "pass": true
+    },
+    {
+      "case": "reconnect_after_cleanup",
+      "pass": true
+    },
+    {
+      "case": "split_auth_frame",
+      "pass": true
+    },
+    {
+      "case": "coalesced_register_login",
+      "pass": true
+    },
+    {
+      "case": "identity_switch_rejected",
+      "pass": true
+    }
+  ],
+  "auth-unit-final": [
+    {
+      "case": "auth",
+      "exit": 0,
+      "pass": true
+    },
+    {
+      "case": "crash",
+      "exit": 73,
+      "pass": true
+    },
+    {
+      "case": "recover",
+      "exit": 0,
+      "pass": true
+    }
+  ],
+  "state-unit-final": [
+    {
+      "case": "state",
+      "exit": 0,
+      "pass": true
+    },
+    {
+      "case": "crash",
+      "exit": 73,
+      "pass": true
+    },
+    {
+      "case": "recover",
+      "exit": 0,
+      "pass": true
+    }
+  ],
+  "network-final": [
+    {
+      "case": "room_isolation",
+      "pass": true,
+      "server_alive": true,
+      "deliveries": 3,
+      "cross_room_deliveries": 0,
+      "peer_closed": false,
+      "expected_deliveries": 3,
+      "subsequent_valid_deliveries": null
+    },
+    {
+      "case": "split_frame",
+      "pass": true,
+      "server_alive": true,
+      "deliveries": 3,
+      "cross_room_deliveries": 0,
+      "peer_closed": false,
+      "expected_deliveries": 3,
+      "subsequent_valid_deliveries": null
+    },
+    {
+      "case": "coalesced_frames",
+      "pass": true,
+      "server_alive": true,
+      "deliveries": 9,
+      "cross_room_deliveries": 0,
+      "peer_closed": false,
+      "expected_deliveries": 9,
+      "subsequent_valid_deliveries": null
+    },
+    {
+      "case": "complete_and_partial",
+      "pass": true,
+      "server_alive": true,
+      "deliveries": 6,
+      "cross_room_deliveries": 0,
+      "peer_closed": false,
+      "expected_deliveries": 6,
+      "subsequent_valid_deliveries": null
+    },
+    {
+      "case": "spoofed_nickname",
+      "pass": true,
+      "server_alive": true,
+      "deliveries": 0,
+      "cross_room_deliveries": 0,
+      "peer_closed": false,
+      "expected_deliveries": 0,
+      "subsequent_valid_deliveries": null
+    },
+    {
+      "case": "invalid_coordinate",
+      "pass": true,
+      "server_alive": true,
+      "deliveries": 0,
+      "cross_room_deliveries": 0,
+      "peer_closed": false,
+      "expected_deliveries": 0,
+      "subsequent_valid_deliveries": 3
+    },
+    {
+      "case": "nonfinite_coordinate",
+      "pass": true,
+      "server_alive": true,
+      "deliveries": 0,
+      "cross_room_deliveries": 0,
+      "peer_closed": false,
+      "expected_deliveries": 0,
+      "subsequent_valid_deliveries": 3
+    },
+    {
+      "case": "oversized_frame",
+      "pass": true,
+      "server_alive": true,
+      "deliveries": 0,
+      "cross_room_deliveries": 0,
+      "peer_closed": true,
+      "expected_deliveries": 0,
+      "subsequent_valid_deliveries": null
+    }
+  ],
+  "lifecycle-final": [
+    {
+      "case": "invalid_integer",
+      "passed": true,
+      "deliveries": 3,
+      "expected": 3,
+      "healthy_room_final_deliveries": 3,
+      "threads_before": 13,
+      "threads_after": 12
+    },
+    {
+      "case": "invalid_integer_range",
+      "passed": true,
+      "deliveries": 3,
+      "expected": 3,
+      "healthy_room_final_deliveries": 3,
+      "threads_before": 13,
+      "threads_after": 12
+    },
+    {
+      "case": "logout_relogin",
+      "passed": true,
+      "deliveries": 3,
+      "expected": 3,
+      "healthy_room_final_deliveries": 3,
+      "threads_before": 13,
+      "threads_after": 13
+    },
+    {
+      "case": "quit_eof_churn",
+      "passed": true,
+      "deliveries": 63,
+      "expected": 63,
+      "healthy_room_final_deliveries": 3,
+      "threads_before": 13,
+      "threads_after": 13
+    },
+    {
+      "case": "simultaneous_disconnect",
+      "passed": true,
+      "deliveries": 3,
+      "expected": 3,
+      "healthy_room_final_deliveries": 3,
+      "threads_before": 13,
+      "threads_after": 13
+    }
+  ],
+  "purchase-final": {
+    "server_alive": true,
+    "correct_wallet_and_inventory": 32,
+    "expected": 32,
+    "passed": true
+  },
+  "hit-final": {
+    "pass": true,
+    "expected": 28,
+    "received": 28,
+    "cross_room": 0
+  },
+  "rooms-final": {
+    "one_reward_per_match": true,
+    "one_game_end_per_match": true,
+    "other_room_keeps_responding": true,
+    "rewards_saved_once": true,
+    "room_churn_keeps_server_alive": true
+  },
+  "pressure-final": [
+    {
+      "pressure": false,
+      "clients": 8,
+      "rooms": 2,
+      "probe_requests": 100,
+      "expected_deliveries": 300,
+      "received_deliveries": 300,
+      "missing_deliveries": 0,
+      "duplicates": 0,
+      "p50_ms": 0.5671000108122826,
+      "p95_ms": 6.845199968665838,
+      "p99_ms": 7.414999883621931,
+      "pressure_requests_written": 0,
+      "server_cpu_core_percent": 0.44802579619475247,
+      "peak_rss_mib": 6.83203125,
+      "peak_threads": 13,
+      "duration_s": 6.9750447999686,
+      "transport": [
+        {
+          "accepted_frames": 9,
+          "completed_frames": 9,
+          "send_calls": 9,
+          "batches": 9,
+          "sent_bytes": 479,
+          "peak_pending_bytes": 69,
+          "peak_pending_frames": 1,
+          "stop_reason": 1
+        },
+        {
+          "accepted_frames": 12,
+          "completed_frames": 11,
+          "send_calls": 11,
+          "batches": 11,
+          "sent_bytes": 581,
+          "peak_pending_bytes": 105,
+          "peak_pending_frames": 2,
+          "stop_reason": 2
+        },
+        {
+          "accepted_frames": 12,
+          "completed_frames": 12,
+          "send_calls": 10,
+          "batches": 10,
+          "sent_bytes": 625,
+          "peak_pending_bytes": 149,
+          "peak_pending_frames": 3,
+          "stop_reason": 1
+        },
+        {
+          "accepted_frames": 12,
+          "completed_frames": 10,
+          "send_calls": 11,
+          "batches": 11,
+          "sent_bytes": 530,
+          "peak_pending_bytes": 92,
+          "peak_pending_frames": 2,
+          "stop_reason": 2
+        },
+        {
+          "accepted_frames": 112,
+          "completed_frames": 110,
+          "send_calls": 111,
+          "batches": 111,
+          "sent_bytes": 3917,
+          "peak_pending_bytes": 92,
+          "peak_pending_frames": 2,
+          "stop_reason": 2
+        },
+        {
+          "accepted_frames": 113,
+          "completed_frames": 110,
+          "send_calls": 111,
+          "batches": 111,
+          "sent_bytes": 3917,
+          "peak_pending_bytes": 126,
+          "peak_pending_frames": 3,
+          "stop_reason": 2
+        },
+        {
+          "accepted_frames": 114,
+          "completed_frames": 111,
+          "send_calls": 111,
+          "batches": 111,
+          "sent_bytes": 3958,
+          "peak_pending_bytes": 121,
+          "peak_pending_frames": 3,
+          "stop_reason": 2
+        },
+        {
+          "accepted_frames": 14,
+          "completed_frames": 12,
+          "send_calls": 11,
+          "batches": 11,
+          "sent_bytes": 625,
+          "peak_pending_bytes": 224,
+          "peak_pending_frames": 5,
+          "stop_reason": 2
+        }
+      ],
+      "variant": "candidate",
+      "repeat": 1
+    },
+    {
+      "pressure": true,
+      "clients": 8,
+      "rooms": 2,
+      "probe_requests": 100,
+      "expected_deliveries": 300,
+      "received_deliveries": 300,
+      "missing_deliveries": 0,
+      "duplicates": 0,
+      "p50_ms": 0.5449000746011734,
+      "p95_ms": 6.708499975502491,
+      "p99_ms": 7.7314001973718405,
+      "pressure_requests_written": 3490,
+      "server_cpu_core_percent": 2.465824745056139,
+      "peak_rss_mib": 7.3828125,
+      "peak_threads": 13,
+      "duration_s": 6.970284499926493,
+      "transport": [
+        {
+          "accepted_frames": 198,
+          "completed_frames": 72,
+          "send_calls": 34,
+          "batches": 34,
+          "sent_bytes": 130574,
+          "peak_pending_bytes": 260190,
+          "peak_pending_frames": 126,
+          "stop_reason": 3
+        },
+        {
+          "accepted_frames": 3501,
+          "completed_frames": 3501,
+          "send_calls": 1258,
+          "batches": 1258,
+          "sent_bytes": 7207431,
+          "peak_pending_bytes": 33040,
+          "peak_pending_frames": 16,
+          "stop_reason": 1
+        },
+        {
+          "accepted_frames": 3503,
+          "completed_frames": 3503,
+          "send_calls": 1124,
+          "batches": 1124,
+          "sent_bytes": 7207521,
+          "peak_pending_bytes": 33040,
+          "peak_pending_frames": 16,
+          "stop_reason": 1
+        },
+        {
+          "accepted_frames": 3509,
+          "completed_frames": 3503,
+          "send_calls": 1042,
+          "batches": 1042,
+          "sent_bytes": 7207521,
+          "peak_pending_bytes": 30975,
+          "peak_pending_frames": 15,
+          "stop_reason": 1
+        },
+        {
+          "accepted_frames": 12,
+          "completed_frames": 11,
+          "send_calls": 11,
+          "batches": 11,
+          "sent_bytes": 576,
+          "peak_pending_bytes": 87,
+          "peak_pending_frames": 2,
+          "stop_reason": 1
+        },
+        {
+          "accepted_frames": 115,
+          "completed_frames": 111,
+          "send_calls": 111,
+          "batches": 111,
+          "sent_bytes": 3963,
+          "peak_pending_bytes": 188,
+          "peak_pending_frames": 5,
+          "stop_reason": 1
+        },
+        {
+          "accepted_frames": 117,
+          "completed_frames": 112,
+          "send_calls": 111,
+          "batches": 111,
+          "sent_bytes": 4004,
+          "peak_pending_bytes": 230,
+          "peak_pending_frames": 7,
+          "stop_reason": 1
+        },
+        {
+          "accepted_frames": 121,
+          "completed_frames": 112,
+          "send_calls": 111,
+          "batches": 111,
+          "sent_bytes": 4004,
+          "peak_pending_bytes": 350,
+          "peak_pending_frames": 11,
+          "stop_reason": 1
+        }
+      ],
+      "variant": "candidate",
+      "repeat": 1
+    }
+  ],
+  "output-unit": [
+    "PASS partial_writes, frames=100, calls=128",
+    "PASS concurrent_producers, frames=400",
+    "PASS byte_limit, peak_bytes=262144, peak_frames=2",
+    "PASS frame_limit, peak_bytes=4096, peak_frames=4096",
+    "PASS burst_batching, frames=1000, bytes=2000, calls=2 (injected sender, not a network benchmark)",
+    "PASS send_failure",
+    "PASS cancellation_lifetime",
+    "7/7 output tests passed"
+  ],
+  "client-auth-final": [
+    "PASS AuthReceiver success, malformed/old responses, error routing and nickname-only preferences",
+    "PASS LoginSystem success, malformed/old responses and error routing",
+    "PASS RegisterSystem delimited response handling",
+    "PASS split UTF-8 authentication response",
+    "PASS split, coalesced, retained tail, no premature dispatch",
+    "PASS split UTF-8 at every byte",
+    "PASS exact limit and oversized message",
+    "PASS invalid UTF-8 rejected",
+    "PASS authentication logs omit response bodies"
+  ],
+  "unity_editor": {
+    "executed": false,
+    "required": "2022.3.40f1",
+    "installed": "6000.3.1f1",
+    "reason": "Required editor not installed; project was not upgraded."
+  },
+  "before-build": {
+    "source_commit": "7394d2e424f2cb7b7cfad94ba50ddd2c61261f93",
+    "source_hashes": {
+      "CharacterStatsManager.cpp": "1a7861c3c9a291607bc867148686a97490d5cb7a43cc92ac8256a5208a61d454",
+      "CharacterStatsManager.h": "c7c5d030798e3c12506dc12394602e548a479c57c777c927e3b3d08c992cb570",
+      "ClientHandler.cpp": "a7f1e3b3f5dc51d9dcbdc02871428747cf03708d6a4f807ef08c935d734e750a",
+      "ClientHandler.h": "dd3daabd5840d776920e6d578743fe38111699c5514d38e7cca779b739e4fad8",
+      "ClientInfo.cpp": "ba08341028de4df83f37296728b69a0725ec18bab376bc6d9c10c1cd165d9a02",
+      "ClientInfo.h": "b7115f8f728c1fb9072751ba05965b9f4b92f8efd197294cdc07739f93f707d6",
+      "CsvStore.h": "b7324999fe2971169867eb9ca0e6cedea9d935e9e03a8d50718f7d8c644614d1",
+      "main.cpp": "1d0f170be52b5532177619641d9f2fe715c1791bd5dabdd72e277e4cd7890b9c",
+      "MapManager.cpp": "a500ed1f000eecf4e121ecc3296e9dd43089113359442c7307e69134f53b1cb5",
+      "MapManager.h": "ceab6660e25c1a23604cf651011e96e9fb5d4324c32814037892e997d9e1d6f9",
+      "Player.cpp": "4a63f7ca2dd1e59584aa133918f26b7610ecf609c174798240260dd411e04b93",
+      "Player.h": "413d9b5f643d81978d618d4cc03de20b0528f91030e1d838b34e837dafe1e1a3",
+      "Room.cpp": "c4bf7c41a09a6597817e7549fe43db87e8cd1bb69f064c27adb9e6b54a12bba6",
+      "Room.h": "b07da1e22e4dc7b6f1de50159eef4d2642890af25f6fc37fdc79ac9bb6503d6c",
+      "RoomManager.cpp": "354bba7be7161993deaffadcfbe5bcc6b1709252f42cb1b84eac794be8e2203c",
+      "RoomManager.h": "da2f1953acf8f9f6a77e6a6c481eea3f6d4b31750f7e95eaec06630f46316eba",
+      "Server.cpp": "51e8e2d37648e7d24350fc7d3348fea1ecf64b592ff64cee88e0e1b2fe24bb14",
+      "Server.h": "6cf83cdc8e1ea41c3c3085b5748a941b06e071295b25931aa65fa536c2daf7be",
+      "SocketOutput.cpp": "ae090fb0d437d204186acf100773951a2028cc00f4cdeba557668d6e4a3a8a20",
+      "SocketOutput.h": "252141c595544977210b7bc006f07f1352c11f138cdf77d69c3d05710d5f1140",
+      "StoreData.cpp": "0eddfbf2d1e6e644b63f8e7df307c0c59ef49151ea66b923052fcc1e8ab17573",
+      "StoreData.h": "4139fc8bf2d48c5479418e884ec546b71b10514a65f7d8c0f4b3374fd684e161",
+      "TeamOFYServer.vcxproj": "3913042703156034b06efc09e7b294804d09f6b3a6c7b64b6f0764520710fa67",
+      "UserAccount.cpp": "17c46f1aea564cb43bc1d044a394e94d7fb4a212f663b57945694ed8bc4b4688",
+      "UserAccount.h": "94c28ffa8863881ff555d7dc8b3a6f48b23729a3aca784f0c500cb0e0c6a9122",
+      "UserManager.cpp": "3570dfed3548fb56bf44eb3db50ec1c3d71cf305975cb803bf36223b3c1382d9",
+      "UserManager.h": "89f97365c0b46fc9ea82f6c5e5fa3609932908afbd5df900368272fa06edb15d",
+      "Utils.h": "eb42aa3bc165fe04e1a4d5aa5b18df1cdf67ce78c1ea570ca613266cc254b53f"
+    },
+    "binary_sha256": "49bd34231bcc12427e4fcd24daef0a8b4f980178a21064d1279cbeeb887e38ad",
+    "port": 39101,
+    "adapter": [
+      "main.cpp: test port instead of 9000",
+      "Server.cpp: bind loopback instead of all interfaces"
+    ],
+    "configuration": "Release x64, MSVC v143, C++14",
+    "build_command": [
+      "{MSBUILD}",
+      "{BUILD_DIR}\\source\\TeamOFYServer.vcxproj",
+      "/p:Configuration=Release",
+      "/p:Platform=x64",
+      "/p:OutDir={BUILD_DIR}\\bin\\",
+      "/p:IntDir={BUILD_DIR}\\obj\\",
+      "/v:minimal",
+      "/nologo"
+    ]
+  },
+  "final-build": {
+    "source_commit": "7394d2e424f2cb7b7cfad94ba50ddd2c61261f93",
+    "source_hashes": {
+      "CharacterStatsManager.cpp": "1a7861c3c9a291607bc867148686a97490d5cb7a43cc92ac8256a5208a61d454",
+      "CharacterStatsManager.h": "c7c5d030798e3c12506dc12394602e548a479c57c777c927e3b3d08c992cb570",
+      "ClientHandler.cpp": "fe26e181870cd0dd1bc50d7deca8b495ca04f5209f3b108415b9a34c16df708f",
+      "ClientHandler.h": "dd3daabd5840d776920e6d578743fe38111699c5514d38e7cca779b739e4fad8",
+      "ClientInfo.cpp": "ba08341028de4df83f37296728b69a0725ec18bab376bc6d9c10c1cd165d9a02",
+      "ClientInfo.h": "b7115f8f728c1fb9072751ba05965b9f4b92f8efd197294cdc07739f93f707d6",
+      "CsvStore.h": "3586deb0f02d24b5cd219f1de87fb066825e1a3e6799bed1dbfbcff30f38db14",
+      "main.cpp": "1d0f170be52b5532177619641d9f2fe715c1791bd5dabdd72e277e4cd7890b9c",
+      "MapManager.cpp": "a500ed1f000eecf4e121ecc3296e9dd43089113359442c7307e69134f53b1cb5",
+      "MapManager.h": "ceab6660e25c1a23604cf651011e96e9fb5d4324c32814037892e997d9e1d6f9",
+      "PasswordHash.h": "402eac8b10e441a4081d36b6bf35b9dfcd938b408500a6802b42cb307e13e3af",
+      "Player.cpp": "4a63f7ca2dd1e59584aa133918f26b7610ecf609c174798240260dd411e04b93",
+      "Player.h": "413d9b5f643d81978d618d4cc03de20b0528f91030e1d838b34e837dafe1e1a3",
+      "Room.cpp": "c4bf7c41a09a6597817e7549fe43db87e8cd1bb69f064c27adb9e6b54a12bba6",
+      "Room.h": "b07da1e22e4dc7b6f1de50159eef4d2642890af25f6fc37fdc79ac9bb6503d6c",
+      "RoomManager.cpp": "354bba7be7161993deaffadcfbe5bcc6b1709252f42cb1b84eac794be8e2203c",
+      "RoomManager.h": "da2f1953acf8f9f6a77e6a6c481eea3f6d4b31750f7e95eaec06630f46316eba",
+      "Server.cpp": "178e6b965f60e83519aa1461e564cf5f9f43af5c4aa64669392b8676597d0a4f",
+      "Server.h": "6cf83cdc8e1ea41c3c3085b5748a941b06e071295b25931aa65fa536c2daf7be",
+      "SocketOutput.cpp": "ae090fb0d437d204186acf100773951a2028cc00f4cdeba557668d6e4a3a8a20",
+      "SocketOutput.h": "252141c595544977210b7bc006f07f1352c11f138cdf77d69c3d05710d5f1140",
+      "StoreData.cpp": "0eddfbf2d1e6e644b63f8e7df307c0c59ef49151ea66b923052fcc1e8ab17573",
+      "StoreData.h": "4139fc8bf2d48c5479418e884ec546b71b10514a65f7d8c0f4b3374fd684e161",
+      "TeamOFYServer.vcxproj": "dd72b8f98aef6387baa0ab15a7925384fe7355b13ed4ffd4f5ea81af27dd9574",
+      "UserAccount.cpp": "17c46f1aea564cb43bc1d044a394e94d7fb4a212f663b57945694ed8bc4b4688",
+      "UserAccount.h": "9b8d36f7d0f9daebdd216980ac0062436cbefe9257020a7221a88f9b7f98628f",
+      "UserManager.cpp": "206c25c3c61a880cd39fa9ea8be68d0b66b756245abc483532741088f3b79030",
+      "UserManager.h": "89f97365c0b46fc9ea82f6c5e5fa3609932908afbd5df900368272fa06edb15d",
+      "Utils.h": "eb42aa3bc165fe04e1a4d5aa5b18df1cdf67ce78c1ea570ca613266cc254b53f"
+    },
+    "binary_sha256": "57a9ae5b75cf3b27e471753d00bf036e321543602211cc00a2465447a54d9ca0",
+    "port": 39103,
+    "adapter": [
+      "main.cpp: test port instead of 9000",
+      "Server.cpp: bind loopback instead of all interfaces"
+    ],
+    "configuration": "Release x64, MSVC v143, C++14",
+    "build_command": [
+      "{MSBUILD}",
+      "{BUILD_DIR}\\source\\TeamOFYServer.vcxproj",
+      "/p:Configuration=Release",
+      "/p:Platform=x64",
+      "/p:OutDir={BUILD_DIR}\\bin\\",
+      "/p:IntDir={BUILD_DIR}\\obj\\",
+      "/v:minimal",
+      "/nologo"
+    ]
+  },
+  "solution_build": {
+    "exit_code": 0,
+    "configuration": "Release x64",
+    "binary_sha256": "9e87c2e891583efe4179bf81b24ed1315c7a0bfd3dfb73bf0e5c80416224a82c"
+  },
+  "source_sha256": {
+    "BNB/Assets/Script/Lobby/LobbyRoom.cs": "228b4a06d28b1ade1d83b70c4e3ccdb38e4a2581d9e3aa44cb372eaa78043239",
+    "BNB/Assets/Script/Lobby/LobbySystem.cs": "b03a912b12d4e2e0907c6fae57dc2e8b564f4d2f4d86e9d81f822d3cc064b772",
+    "BNB/Assets/Script/Login/AuthReceiver.cs": "9faa547b6c24552716894c7ecdacc011253b2aea0c1af3cbd4d460a46d2fb0fc",
+    "BNB/Assets/Script/Login/LoginSystem.cs": "6462b43c57534b6e984167cd0ca4b75acb30d990c471f2d770f628826bda9a1b",
+    "BNB/Assets/Script/Login/RegisterSystem.cs": "8b9d263878a05c163f9daae0016b35009fa14244de13ca4d060d61d0c96e89cd",
+    "BNB/Assets/Script/Network/NetworkConnector.cs": "f85bc7149c6a3cdf3289e52790deea41c4ef13dd65db2f685fa434d68daf7221",
+    "BNB/Assets/Script/Login/AuthProtocol.cs": "563d7d350fa110a35ff701dae68d20da4bfab36fec3c1dff946a95b3f00406b9",
+    "BNB/tools/AuthTests.cs": "cac6e6962a2a7a34489b823b3f597a21e1fa8da49f42797403a816c9e2266098",
+    "BNB/tools/AuthUiDoubles.cs": "b9bf7e5d5c0f9170c1f26d1af82c8e64dbb57300f56f7a4d2478c9d6b29b6c1e",
+    "BNB/tools/test_auth.py": "3c6d9d8aaa25891550c0417e057bad2925fec82c9433147f1959b4540f88a162"
+  }
+}

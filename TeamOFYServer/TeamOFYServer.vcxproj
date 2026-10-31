@@ -158,6 +158,7 @@
     <ClInclude Include="StoreData.h" />
     <ClInclude Include="UserAccount.h" />
     <ClInclude Include="UserManager.h" />
+    <ClInclude Include="PasswordHash.h" />
     <ClInclude Include="Utils.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

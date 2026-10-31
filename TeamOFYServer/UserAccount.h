@@ -5,7 +5,7 @@ class UserAccount
 {
 public:
     string id;
-    string password;
+    string passwordHash; // Only a versioned CNG-derived verifier; never plaintext.
     string nickname;
 };
 
