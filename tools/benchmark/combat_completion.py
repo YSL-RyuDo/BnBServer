@@ -3,6 +3,7 @@ import argparse, asyncio, csv, json
 from pathlib import Path
 import run
 from run import start, stop
+from world_client import WorldClient
 original_fixture=run.fixture
 def fixture(folder,n):
     original_fixture(folder,n)
@@ -36,23 +37,38 @@ async def main(a):
             await p.send(f'LOGIN|u{p.i},synthetic-only\n');await p.until('LOGIN_SUCCESS|')
             if p.i==0:await p.send('CREATE_ROOM|coop|Map1||1\n');await p.until('CREATE_ROOM_SUCCESS|')
             else:await p.send('ENTER_ROOM|coop||1\n');await p.until('ENTER_ROOM_SUCCESS|')
-        await peers[0].send('START_GAME|coop\n');await peers[0].until('GAME_START|')
+        bootstrap=WorldClient(peers)
+        for p in peers:await bootstrap.request(p.i,f'CHOOSE_CHARACTER|coop|n{p.i}|1','UPDATE_CHARACTER|')
+        match,positions=await bootstrap.begin(0,'coop',range(4))
+        await bootstrap.close()
+        async def fire(sender,seq,target):
+            import math
+            origin=positions[f'n{sender}'];dest=positions[f'n{target}']
+            yaw=math.degrees(math.atan2(dest[0]-origin[0],dest[1]-origin[1]))%360
+            await peers[sender].send(f'ATTACK|{match}|{seq}|{yaw}\n')
+        async def wait_for(predicate):
+            async def poll():
+                while not predicate():await asyncio.sleep(.01)
+            await asyncio.wait_for(poll(),5)
         tasks=[asyncio.create_task(collect(p)) for p in peers];await drain();rows.clear()
-        await peers[0].send('HIT|0|n0|n2|1\n');await drain()
+        await fire(0,1,2);await asyncio.sleep(.3);await drain()
         check('friendly_fire_rejected',count('DAMAGE|')==0);rows.clear()
-        await asyncio.gather(peers[0].send('HIT|0|n0|n1|1\n'),peers[2].send('HIT|0|n2|n1|1\n'))
+        await asyncio.sleep(1.25)
+        await asyncio.gather(fire(0,2,1),fire(2,1,1))
+        await wait_for(lambda:count('PLAYER_DEAD|n1|1')==4)
         await drain();check('concurrent_lethal_hit_once',count('DAMAGE|n1|10|0|1|1')==4 and count('PLAYER_DEAD|n1|1')==4 and count('REWARD_RESULT')==0);rows.clear()
-        await peers[1].send('HIT|0|n1|n0|1\n');await drain();check('dead_attacker_rejected',count('DAMAGE|')==0);rows.clear()
+        await fire(1,1,0);await asyncio.sleep(.1);await drain();check('dead_attacker_rejected',count('DAMAGE|')==0);rows.clear()
         # Block only the journal rename, before its commit point, in this test directory.
         blocker=out/'users.redo';blocker.mkdir()
-        await peers[0].send('HIT|0|n0|n3|1\n');await drain()
-        check('reward_failure_keeps_money_unchanged',count('FILE_WRITE_ERROR|')==1 and count('REWARD_RESULT')==0 and all(v==100000 for v in balances().values()));rows.clear()
+        await asyncio.sleep(1.5);await fire(0,3,3)
+        await wait_for(lambda:b'Combat reward save failed' in (out/'server.log').read_bytes());await drain()
+        check('reward_failure_keeps_money_unchanged',count('REWARD_RESULT')==0 and all(v==100000 for v in balances().values()));rows.clear()
         await asyncio.gather(*(p.send(f'READY_TO_EXIT|n{p.i}\n') for p in peers));await drain()
         check('no_exit_before_reward_commit',count('GAME_END')==0 and count('READY_TO_EXIT')==0);rows.clear()
         blocker.rmdir()
-        await peers[3].send('DEAD|n3\n');await drain()
+        await peers[3].send('DEAD|n3\n');await wait_for(lambda:count('REWARD_RESULT')==4);await drain()
         check('zero_hp_receipt_retries_reward_once',count('TEAM_WIN|Blue,n0,n2')==4 and count('REWARD_RESULT')==4 and balances()=={'u0':100500,'u1':100200,'u2':100500,'u3':100200});rows.clear()
-        await peers[3].send('DEAD|n3\nDEAD|n3\n');await peers[0].send('HIT|0|n0|n2|1\n');await drain()
+        await peers[3].send('DEAD|n3\nDEAD|n3\n');await fire(0,1,2);await asyncio.sleep(.3);await drain()
         check('resolved_match_cannot_damage_or_reward_again',count('DAMAGE|')==0 and count('REWARD_RESULT')==0);rows.clear()
         await peers[0].send('READY_TO_EXIT|n2\n');await drain()
         check('ready_owner_spoof_rejected',count('READY_TO_EXIT')==0);rows.clear()

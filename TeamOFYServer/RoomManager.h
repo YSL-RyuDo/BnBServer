@@ -79,6 +79,13 @@ public:
         uint64_t matchId = 0, revision = 0;
         DeathResult death;
     };
+    bool WorldCommand(const std::string& id, const std::string& command, uint64_t match, uint64_t sequence, double x, double z);
+    std::string MapResponse(const std::string& id);
+    void TickWorld(double seconds);
+    void BroadcastToMatch(const Room& match, const std::string& message);
+private:
+    DamageResult ApplyDamageLocked(Room& room, const std::string& attacker, const std::string& target, bool water);
+public:
     DamageResult ApplyDamage(const std::string& attacker, const std::string& target,
         int weapon, uint64_t matchId, bool water);
     void MarkRewardsCommitted(const Room& snapshot);

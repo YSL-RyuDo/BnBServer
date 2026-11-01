@@ -2,6 +2,8 @@
 import argparse, asyncio, json
 from pathlib import Path
 from run import Peer, start, setup, stop
+from world_client import WorldClient
+import math
 
 async def main(a):
     build=Path(a.build).resolve();out=Path(a.out).resolve()
@@ -10,7 +12,13 @@ async def main(a):
     tasks=[];results=[];damage=[];messages=[];ready=[]
     try:
         await setup(peers)
-        await peers[0].send("START_GAME|r0\n");await peers[0].until("GAME_START|")
+        bootstrap=WorldClient(peers)
+        await bootstrap.request(0,'CHOOSE_CHARACTER|r0|n0|1','UPDATE_CHARACTER|')
+        match,positions=await bootstrap.begin(0,'r0',range(4))
+        await bootstrap.close()
+        target=min(range(1,4),key=lambda i:math.dist(positions['n0'],positions[f'n{i}']))
+        delta=(positions[f'n{target}'][0]-positions['n0'][0],positions[f'n{target}'][1]-positions['n0'][1])
+        yaw=math.degrees(math.atan2(*delta))%360
         r,w=await asyncio.open_connection('127.0.0.1',meta['port'])
         peers.append(Peer(8,r,w))
         ready=[asyncio.Event() for _ in peers]
@@ -30,7 +38,11 @@ async def main(a):
             for p in peers:
                 if p.i!=sender:await p.send('GET_ROOM_LIST|\n')
             await asyncio.wait_for(asyncio.gather(*(event.wait() for event in ready)),5)
-            wanted=[(i,'DAMAGE|n1|10|90|1|1') for i in range(4)] if expected else []
+            if expected:
+                async def wait_damage():
+                    while len(damage)<4:await asyncio.sleep(.01)
+                await asyncio.wait_for(wait_damage(),5)
+            wanted=[(i,f'DAMAGE|n{target}|10|90|1|1') for i in range(4)] if expected else []
             passed=sorted(damage)==wanted and (not requires_auth or sender in messages)
             results.append({'case':name,'pass':passed,'damage_deliveries':len(damage)})
             print(results[-1],flush=True)
@@ -39,7 +51,7 @@ async def main(a):
         await exercise('other_room_sender_spoof',4,'HIT|0|n0|n1|1',False)
         await exercise('cross_room_target',0,'HIT|0|n0|n4|1',False)
         await exercise('missing_target',0,'HIT|0|n0|missing|1',False)
-        await exercise('authenticated_hit',0,'HIT|0|n0|n1|1',True)
+        await exercise('authenticated_attack',0,f'ATTACK|{match}|1|{yaw}',True)
         await exercise('unauthenticated_profile_request',8,'GETINFO|n0',False,True)
         await exercise('unauthenticated_purchase',8,'BUY_CHAR|n0,1',False,True)
         await peers[2].send('LOGOUT|n2\n')

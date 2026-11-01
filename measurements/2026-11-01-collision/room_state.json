@@ -1,0 +1,7 @@
+{
+  "one_reward_per_match": true,
+  "one_game_end_per_match": true,
+  "other_room_keeps_responding": true,
+  "rewards_saved_once": true,
+  "room_churn_keeps_server_alive": true
+}

@@ -2,6 +2,8 @@
 #include <winsock2.h> 
 #include <ws2tcpip.h>
 #include <vector>
+#include <atomic>
+#include <thread>
 #include <mutex>
 #include "ClientInfo.h"
 #include "ClientHandler.h"
@@ -23,6 +25,8 @@ public:
     mutex clientsMutex;
     
 private:
+    std::atomic<bool> simulationRunning_{false};
+    std::thread simulationThread_;
     SOCKET listenSocket;
     vector<shared_ptr<ClientInfo>> clients;
     MapManager mapManager_;

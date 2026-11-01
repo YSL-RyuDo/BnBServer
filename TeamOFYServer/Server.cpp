@@ -12,6 +12,8 @@ Server::Server()
 }
 
 Server::~Server() {
+    simulationRunning_ = false;
+    if (simulationThread_.joinable()) simulationThread_.join();
     if (listenSocket != INVALID_SOCKET) {
         closesocket(listenSocket);
         listenSocket = INVALID_SOCKET;
@@ -91,6 +93,17 @@ void Server::Run() {
         << std::chrono::duration_cast<std::chrono::milliseconds>(accountsReady - accountsBegin).count()
         << " total_ms=" << std::chrono::duration_cast<std::chrono::milliseconds>(initialized - startupBegin).count()
         << std::endl;
+    simulationRunning_ = true;
+    simulationThread_ = std::thread([this] {
+        auto previous = std::chrono::steady_clock::now();
+        while (simulationRunning_) {
+            auto deadline = previous + std::chrono::milliseconds(20);
+            std::this_thread::sleep_until(deadline);
+            auto now = std::chrono::steady_clock::now();
+            roomManager_.TickWorld(std::chrono::duration<double>(now - previous).count());
+            previous = now;
+        }
+    });
     AcceptClients();
 }
 

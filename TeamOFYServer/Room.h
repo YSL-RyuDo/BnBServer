@@ -2,6 +2,7 @@
 #include <string>
 #include <cstdint>
 #include <chrono>
+#include "CombatWorld.h"
 #include <vector>
 #include <unordered_map>
 
@@ -23,6 +24,7 @@ struct Room {
         std::chrono::steady_clock::time_point nextDamage{};
     };
     unordered_map<string, Combatant> combat;
+    CombatWorld world;
     uint64_t combatRevision = 0;
     bool rewardsPending = false;
     bool rewardsCommitted = false;

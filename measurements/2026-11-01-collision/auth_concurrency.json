@@ -1,0 +1,26 @@
+[
+  {
+    "case": "atomic_duplicate_login",
+    "pass": true
+  },
+  {
+    "case": "quit_closes_session",
+    "pass": true
+  },
+  {
+    "case": "reconnect_after_cleanup",
+    "pass": true
+  },
+  {
+    "case": "split_auth_frame",
+    "pass": true
+  },
+  {
+    "case": "coalesced_register_login",
+    "pass": true
+  },
+  {
+    "case": "identity_switch_rejected",
+    "pass": true
+  }
+]

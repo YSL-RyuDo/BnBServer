@@ -1,0 +1,58 @@
+[
+  {
+    "test": "collision_regression",
+    "exit": 0
+  },
+  {
+    "test": "world_socket",
+    "exit": 0
+  },
+  {
+    "test": "combat_regression",
+    "exit": 0
+  },
+  {
+    "test": "access_regression",
+    "exit": 0
+  },
+  {
+    "test": "hit_regression",
+    "exit": 0
+  },
+  {
+    "test": "combat_completion",
+    "exit": 0
+  },
+  {
+    "test": "room_state",
+    "exit": 0
+  },
+  {
+    "test": "regression",
+    "exit": 0
+  },
+  {
+    "test": "lifecycle",
+    "exit": 0
+  },
+  {
+    "test": "auth_regression",
+    "exit": 0
+  },
+  {
+    "test": "auth_concurrency",
+    "exit": 0
+  },
+  {
+    "test": "purchase_regression",
+    "exit": 0
+  },
+  {
+    "test": "backpressure",
+    "exit": 0
+  },
+  {
+    "test": "stats_lookup",
+    "exit": 0
+  }
+]

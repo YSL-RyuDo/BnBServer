@@ -45,6 +45,11 @@ public:
 
     int CombatHealth(int index) { return userManager_.GetHealthByIndex(index); }
     int CombatAttack(int index) { return userManager_.GetAttackByIndex(index); }
+    int CombatBalloon(const std::string& id) { auto lock = userManager_.LockState(); return userManager_.GetUserProfileById(id).balloon; }
+    std::pair<std::vector<std::vector<int>>, std::vector<std::pair<int,int>>> CombatMap(const std::string& name) {
+        return mapManager_.LoadMapByNameWithSpawns(name);
+    }
+    void PublishDeath(const std::string& id, const RoomManager::DeathResult& result) { FinishDeath(id, result); }
     void OnClientDisconnected(shared_ptr<ClientInfo> client);
     void RemoveLoginSession(const std::string& userId);
 private:

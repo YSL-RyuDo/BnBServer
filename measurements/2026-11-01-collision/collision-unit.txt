@@ -1,0 +1,37 @@
+PASS readiness barrier
+PASS invalid direction rejected
+PASS input flood cannot accelerate time
+PASS old movement sequence rejected
+PASS silent input expires after 250ms
+PASS movement cannot cross wall
+PASS bounded catch-up after stall
+PASS attack cooldown and replay
+PASS server projectile hits exactly once without HIT report
+PASS arrow blocked by wall
+PASS spell preserves authored wall-passing behavior
+PASS laser range computed from server map
+PASS laser wall occlusion and 300ms lifetime
+PASS authored weapon 0 collision
+PASS authored weapon 1 collision
+PASS authored weapon 2 collision
+PASS authored weapon 3 collision
+PASS authored weapon 4 collision
+PASS authored weapon 5 collision
+PASS authored weapon 6 collision
+PASS melody server reflection and speed
+PASS reflected projectile lifetime bounded
+PASS melody near-wall spawn reflects outside obstacle
+PASS overlapping projectile spawn cannot stick or cross wall
+PASS pitchfork destroys only contacted wall
+PASS balloon origin derived and cooldown enforced
+PASS balloon fuse not client-controlled
+PASS server explosion damages silent stationary player
+PASS water destroys block and stops at wall
+PASS water cannot propagate through obstacle
+PASS water expires without duplicate stay damage
+PASS Map2 block and wall types
+PASS owner may leave balloon but cannot walk back through it
+PASS Map1
+PASS Map2
+PASS map path traversal rejected
+36 checks passed

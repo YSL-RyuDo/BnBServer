@@ -1,4 +1,5 @@
 #include "RoomManager.h"
+#include <random>
 #include "Server.h"
 
 RoomManager::RoomManager(Server& server, ClientHandler& clientHandler)
@@ -737,24 +738,39 @@ bool RoomManager::InitializeCombat(Room& room) {
         if (p.health <= 0 || p.attack <= 0) return false;
         players.emplace(id, p);
     }
+    auto map = clientHandler_.CombatMap(room.mapName);
+    CombatWorld world;
+    if (map.second.size() < room.users.size() || !world.Initialize(room.mapName, map.first, nextMatchId_ + 1)) return false;
+    std::mt19937 random(std::random_device{}());
+    std::shuffle(map.second.begin(), map.second.end(), random);
+    room.assignedSpawnPositions.clear();
+    for (size_t i = 0; i < room.users.size(); ++i) {
+        const auto& id = room.users[i];
+        const auto spawn = map.second[i];
+        if (spawn.second < 13 || !world.AddPlayer(id, Trim(clientHandler_.GetNicknameById(id)), players.at(id).character,
+                clientHandler_.CombatBalloon(id), {double(spawn.first), double(spawn.second - 13)})) return false;
+        room.assignedSpawnPositions.push_back(spawn);
+    }
+    room.world = std::move(world);
     room.combat = std::move(players);
     room.combatRevision = 0;
     room.rewardsPending = room.rewardsCommitted = false;
     return true;
 }
 
-RoomManager::DamageResult RoomManager::ApplyDamage(const std::string& attacker,
-    const std::string& target, int weapon, uint64_t matchId, bool water) {
-    std::lock_guard<std::mutex> lock(roomsMutex);
-    for (auto& room : rooms) {
-        if (std::find(room.users.begin(), room.users.end(), attacker) == room.users.end()) continue;
-        if (!room.isInGame || room.matchId != matchId || room.rewardsPending || resolvedRooms_.count(room.roomName)) return {};
-        if (std::find(room.users.begin(), room.users.end(), target) == room.users.end()) return {};
+RoomManager::DamageResult RoomManager::ApplyDamage(const std::string&, const std::string&, int, uint64_t, bool) {
+    // Old client collision reports cannot authorize damage.
+    return {};
+}
+
+RoomManager::DamageResult RoomManager::ApplyDamageLocked(Room& room, const std::string& attacker,
+    const std::string& target, bool water) {
+        if (!room.isInGame || room.rewardsPending || resolvedRooms_.count(room.roomName)) return {};
         auto a = room.combat.find(attacker), t = room.combat.find(target);
         if (a == room.combat.end() || t == room.combat.end() || a->second.health <= 0 || t->second.health <= 0) return {};
         if (water) { if (attacker != target) return {}; }
         else {
-            if (attacker == target || weapon != a->second.character) return {};
+            if (attacker == target) return {};
             if (room.isCoopMode) {
                 auto at = room.teamAssignments.find(attacker), tt = room.teamAssignments.find(target);
                 if (at == room.teamAssignments.end() || tt == room.teamAssignments.end() || at->second == tt->second) return {};
@@ -770,9 +786,8 @@ RoomManager::DamageResult RoomManager::ApplyDamage(const std::string& attacker,
         result.accepted = true; result.damage = damage; result.health = t->second.health;
         result.matchId = room.matchId; result.revision = ++room.combatRevision;
         if (t->second.health == 0) result.death = RecordDeathLocked(room, target);
+        if (result.health == 0) room.world.players.at(target).alive = false;
         return result;
-    }
-    return {};
 }
 
 RoomManager::DeathResult RoomManager::RecordDeathLocked(Room& room, const std::string& userId) {
@@ -844,6 +859,7 @@ void RoomManager::ForceExitRoomByUserId(const std::string& userId)
         );
 
         // 부가 정보 정리
+        room.world.RemovePlayer(userId);
         room.characterSelections.erase(userId);
         room.teamAssignments.erase(userId);
 
@@ -924,4 +940,83 @@ void RoomManager::RetryDeath(const Room& snapshot, const std::string& userId) {
     if (!room || !room->isInGame || room->rewardsCommitted || room->matchId != snapshot.matchId) return;
     resolvedRooms_.erase(room->roomName);
     deadUsersByRoom[room->roomName].erase(userId);
+}
+
+bool RoomManager::WorldCommand(const std::string& id, const std::string& command, uint64_t match,
+    uint64_t sequence, double x, double z) {
+    std::lock_guard<std::mutex> lock(roomsMutex);
+    for (auto& room : rooms) {
+        if (std::find(room.users.begin(), room.users.end(), id) == room.users.end()) continue;
+        if (!room.isInGame || room.matchId != match || room.rewardsPending) return false;
+        if (command == "MATCH_READY") return room.world.Ready(id);
+        if (command == "MOVE_INPUT") return room.world.Input(id, sequence, {x,z});
+        if (command == "ATTACK") return room.world.Fire(id, sequence, x);
+        if (command == "BALLOON") return room.world.Place(id, sequence);
+    }
+    return false;
+}
+
+std::string RoomManager::MapResponse(const std::string& id) {
+    std::lock_guard<std::mutex> lock(roomsMutex);
+    for (const auto& room : rooms) {
+        if (!room.isInGame || std::find(room.users.begin(),room.users.end(),id)==room.users.end()) continue;
+        // Per-client delivery, stable per-match spawns, no filesystem read or rerandomization.
+        std::string map="MAP_DATA|"+room.mapName+"|", spawn, stats="CHAR_INFO|";
+        for (const auto& row : room.world.map) {
+            for (int cell : row) map+=std::to_string(cell)+",";
+            map.back()=';';
+        }
+        map.back()='|';
+        for (size_t i=0;i<room.users.size();++i) {
+            const auto& uid=room.users[i];const auto& p=room.world.players.at(uid);const auto& c=room.combat.at(uid);
+            spawn+=p.nickname+":"+std::to_string(int(p.position.x))+":"+std::to_string(int(p.position.z)+13)+":"+std::to_string(c.character)+",";
+            stats+=p.nickname+","+std::to_string(c.character)+","+std::to_string(c.health)+","+std::to_string(c.attack)+"|";
+        }
+        spawn.pop_back();stats.pop_back();return map+spawn+"\n"+stats+"\n";
+    }
+    return {};
+}
+
+void RoomManager::BroadcastToMatch(const Room& match,const std::string& message) {
+    std::vector<std::shared_ptr<ClientInfo>> recipients;
+    {
+        std::lock_guard<std::mutex> lock(roomsMutex);
+        auto room=FindRoomByName_NoLock(match.roomName);
+        if (!room || room->matchId!=match.matchId) return;
+        std::lock_guard<std::mutex> clientsLock(server_.clientsMutex);
+        const auto& clients=clientHandler_.GetClientsMapLocked();
+        for (const auto& id:room->users) {auto p=clients.find(id);if(p!=clients.end())recipients.push_back(p->second);}
+    }
+    for(const auto& p:recipients)QueueSend(p->socket,message.data(),int(message.size()),0);
+}
+
+void RoomManager::TickWorld(double seconds) {
+    std::vector<std::pair<std::shared_ptr<ClientInfo>,std::string>> sends;
+    std::vector<std::pair<std::string,DeathResult>> deaths;
+    {
+        std::lock_guard<std::mutex> lock(roomsMutex);
+        for(auto& room:rooms) {
+            if(!room.isInGame || room.rewardsPending)continue;
+            for(auto& p:room.world.players)
+                if(std::find(room.users.begin(),room.users.end(),p.first)==room.users.end())room.world.RemovePlayer(p.first);
+            room.world.Advance(seconds,[&](const std::string& attacker,const std::string& target,bool water) {
+                auto hit=ApplyDamageLocked(room,attacker,target,water);if(!hit.accepted)return;
+                const auto& nick=room.world.players.at(target).nickname;
+                room.world.events.push_back("DAMAGE|"+nick+"|"+std::to_string(hit.damage)+"|"+std::to_string(hit.health)+"|"+
+                    std::to_string(hit.matchId)+"|"+std::to_string(hit.revision)+"\n");
+                if(hit.death.room)deaths.push_back({target,hit.death});
+            });
+            if(room.world.events.empty())continue;
+            std::string framed;for(const auto& message:room.world.events)framed+=message;
+            room.world.events.clear();
+            std::lock_guard<std::mutex> clientsLock(server_.clientsMutex);
+            const auto& clients=clientHandler_.GetClientsMapLocked();
+            for(const auto& id:room.users){auto p=clients.find(id);if(p!=clients.end())sends.push_back({p->second,framed});}
+        }
+    }
+    for(const auto& send:sends)QueueSend(send.first->socket,send.second.data(),int(send.second.size()),0);
+    for(const auto& death:deaths) {
+        try {clientHandler_.PublishDeath(death.first,death.second);}
+        catch(const std::exception&) {std::cerr<<"Combat reward save failed; receipt retry pending\n";}
+    }
 }

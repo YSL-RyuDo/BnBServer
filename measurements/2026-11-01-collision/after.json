@@ -1,0 +1,57 @@
+[
+  {
+    "case": "damage_without_server_attack",
+    "pass": true,
+    "unauthorized_deliveries": 0
+  },
+  {
+    "case": "water_without_server_water",
+    "pass": true,
+    "unauthorized_deliveries": 0
+  },
+  {
+    "case": "remote_weapon_origin",
+    "pass": true,
+    "unauthorized_deliveries": 0
+  },
+  {
+    "case": "remote_balloon_origin",
+    "pass": true,
+    "unauthorized_deliveries": 0
+  },
+  {
+    "case": "nonexistent_balloon_explosion",
+    "pass": true,
+    "unauthorized_deliveries": 0
+  },
+  {
+    "case": "arbitrary_block_destruction",
+    "pass": true,
+    "unauthorized_deliveries": 0
+  },
+  {
+    "case": "arbitrary_wall_destruction",
+    "pass": true,
+    "unauthorized_deliveries": 0
+  },
+  {
+    "case": "arbitrary_projectile_destruction",
+    "pass": true,
+    "unauthorized_deliveries": 0
+  },
+  {
+    "case": "unregistered_melody",
+    "pass": true,
+    "unauthorized_deliveries": 0
+  },
+  {
+    "case": "projectile_teleport",
+    "pass": true,
+    "unauthorized_deliveries": 0
+  },
+  {
+    "case": "player_teleport",
+    "pass": true,
+    "unauthorized_deliveries": 0
+  }
+]

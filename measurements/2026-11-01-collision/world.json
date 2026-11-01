@@ -1,0 +1,46 @@
+[
+  {
+    "case": "stable_spawn_snapshot",
+    "pass": true
+  },
+  {
+    "case": "no_attack_before_all_clients_ready",
+    "pass": true
+  },
+  {
+    "case": "server_moves_from_direction_at_bounded_speed",
+    "pass": true
+  },
+  {
+    "case": "stale_input_cannot_restart_movement",
+    "pass": true
+  },
+  {
+    "case": "stale_match_attack_rejected",
+    "pass": true
+  },
+  {
+    "case": "registered_arrow_causes_server_damage",
+    "pass": true
+  },
+  {
+    "case": "server_attack_cooldown",
+    "pass": true
+  },
+  {
+    "case": "balloon_uses_server_position_and_equipped_type",
+    "pass": true
+  },
+  {
+    "case": "balloon_not_removed_early",
+    "pass": true
+  },
+  {
+    "case": "silent_client_still_receives_water_damage",
+    "pass": true
+  },
+  {
+    "case": "world_events_stay_in_room",
+    "pass": true
+  }
+]

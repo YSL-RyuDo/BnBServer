@@ -1,0 +1,1 @@
+{'server_alive': True, 'first_login_s': 0.10567219997756183, 'max_login_s': 0.11148769990541041, 'startup': {'ready': True, 'tcp_connected_s': 0.5102406998630613, 'application_ready_s': 9.64266850007698, 'account_load_ms': 3603, 'server_initialization_ms': 3613}, 'correct_wallet_and_inventory': 32, 'expected': 32, 'passed': True}

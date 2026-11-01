@@ -1,5 +1,7 @@
 # 서버 권한 전투 상태 1차
 
+> 이 문서는 이전 HP/사망 처리 단계의 기록이다. 후속 공간 충돌 구현과 현재 제한은 [COLLISION_AUTHORITY.ko.md](COLLISION_AUTHORITY.ko.md)를 참조한다.
+
 인증 고도화 `3b6731c`에서 `feature/server-authoritative-combat`를 분기했다.
 Hybrid Winsock 수신 + IOCP 송신 구조, 기존 캐릭터 능력치, 개인전/협동전 보상은 유지한다.
 실제 계정 CSV와 main은 변경하지 않는다. 이 변경은 체력·사망·보상의 권한 이전이며,

@@ -21,6 +21,12 @@ def fixture(path,n):
         (path/(name+'.csv')).write_text(f'{field}Index,price,priceType\n0,5000,0\n1,5000,0\n',encoding='ascii')
     (path/'CharStat.csv').write_text('CharIndex,Health,Attack\n'+'\n'.join(f'{i},100,10' for i in range(7))+'\n')
 
+    # Both supported arenas, with deterministic synthetic spawn candidates and no real map data.
+    for map_name in ['Map1','Map2']:
+        grid=[[0]*15 for _ in range(13)]+[[5]*15 for _ in range(13)]
+        for x,z in [(2,2),(3,2),(2,3),(3,3)]:grid[z+13][x]=-1
+        (path/(map_name+'.csv')).write_text('\n'.join(','.join(map(str,row)) for row in grid)+'\n')
+
 class Peer:
     def __init__(self,i,reader,writer): self.i=i;self.r=reader;self.w=writer
     async def send(self,s):self.w.write(s.encode());await self.w.drain()

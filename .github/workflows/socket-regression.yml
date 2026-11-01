@@ -10,7 +10,7 @@ permissions:
 jobs:
   windows-sockets:
     runs-on: windows-2022
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -19,6 +19,12 @@ jobs:
       - run: python -m pip install -r tools/benchmark/requirements.txt
       - name: Build isolated loopback server
         run: python tools/benchmark/build.py --out .bench-work/candidate --port 39092
+      - name: Verify collision simulation against deterministic clock and shipped maps
+        run: python tools/benchmark/test_collision.py --out .bench-work/collision-unit
+      - name: Verify untrusted collision and destruction reports are inert
+        run: python tools/benchmark/collision_regression.py --build .bench-work/candidate --out .bench-work/collision
+      - name: Verify movement intents and autonomous projectiles and explosions
+        run: python tools/benchmark/world_socket.py --build .bench-work/candidate --out .bench-work/world
       - name: Verify combat authority and replay rejection
         run: python tools/benchmark/combat_regression.py --build .bench-work/candidate --out .bench-work/combat
       - name: Verify cooperative lethal races and reward failure recovery
@@ -58,6 +64,9 @@ jobs:
           name: socket-regression-results
           path: |
             .bench-work/candidate/build.log
+            .bench-work/collision-unit/results.txt
+            .bench-work/collision/results.json
+            .bench-work/world/results.json
             .bench-work/combat/results.json
             .bench-work/combat-completion/results.json
             .bench-work/auth/results.json

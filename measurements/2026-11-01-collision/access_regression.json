@@ -1,0 +1,47 @@
+[
+  {
+    "case": "unauthenticated_hit",
+    "pass": true,
+    "damage_deliveries": 0
+  },
+  {
+    "case": "same_room_sender_spoof",
+    "pass": true,
+    "damage_deliveries": 0
+  },
+  {
+    "case": "other_room_sender_spoof",
+    "pass": true,
+    "damage_deliveries": 0
+  },
+  {
+    "case": "cross_room_target",
+    "pass": true,
+    "damage_deliveries": 0
+  },
+  {
+    "case": "missing_target",
+    "pass": true,
+    "damage_deliveries": 0
+  },
+  {
+    "case": "authenticated_attack",
+    "pass": true,
+    "damage_deliveries": 4
+  },
+  {
+    "case": "unauthenticated_profile_request",
+    "pass": true,
+    "damage_deliveries": 0
+  },
+  {
+    "case": "unauthenticated_purchase",
+    "pass": true,
+    "damage_deliveries": 0
+  },
+  {
+    "case": "logged_out_hit",
+    "pass": true,
+    "damage_deliveries": 0
+  }
+]

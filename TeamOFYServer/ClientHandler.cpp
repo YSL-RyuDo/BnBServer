@@ -112,6 +112,33 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
             if (message.substr(offset, end == std::string::npos ? end : end - offset) != sessionNickname) return;
         }
 
+        const auto command=message.substr(0,message.find('|'));
+        if (command=="MATCH_READY" || command=="MOVE_INPUT" || command=="ATTACK" || command=="BALLOON") {
+            std::vector<std::string> f;std::stringstream stream(message);std::string value;
+            while(std::getline(stream,value,'|'))f.push_back(value);
+            const size_t count=command=="MATCH_READY"?2:(command=="BALLOON"?3:4);
+            if(message.back()=='|' || f.size()!=count)return;
+            auto integer=[](const std::string& text)->uint64_t {
+                if(text.empty() || text.size()>20 || text.find_first_not_of("0123456789")!=std::string::npos)throw std::invalid_argument("sequence");
+                return std::stoull(text);
+            };
+            auto number=[](const std::string& text)->double {
+                size_t used=0;double n=std::stod(text,&used);
+                if(used!=text.size() || !std::isfinite(n))throw std::invalid_argument("coordinate");return n;
+            };
+            uint64_t match=integer(f[1]),sequence=count>2?integer(f[2]):0;double x=0,z=0;
+            if(command=="MOVE_INPUT") {
+                auto comma=f[3].find(',');if(comma==std::string::npos)return;
+                x=number(f[3].substr(0,comma));z=number(f[3].substr(comma+1));
+            } else if(command=="ATTACK") x=number(f[3]);
+            roomManager_.WorldCommand(sessionId,command,match,sequence,x,z);
+            return;
+        }
+        // Legacy combat messages are intentionally inert; only simulation events can change results.
+        for(const char* obsolete:{"HIT","WATER_HIT","WEAPON_ATTACK","PLACE_BALLOON","REMOVE_BALLOON",
+            "MELODY_SPAWN","MELODY_MOVE","MELODY_DESTROY","DESTROY_SPELL","DESTROY_BLOCK","HITWALL"})
+            if(command==obsolete)return;
+
         if (message.rfind("LOGIN|", 0) == 0) {
             cout << "로그인 요청 감지" << endl;
             string loginData = message.substr(strlen("LOGIN|"));
@@ -1183,106 +1210,10 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
 
         else if (message.rfind("GET_MAP|", 0) == 0)
         {
-            std::string data = message.substr(strlen("GET_MAP|"));
-            std::stringstream ss(data);
-            std::string roomName, mapName;
-
-            if (!getline(ss, roomName, '|') || !getline(ss, mapName))
-            {
-                std::cerr << "[GET_MAP] 메시지 형식 오류: " << message << std::endl;
-                return;
-            }
-
-            auto ownMapRoom = roomManager_.GetRoomByUserId(sessionId);
-            if (!ownMapRoom || !ownMapRoom->isInGame || ownMapRoom->roomName != roomName || ownMapRoom->mapName != mapName) return;
-
-            auto result = mapManager_.LoadMapByNameWithSpawns(mapName);
-            auto& mapData = result.first;
-            auto& allSpawnPoints = result.second;
-
-            auto room = roomManager_.FindRoomByName(roomName);
-            for (const auto& userId : room->users) {
-                string nickname = Trim(GetNicknameById(userId));
-            }
-
-            size_t userCount = room->users.size();
-
-            if (userCount > allSpawnPoints.size())
-            {
-                std::cerr << "[GET_MAP] 스폰 좌표 부족" << std::endl;
-                return;
-            }
-
-            std::string mapDataStr;
-            for (const auto& row : mapData)
-            {
-                for (int cell : row)
-                {
-                    mapDataStr += std::to_string(cell) + ",";
-                }
-                if (!row.empty()) mapDataStr.pop_back();
-                mapDataStr += ";";
-            }
-            if (!mapData.empty()) mapDataStr.pop_back();
-
-            std::vector<size_t> indices(allSpawnPoints.size());
-            std::iota(indices.begin(), indices.end(), 0);
-
-            std::random_device rd;
-            std::mt19937 g(rd());
-            std::shuffle(indices.begin(), indices.end(), g);
-
-            std::string spawnStr;
-            for (size_t i = 0; i < userCount; ++i) {
-                const std::string& userId = room->users[i];
-                string nickname = Trim(GetNicknameById(userId));
-
-                int x = std::get<0>(allSpawnPoints[indices[i]]);
-                int y = std::get<1>(allSpawnPoints[indices[i]]);
-                int charIndex = 0;
-
-                auto it = room->characterSelections.find(userId);
-                if (it != room->characterSelections.end())
-                    charIndex = it->second;
-
-                spawnStr += nickname + ":" + std::to_string(x) + ":" + std::to_string(y) + ":" + std::to_string(charIndex) + ",";
-            }
-            if (!spawnStr.empty()) spawnStr.pop_back();
-
-            std::string charInfoStr = "CHAR_INFO|";
-            for (size_t i = 0; i < userCount; ++i) {
-                const std::string& userId = room->users[i];
-                std::string nickname = Trim(GetNicknameById(userId));
-
-                int charIndex = 0;
-                auto itCharSel = room->characterSelections.find(userId);
-                if (itCharSel != room->characterSelections.end())
-                    charIndex = itCharSel->second;
-
-                int health = room->combat.at(userId).health;
-                int attack = room->combat.at(userId).attack;
-
-                charInfoStr += nickname + "," + std::to_string(charIndex) + "," +
-                    std::to_string(health) + "," + std::to_string(attack);
-
-                if (i != userCount - 1)
-                    charInfoStr += "|";
-            }
-            charInfoStr += "\n";
-
-
-            std::cout << "[서버 캐릭터 전송] " << charInfoStr;
-            std::string response = "MAP_DATA|" + mapName + "|" + mapDataStr + "|" + spawnStr + "\n";
-            std::cout << "[서버 MAP_DATA 전송] " << response;
-            std::lock_guard<std::mutex> lock(server_.GetClientsMutex());
-            for (const auto& id : room->users) {
-                auto it = clientsMap.find(id);
-                if (it != clientsMap.end()) {
-                    QueueSend(it->second->socket, response.data(), static_cast<int>(response.size()), 0);
-                    QueueSend(it->second->socket, charInfoStr.data(), static_cast<int>(charInfoStr.size()), 0);
-                }
-            }
-
+            auto room=roomManager_.GetRoomByUserId(sessionId);
+            if (!room || message!="GET_MAP|"+room->roomName+"|"+room->mapName) return;
+            auto data=roomManager_.MapResponse(sessionId);
+            if(!data.empty())SendToClient(client,data);
         }
         else if (message.rfind("GET_BALLOON|", 0) == 0)
         {
@@ -1365,255 +1296,12 @@ void ClientHandler::ProcessMessages(std::shared_ptr<ClientInfo> client, const st
                 x = std::stof(xs, &nx); z = std::stof(zs, &nz);
                 if (nx != xs.size() || nz != zs.size() || !std::isfinite(x) || !std::isfinite(z)) return;
             } catch (const std::exception&) { return; }
+            auto gameRoom=roomManager_.GetRoomByUserId(sessionId);
+            if (gameRoom && gameRoom->isInGame) return;
             player_.UpdatePlayerPosition(username, x, z);
             const std::string resultMsg = "MOVE_RESULT|" + username + "," +
                 std::to_string(x) + "," + std::to_string(z);
             roomManager_.BroadcastToRoomExcept(client->id, client->socket, resultMsg);
-        }
-        else if (message.rfind("WEAPON_ATTACK|", 0) == 0)
-        {
-            std::string data = message.substr(strlen("WEAPON_ATTACK|"));
-
-            // 1. 첫 번째 구분자 '|'
-            size_t first = data.find('|');
-            if (first == std::string::npos) return;
-            std::string nickname = data.substr(0, first);
-
-            // 2. 두 번째 구분자 '|'
-            size_t second = data.find('|', first + 1);
-            if (second == std::string::npos) return;
-            std::string charIndexStr = data.substr(first + 1, second - first - 1);
-
-            // 3. 세 번째 구분자 '|'
-            size_t third = data.find('|', second + 1);
-            if (third == std::string::npos) return;
-            std::string positionStr = data.substr(second + 1, third - second - 1);
-
-            // 4. 네 번째 구분자 '|'
-            size_t fourth = data.find('|', third + 1);
-
-            std::string rotYStr;
-            std::string laserLengthStr;
-            std::string senderId = client->id;
-            if (fourth == std::string::npos)
-            {
-                rotYStr = data.substr(third + 1);
-                laserLengthStr = "";
-            }
-            else
-            {
-                rotYStr = data.substr(third + 1, fourth - third - 1);
-                laserLengthStr = data.substr(fourth + 1);
-            }
-
-            std::string forwardMsg;
-            if (!laserLengthStr.empty())
-            {
-                forwardMsg = "WEAPON_ATTACK|" + nickname + "|" + charIndexStr + "|" + positionStr + "|" + rotYStr + "|" + laserLengthStr + "\n";
-            }
-            else
-            {
-                forwardMsg = "WEAPON_ATTACK|" + nickname + "|" + charIndexStr + "|" + positionStr + "|" + rotYStr + "\n";
-            }
-
-            
-            //roomManager_.BroadcastToRoomExcept(client->id, client->socket, forwardMsg);
-            roomManager_.BroadcastToUserRoom(senderId, forwardMsg);
-            std::cout << "[Server] WEAPON_ATTACK 처리 완료 from " << nickname << std::endl;
-            }
-        else if (message.rfind("MELODY_MOVE|", 0) == 0)
-        {
-            std::string data = message.substr(strlen("MELODY_MOVE|"));
-
-            size_t first = data.find('|');
-            if (first == std::string::npos) return;
-            std::string nickname = data.substr(0, first);
-
-            size_t second = data.find('|', first + 1);
-            if (second == std::string::npos) return;
-            std::string posStr = data.substr(first + 1, second - first - 1);
-
-            std::string rotYStr = data.substr(second + 1);
-
-            std::string forwardMsg = "MELODY_MOVE|" + nickname + "|" + posStr + "|" + rotYStr + "\n";
-            roomManager_.BroadcastToRoomExcept(client->id, client->socket, forwardMsg);
-
-            //std::cout << "[Server] Melody 이동 정보 브로드캐스트 (" << nickname << "): " << posStr << ", " << rotYStr << std::endl;
-            }
-        else if (message.rfind("MELODY_DESTROY|", 0) == 0)
-        {
-            std::string nickname = message.substr(strlen("MELODY_DESTROY|"));
-            std::string forwardMsg = "MELODY_DESTROY|" + nickname + "\n";
-
-            roomManager_.BroadcastToUserRoom(client->id, forwardMsg);
-            std::cout << "[Server] Melody 제거 요청 처리 완료 from " << nickname << std::endl;
-        }
-        else if (message.rfind("HITWALL|", 0) == 0)
-        {
-            std::string wallName = message.substr(strlen("HITWALL|"));
-
-            std::string forwardMsg = "DESTROYWALL|" + wallName + "\n";
-            roomManager_.BroadcastToUserRoom(client->id, forwardMsg);
-
-            std::cout << "[Server] Wall 파괴 브로드캐스트: " << wallName << std::endl;
-        }
-        else if (message.rfind("DESTROY_SPELL|", 0) == 0)
-        {
-            std::string spellName = message.substr(strlen("DESTROY_SPELL|"));
-            roomManager_.BroadcastToUserRoom(client->id, message);
-            std::cout << "[Server] 스펠 제거 패킷 브로드캐스트: " << spellName << "\n";
-        }
-        else if (message.rfind("DESTROY_BLOCK|", 0) == 0)
-        {
-            std::string blockName = message.substr(strlen("DESTROY_BLOCK|"));
-            blockName = Trim(blockName);
-
-            if (blockName.empty())
-                return;
-
-            std::cout << "[서버] 블록 파괴 요청 수신: " << blockName << std::endl;
-
-            std::string broadcastMsg = "DESTROY_BLOCK|" + blockName + "\n";
-
-            auto room = roomManager_.GetRoomByUserId(client->id);
-            if (room != nullptr)
-            {
-                roomManager_.BroadcastToUserRoom(client->id, broadcastMsg);
-                std::cout << "[서버] DESTROY_BLOCK 브로드캐스트: " << blockName << std::endl;
-            }
-        }
-        else if (message.rfind("HIT|", 0) == 0 || message.rfind("WATER_HIT|", 0) == 0)
-        {
-            bool water = message.rfind("WATER_HIT|", 0) == 0;
-            std::vector<std::string> fields;
-            std::stringstream input(message); std::string field;
-            while (std::getline(input, field, '|')) fields.push_back(field);
-            if (message.back() == '|' || fields.size() != (water ? 3u : 5u)) return;
-            int weapon = 0;
-            if (!water) {
-                if (fields[1].size() != 1 || fields[1][0] < '0' || fields[1][0] > '6' || fields[2] != sessionNickname) return;
-                weapon = fields[1][0] - '0';
-            } else if (fields[1] != sessionNickname) return;
-            const auto& matchText = fields.back();
-            if (matchText.empty() || matchText.size() > 20 || matchText.find_first_not_of("0123456789") != std::string::npos) return;
-            uint64_t match = std::stoull(matchText);
-            std::string targetNick = water ? sessionNickname : fields[3];
-            std::string targetId = water ? sessionId : GetIdByNickname(targetNick);
-            auto hit = roomManager_.ApplyDamage(sessionId, targetId, weapon, match, water);
-            if (!hit.accepted) return;
-            std::string response = "DAMAGE|" + targetNick + "|" + std::to_string(hit.damage) + "|" +
-                std::to_string(hit.health) + "|" + std::to_string(hit.matchId) + "|" + std::to_string(hit.revision) + "\n";
-            roomManager_.BroadcastToUserRoom(sessionId, response);
-            FinishDeath(targetId, hit.death);
-        }
-        else if (message.rfind("MELODY_SPAWN|", 0) == 0)
-        {
-            std::string data = message.substr(strlen("MELODY_SPAWN|"));
-
-            size_t first = data.find('|');
-            if (first == std::string::npos) return;
-
-            std::string nickname = data.substr(0, first);
-            std::string rest = data.substr(first + 1);
-
-            std::string forwardMsg =
-                "MELODY_SPAWN|" + nickname + "|" + rest + "\n";
-
-            roomManager_.BroadcastToUserRoom(client->id, forwardMsg);
-            }
-
-        else if (message.rfind("PLACE_BALLOON|", 0) == 0)
-        {
-            std::string data = message.substr(strlen("PLACE_BALLOON|"));
-
-            size_t firstBar = data.find('|');
-            if (firstBar == std::string::npos) return;
-
-            std::string nickname = data.substr(0, firstBar);
-            std::string rest = data.substr(firstBar + 1);
-
-            size_t secondBar = rest.find('|');
-            if (secondBar == std::string::npos) return;
-
-            std::string posStr = rest.substr(0, secondBar); // "x,z"
-            std::string typeStr = rest.substr(secondBar + 1); // 풍선 타입
-
-            size_t commaPos = posStr.find(',');
-            if (commaPos == std::string::npos) return;
-
-            float x = std::stof(posStr.substr(0, commaPos));
-            float z = std::stof(posStr.substr(commaPos + 1));
-            int type = std::stoi(typeStr);
-
-            x = std::round(x * 100.0f) / 100.0f;
-            z = std::round(z * 100.0f) / 100.0f;
-
-            std::ostringstream oss;
-            oss << "PLACE_BALLOON_RESULT|" << nickname << "|"
-                << x << "," << z << "|" << type << "\n";  // <-- 여기 \n
-
-
-            std::string result = oss.str();
-            string senderId = Trim(GetIdByNickname(nickname));
-            roomManager_.BroadcastToUserRoom(senderId, result);
-
-
-        }
-        else if (message.rfind("REMOVE_BALLOON|", 0) == 0)
-        {
-            std::string data = message.substr(strlen("REMOVE_BALLOON|"));
-
-            size_t firstBarPos = data.find('|');
-            if (firstBarPos == std::string::npos) return;
-
-            size_t secondBarPos = data.find('|', firstBarPos + 1);
-            if (secondBarPos == std::string::npos) return;
-
-            std::string nickname = data.substr(0, firstBarPos);
-            std::string posStr = data.substr(firstBarPos + 1, secondBarPos - firstBarPos - 1); // x,z
-            std::string typeStr = data.substr(secondBarPos + 1); // 타입
-
-            size_t commaPos = posStr.find(',');
-            if (commaPos == std::string::npos) return;
-
-            float x = std::stof(posStr.substr(0, commaPos));
-            float z = std::stof(posStr.substr(commaPos + 1));
-
-            int balloonType = std::stoi(typeStr);
-
-            x = std::round(x * 100.0f) / 100.0f;
-            z = std::round(z * 100.0f) / 100.0f;
-
-            std::ostringstream removeMsg;
-            removeMsg << "REMOVE_BALLOON|" << nickname << "|" << x << "," << z << "\n";
-
-            std::string result = removeMsg.str();
-
-            std::string senderId = Trim(GetIdByNickname(nickname));
-            roomManager_.BroadcastToUserRoom(senderId, result);
-
-            std::cout << "[Server] REMOVE_BALLOON broadcast: " << result;
-
-            std::ostringstream waterSpread;
-            waterSpread << "WATER_SPREAD|" << nickname << "|" << x << "," << z << "|" << balloonType << "|";
-
-            const int range = 2;
-            for (int dx = -range; dx <= range; dx++)
-            {
-                if (dx == 0) continue;
-                waterSpread << (x + dx) << "," << z << ";";
-            }
-            for (int dz = -range; dz <= range; dz++)
-            {
-                waterSpread << x << "," << (z + dz) << ";";
-            }
-
-            std::string waterMsg = waterSpread.str();
-            if (waterMsg.back() == ';') waterMsg.pop_back();
-            waterMsg += "\n";
-
-            roomManager_.BroadcastToUserRoom(senderId, waterMsg);
-            std::cout << "[Server] WATER_SPREAD broadcast: " << waterMsg;
         }
         else if (message.rfind("DEAD|", 0) == 0)
         {
@@ -2189,7 +1877,7 @@ void ClientHandler::FinishDeath(const std::string& deadUserId, const RoomManager
             // 3. PLAYER_DEAD 패킷 브로드캐스트
             std::ostringstream deadMsg;
             deadMsg << "PLAYER_DEAD|" << deadNickname << "|" << death.room->matchId << "\n";
-            roomManager_.BroadcastToUserRoom(deadUserId, deadMsg.str());
+            roomManager_.BroadcastToMatch(*death.room, deadMsg.str());
             std::cout << "[Server] PLAYER_DEAD broadcast: " << deadMsg.str();
 
             if (!death.resolvesMatch) return;
@@ -2269,9 +1957,9 @@ void ClientHandler::FinishDeath(const std::string& deadUserId, const RoomManager
                     if (!transaction.Commit()) throw std::runtime_error("Reward CSV commit failed");
                     } // Release the account lock before acquiring any room lock.
                     roomManager_.MarkRewardsCommitted(*room);
-                    roomManager_.BroadcastToUserRoom(deadUserId, winMsg.str());
+                    roomManager_.BroadcastToMatch(*death.room, winMsg.str());
                     rewardMsg << "\n";
-                    roomManager_.BroadcastToUserRoom(deadUserId, rewardMsg.str());
+                    roomManager_.BroadcastToMatch(*death.room, rewardMsg.str());
                     std::cout << "[Server] REWARD_RESULT broadcast: " << rewardMsg.str();
                 }
             }
@@ -2344,9 +2032,9 @@ void ClientHandler::FinishDeath(const std::string& deadUserId, const RoomManager
                     if (!transaction.Commit()) throw std::runtime_error("Reward CSV commit failed");
                     } // Release the account lock before acquiring any room lock.
                     roomManager_.MarkRewardsCommitted(*room);
-                    roomManager_.BroadcastToUserRoom(deadUserId, teamWinMsg.str());
+                    roomManager_.BroadcastToMatch(*death.room, teamWinMsg.str());
                     rewardMsg << "\n";
-                    roomManager_.BroadcastToUserRoom(deadUserId, rewardMsg.str());
+                    roomManager_.BroadcastToMatch(*death.room, rewardMsg.str());
                     std::cout << "[Server] REWARD_RESULT broadcast: " << rewardMsg.str();
                 }
             }
